@@ -76,6 +76,7 @@ export function useDashboardStats() {
         activeMembers,
         expiringMemberships,
         pendingPayments: (pendingRes.data || []).length,
+        newLeads: (leadsRes.data || []).length,
         recentPayments: (recentRes.data || []).map((p: any) => ({
           member_name: p.members?.name ?? 'Unknown',
           amount: Number(p.amount),

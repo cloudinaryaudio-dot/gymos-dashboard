@@ -9,6 +9,9 @@ import MembersPage from "./pages/MembersPage";
 import PlansPage from "./pages/PlansPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import ExpensesPage from "./pages/ExpensesPage";
+import LeadsPage from "./pages/LeadsPage";
+import WebsiteBuilderPage from "./pages/WebsiteBuilderPage";
+import PublicGymPage from "./pages/PublicGymPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -26,9 +29,10 @@ const App = () => (
             <Route path="/members" element={<MembersPage />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/payments" element={<PaymentsPage />} />
-            <Route path="/leads" element={<PlaceholderPage />} />
+            <Route path="/leads" element={<LeadsPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />
-            <Route path="/website" element={<PlaceholderPage />} />
+            <Route path="/website" element={<WebsiteBuilderPage />} />
+            <Route path="/gym/:userId" element={<PublicGymPage />} />
             <Route path="/settings" element={<PlaceholderPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
