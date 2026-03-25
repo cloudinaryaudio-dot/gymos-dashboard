@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import MembersPage from "./pages/MembersPage";
+import PlansPage from "./pages/PlansPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -19,7 +21,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/members" element={<PlaceholderPage />} />
+            <Route path="/members" element={<MembersPage />} />
+            <Route path="/plans" element={<PlansPage />} />
             <Route path="/payments" element={<PlaceholderPage />} />
             <Route path="/leads" element={<PlaceholderPage />} />
             <Route path="/expenses" element={<PlaceholderPage />} />
