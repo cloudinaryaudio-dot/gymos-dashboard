@@ -1,4 +1,4 @@
-import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt } from 'lucide-react';
+import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { format } from 'date-fns';
