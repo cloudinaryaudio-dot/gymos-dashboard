@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import MembersPage from "./pages/MembersPage";
 import PlansPage from "./pages/PlansPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import ExpensesPage from "./pages/ExpensesPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -23,9 +25,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/members" element={<MembersPage />} />
             <Route path="/plans" element={<PlansPage />} />
-            <Route path="/payments" element={<PlaceholderPage />} />
+            <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/leads" element={<PlaceholderPage />} />
-            <Route path="/expenses" element={<PlaceholderPage />} />
+            <Route path="/expenses" element={<ExpensesPage />} />
             <Route path="/website" element={<PlaceholderPage />} />
             <Route path="/settings" element={<PlaceholderPage />} />
             <Route path="*" element={<NotFound />} />
