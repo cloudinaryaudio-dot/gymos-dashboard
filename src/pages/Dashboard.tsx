@@ -1,4 +1,4 @@
-import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt } from 'lucide-react';
+import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { format } from 'date-fns';
@@ -16,7 +16,7 @@ export default function Dashboard() {
 
   const s = stats ?? {
     monthlyRevenue: 0, totalExpenses: 0, profit: 0,
-    activeMembers: 0, expiringMemberships: 0, pendingPayments: 0,
+    activeMembers: 0, expiringMemberships: 0, pendingPayments: 0, newLeads: 0,
     recentPayments: [],
   };
 
@@ -62,6 +62,13 @@ export default function Dashboard() {
       change: s.pendingPayments > 0 ? 'Needs follow-up' : 'All clear!',
       changeType: s.pendingPayments > 0 ? 'negative' as const : 'positive' as const,
       icon: AlertCircle,
+    },
+    {
+      title: 'New Leads',
+      value: s.newLeads.toString(),
+      change: s.newLeads > 0 ? 'Awaiting contact' : 'No new leads',
+      changeType: s.newLeads > 0 ? 'positive' as const : 'neutral' as const,
+      icon: UserPlus,
     },
   ];
 

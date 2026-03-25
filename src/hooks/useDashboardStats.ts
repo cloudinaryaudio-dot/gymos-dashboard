@@ -10,6 +10,7 @@ export interface DashboardStats {
   activeMembers: number;
   expiringMemberships: number;
   pendingPayments: number;
+  newLeads: number;
   recentPayments: { member_name: string; amount: number; date: string }[];
 }
 
@@ -24,7 +25,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard', user?.id, monthStart],
     queryFn: async () => {
-      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes] = await Promise.all([
+      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes, leadsRes] = await Promise.all([
         supabase
           .from('payments')
           .select('amount')
@@ -49,6 +50,10 @@ export function useDashboardStats() {
           .eq('status', 'paid')
           .order('payment_date', { ascending: false })
           .limit(5),
+        supabase
+          .from('leads')
+          .select('id')
+          .eq('status', 'new'),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
@@ -56,6 +61,7 @@ export function useDashboardStats() {
       if (membersRes.error) throw membersRes.error;
       if (pendingRes.error) throw pendingRes.error;
       if (recentRes.error) throw recentRes.error;
+      if (leadsRes.error) throw leadsRes.error;
 
       const monthlyRevenue = (paymentsRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
       const totalExpenses = (expensesRes.data || []).reduce((sum, e) => sum + Number(e.amount), 0);
@@ -70,6 +76,7 @@ export function useDashboardStats() {
         activeMembers,
         expiringMemberships,
         pendingPayments: (pendingRes.data || []).length,
+        newLeads: (leadsRes.data || []).length,
         recentPayments: (recentRes.data || []).map((p: any) => ({
           member_name: p.members?.name ?? 'Unknown',
           amount: Number(p.amount),
