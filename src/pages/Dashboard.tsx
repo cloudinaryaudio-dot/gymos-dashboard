@@ -63,6 +63,13 @@ export default function Dashboard() {
       changeType: s.pendingPayments > 0 ? 'negative' as const : 'positive' as const,
       icon: AlertCircle,
     },
+    {
+      title: 'New Leads',
+      value: s.newLeads.toString(),
+      change: s.newLeads > 0 ? 'Awaiting contact' : 'No new leads',
+      changeType: s.newLeads > 0 ? 'positive' as const : 'neutral' as const,
+      icon: UserPlus,
+    },
   ];
 
   return (
