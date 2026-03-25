@@ -50,6 +50,10 @@ export function useDashboardStats() {
           .eq('status', 'paid')
           .order('payment_date', { ascending: false })
           .limit(5),
+        supabase
+          .from('leads')
+          .select('id')
+          .eq('status', 'new'),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
