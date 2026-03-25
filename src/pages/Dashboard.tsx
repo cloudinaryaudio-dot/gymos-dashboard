@@ -16,7 +16,7 @@ export default function Dashboard() {
 
   const s = stats ?? {
     monthlyRevenue: 0, totalExpenses: 0, profit: 0,
-    activeMembers: 0, expiringMemberships: 0, pendingPayments: 0,
+    activeMembers: 0, expiringMemberships: 0, pendingPayments: 0, newLeads: 0,
     recentPayments: [],
   };
 
