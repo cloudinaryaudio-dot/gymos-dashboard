@@ -25,7 +25,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard', user?.id, monthStart],
     queryFn: async () => {
-      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes] = await Promise.all([
+      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes, leadsRes] = await Promise.all([
         supabase
           .from('payments')
           .select('amount')
