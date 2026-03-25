@@ -10,6 +10,7 @@ export interface DashboardStats {
   activeMembers: number;
   expiringMemberships: number;
   pendingPayments: number;
+  newLeads: number;
   recentPayments: { member_name: string; amount: number; date: string }[];
 }
 
