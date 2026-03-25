@@ -32,6 +32,83 @@ export type Database = {
         }
         Relationships: []
       }
+      members: {
+        Row: {
+          created_at: string
+          expiry_date: string
+          id: string
+          name: string
+          phone: string
+          plan_id: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expiry_date: string
+          id?: string
+          name: string
+          phone: string
+          plan_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          name?: string
+          phone?: string
+          plan_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          name: string
+          price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          name: string
+          price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

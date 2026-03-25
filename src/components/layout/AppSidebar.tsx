@@ -7,6 +7,7 @@ import {
   Globe,
   Settings,
   Dumbbell,
+  Package,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -24,6 +25,7 @@ import {
 const navItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Members', url: '/members', icon: Users },
+  { title: 'Plans', url: '/plans', icon: Package },
   { title: 'Payments', url: '/payments', icon: CreditCard },
   { title: 'Leads', url: '/leads', icon: UserPlus },
   { title: 'Expenses', url: '/expenses', icon: Receipt },
