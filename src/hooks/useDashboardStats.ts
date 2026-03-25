@@ -61,6 +61,7 @@ export function useDashboardStats() {
       if (membersRes.error) throw membersRes.error;
       if (pendingRes.error) throw pendingRes.error;
       if (recentRes.error) throw recentRes.error;
+      if (leadsRes.error) throw leadsRes.error;
 
       const monthlyRevenue = (paymentsRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
       const totalExpenses = (expensesRes.data || []).reduce((sum, e) => sum + Number(e.amount), 0);
