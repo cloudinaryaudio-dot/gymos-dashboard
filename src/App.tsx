@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import MembersPage from "./pages/MembersPage";
 import PlansPage from "./pages/PlansPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import ExpensesPage from "./pages/ExpensesPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
