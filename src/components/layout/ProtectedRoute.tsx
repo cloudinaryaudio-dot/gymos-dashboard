@@ -1,9 +1,8 @@
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import Dashboard from './Dashboard';
+import { DashboardLayout } from './DashboardLayout';
 
-export default function Index() {
+export function ProtectedRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -15,12 +14,12 @@ export default function Index() {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
     <DashboardLayout>
-      <Dashboard />
+      <Outlet />
     </DashboardLayout>
   );
 }

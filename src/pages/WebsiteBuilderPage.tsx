@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useWebsiteContent } from '@/hooks/useWebsiteContent';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,7 +41,6 @@ export default function WebsiteBuilderPage() {
   const [trImg, setTrImg] = useState('');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const getSectionData = (type: string) => {
     const existing = sections.find(s => s.section_type === type);
@@ -64,8 +61,7 @@ export default function WebsiteBuilderPage() {
   const publicUrl = `${window.location.origin}/gym/${user.id}`;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-display">Website Builder</h1>
@@ -230,6 +226,5 @@ export default function WebsiteBuilderPage() {
           </Tabs>
         )}
       </div>
-    </DashboardLayout>
   );
 }

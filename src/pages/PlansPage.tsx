@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan, Plan } from '@/hooks/usePlans';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +57,6 @@ export default function PlansPage() {
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleSubmit = async (data: { name: string; price: number; duration_days: number }) => {
     try {
@@ -87,8 +84,7 @@ export default function PlansPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-display">Plans</h1>
@@ -154,6 +150,5 @@ export default function PlansPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

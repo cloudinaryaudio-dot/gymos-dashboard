@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLeads, LeadStatus } from '@/hooks/useLeads';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +25,6 @@ export default function LeadsPage() {
   const [filter, setFilter] = useState<string>('all');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleAdd = () => {
     if (!name.trim() || !phone.trim()) return;
@@ -39,8 +36,7 @@ export default function LeadsPage() {
   const filtered = filter === 'all' ? leads : leads.filter(l => l.status === filter);
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-display">Leads</h1>
@@ -116,6 +112,5 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

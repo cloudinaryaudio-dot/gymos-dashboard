@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, Member } from '@/hooks/useMembers';
 import { usePlans } from '@/hooks/usePlans';
 import { Button } from '@/components/ui/button';
@@ -94,7 +92,6 @@ export default function MembersPage() {
   const [editingMember, setEditingMember] = useState<Member | undefined>();
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleSubmit = async (data: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
     try {
@@ -122,8 +119,7 @@ export default function MembersPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-display">Members</h1>
@@ -217,6 +213,5 @@ export default function MembersPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

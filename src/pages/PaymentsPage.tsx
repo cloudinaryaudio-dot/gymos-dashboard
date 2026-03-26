@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { usePayments, useCreatePayment, useDeletePayment, useUpdatePaymentStatus } from '@/hooks/usePayments';
 import { useMembers } from '@/hooks/useMembers';
 import { Button } from '@/components/ui/button';
@@ -41,7 +39,6 @@ export default function PaymentsPage() {
   const [note, setNote] = useState('');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const resetForm = () => {
     setMemberId(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
@@ -118,8 +115,7 @@ export default function PaymentsPage() {
   );
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold font-display">Payments</h1>
@@ -210,6 +206,5 @@ export default function PaymentsPage() {
           </Card>
         </Tabs>
       </div>
-    </DashboardLayout>
   );
 }
