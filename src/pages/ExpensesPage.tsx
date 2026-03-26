@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useExpenses, useCreateExpense, useDeleteExpense } from '@/hooks/useExpenses';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
