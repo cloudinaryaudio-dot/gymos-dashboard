@@ -151,6 +151,5 @@ export default function PlansPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

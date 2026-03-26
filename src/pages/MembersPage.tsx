@@ -214,6 +214,5 @@ export default function MembersPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

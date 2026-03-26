@@ -134,6 +134,5 @@ export default function ExpensesPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 }

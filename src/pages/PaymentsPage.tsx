@@ -207,6 +207,5 @@ export default function PaymentsPage() {
           </Card>
         </Tabs>
       </div>
-    </DashboardLayout>
   );
 }
