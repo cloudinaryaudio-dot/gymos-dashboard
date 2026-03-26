@@ -92,6 +92,7 @@ export type Database = {
       leads: {
         Row: {
           created_at: string
+          fitness_goal: string | null
           id: string
           name: string
           phone: string
@@ -101,6 +102,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fitness_goal?: string | null
           id?: string
           name: string
           phone: string
@@ -110,6 +112,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fitness_goal?: string | null
           id?: string
           name?: string
           phone?: string
