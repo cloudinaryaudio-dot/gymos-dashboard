@@ -1,54 +1,48 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Dumbbell } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 export default function Auth() {
+  const { user, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  if (loading) return null;
+  if (user) return <Navigate to="/app/dashboard" replace />;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
+    setSubmitting(true);
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/');
+        navigate('/app/dashboard');
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
-          },
+          email, password,
+          options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({
-          title: 'Account created!',
-          description: 'Check your email for a confirmation link.',
-        });
+        toast({ title: 'Account created!', description: 'You can now sign in.' });
       }
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -61,7 +55,6 @@ export default function Auth() {
           </div>
           <h1 className="text-3xl font-bold font-display text-sidebar-accent-foreground">GymOS</h1>
         </div>
-
         <Card className="border-sidebar-border bg-sidebar-accent">
           <CardHeader className="text-center">
             <CardTitle className="text-sidebar-accent-foreground font-display text-xl">
@@ -76,50 +69,23 @@ export default function Auth() {
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-sidebar-foreground">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="bg-sidebar border-sidebar-border text-sidebar-accent-foreground"
-                    placeholder="John Doe"
-                  />
+                  <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-sidebar border-sidebar-border text-sidebar-accent-foreground" placeholder="John Doe" />
                 </div>
               )}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sidebar-foreground">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-sidebar border-sidebar-border text-sidebar-accent-foreground"
-                  placeholder="you@example.com"
-                  required
-                />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-sidebar border-sidebar-border text-sidebar-accent-foreground" placeholder="you@example.com" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sidebar-foreground">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-sidebar border-sidebar-border text-sidebar-accent-foreground"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-sidebar border-sidebar-border text-sidebar-accent-foreground" placeholder="••••••••" required minLength={6} />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
               </Button>
             </form>
             <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-primary hover:underline"
-              >
+              <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-sm text-primary hover:underline">
                 {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
               </button>
             </div>
