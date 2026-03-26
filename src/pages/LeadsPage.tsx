@@ -26,7 +26,6 @@ export default function LeadsPage() {
   const [filter, setFilter] = useState<string>('all');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleAdd = () => {
     if (!name.trim() || !phone.trim()) return;
