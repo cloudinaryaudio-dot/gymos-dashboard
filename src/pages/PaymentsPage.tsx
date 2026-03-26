@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { usePayments, useCreatePayment, useDeletePayment, useUpdatePaymentStatus } from '@/hooks/usePayments';
 import { useMembers } from '@/hooks/useMembers';
 import { Button } from '@/components/ui/button';
