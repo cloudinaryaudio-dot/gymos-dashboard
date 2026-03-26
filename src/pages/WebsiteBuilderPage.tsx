@@ -227,6 +227,5 @@ export default function WebsiteBuilderPage() {
           </Tabs>
         )}
       </div>
-    </DashboardLayout>
   );
 }

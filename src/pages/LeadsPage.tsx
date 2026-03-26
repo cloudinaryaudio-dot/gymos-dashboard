@@ -113,6 +113,5 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }
