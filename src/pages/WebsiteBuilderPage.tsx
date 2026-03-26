@@ -42,7 +42,6 @@ export default function WebsiteBuilderPage() {
   const [trImg, setTrImg] = useState('');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const getSectionData = (type: string) => {
     const existing = sections.find(s => s.section_type === type);
