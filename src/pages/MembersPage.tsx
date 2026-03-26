@@ -92,7 +92,6 @@ export default function MembersPage() {
   const [editingMember, setEditingMember] = useState<Member | undefined>();
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleSubmit = async (data: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
     try {

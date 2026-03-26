@@ -24,7 +24,6 @@ export default function ExpensesPage() {
   const [category, setCategory] = useState('');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

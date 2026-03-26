@@ -39,7 +39,6 @@ export default function PaymentsPage() {
   const [note, setNote] = useState('');
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const resetForm = () => {
     setMemberId(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));

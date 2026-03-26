@@ -57,7 +57,6 @@ export default function PlansPage() {
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
 
   const handleSubmit = async (data: { name: string; price: number; duration_days: number }) => {
     try {
