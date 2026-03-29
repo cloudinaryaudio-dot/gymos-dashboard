@@ -102,6 +102,8 @@ export function useDashboardStats() {
       const activeMembers = allMembers.filter(m => m.expiry_date >= today).length;
       const expiringMemberships = allMembers.filter(m => m.expiry_date >= today && m.expiry_date <= sevenDaysFromNow).length;
 
+      const todayPaymentsData = todayPaymentsRes.data || [];
+
       return {
         monthlyRevenue,
         totalExpenses,
@@ -115,6 +117,11 @@ export function useDashboardStats() {
           amount: Number(p.amount),
           date: p.payment_date,
         })),
+        todayNewMembers: (todayMembersRes.data || []).length,
+        todayPayments: todayPaymentsData.length,
+        todayPaymentsAmount: todayPaymentsData.reduce((sum, p) => sum + Number(p.amount), 0),
+        todayLeads: (todayLeadsRes.data || []).length,
+        monthNewMembers: (monthMembersRes.data || []).length,
       } as DashboardStats;
     },
     enabled: !!user,
