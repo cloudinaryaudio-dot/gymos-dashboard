@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +56,7 @@ export function useWebsiteContent() {
   const sectionsQuery = useQuery({
     queryKey: ['website_sections', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('website_sections').select('*').order('sort_order');
+      const { data, error } = await supabase.from('website_sections' as any).select('*').order('sort_order');
       if (error) throw error;
       return data as WebsiteSection[];
     },
@@ -66,7 +66,7 @@ export function useWebsiteContent() {
   const testimonialsQuery = useQuery({
     queryKey: ['testimonials', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('testimonials').select('*').order('sort_order');
+      const { data, error } = await supabase.from('testimonials' as any).select('*').order('sort_order');
       if (error) throw error;
       return data as Testimonial[];
     },
@@ -76,7 +76,7 @@ export function useWebsiteContent() {
   const galleryQuery = useQuery({
     queryKey: ['gallery', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('gallery').select('*').order('sort_order');
+      const { data, error } = await supabase.from('gallery' as any).select('*').order('sort_order');
       if (error) throw error;
       return data as GalleryItem[];
     },
@@ -86,7 +86,7 @@ export function useWebsiteContent() {
   const trainersQuery = useQuery({
     queryKey: ['trainers', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('trainers').select('*').order('sort_order');
+      const { data, error } = await supabase.from('trainers' as any).select('*').order('sort_order');
       if (error) throw error;
       return data as Trainer[];
     },
@@ -97,10 +97,10 @@ export function useWebsiteContent() {
     mutationFn: async (section: Partial<WebsiteSection> & { section_type: string }) => {
       const payload = { ...section, user_id: user!.id, updated_at: new Date().toISOString() };
       if (section.id) {
-        const { error } = await supabase.from('website_sections').update(payload).eq('id', section.id);
+        const { error } = await (supabase.from('website_sections' as any) as any).update(payload).eq('id', section.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('website_sections').insert(payload as any);
+        const { error } = await (supabase.from('website_sections' as any) as any).insert(payload);
         if (error) throw error;
       }
     },
@@ -113,7 +113,7 @@ export function useWebsiteContent() {
 
   const deleteSection = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('website_sections').delete().eq('id', id);
+      const { error } = await (supabase.from('website_sections' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['website_sections'] }),
@@ -122,7 +122,7 @@ export function useWebsiteContent() {
 
   const addTestimonial = useMutation({
     mutationFn: async (t: { name: string; content?: string; video_url?: string }) => {
-      const { error } = await supabase.from('testimonials').insert({ ...t, user_id: user!.id });
+      const { error } = await (supabase.from('testimonials' as any) as any).insert({ ...t, user_id: user!.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -134,7 +134,7 @@ export function useWebsiteContent() {
 
   const deleteTestimonial = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('testimonials').delete().eq('id', id);
+      const { error } = await (supabase.from('testimonials' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['testimonials'] }),
@@ -143,7 +143,7 @@ export function useWebsiteContent() {
 
   const addGalleryItem = useMutation({
     mutationFn: async (item: { image_url: string; caption?: string }) => {
-      const { error } = await supabase.from('gallery').insert({ ...item, user_id: user!.id });
+      const { error } = await (supabase.from('gallery' as any) as any).insert({ ...item, user_id: user!.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -155,7 +155,7 @@ export function useWebsiteContent() {
 
   const deleteGalleryItem = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('gallery').delete().eq('id', id);
+      const { error } = await (supabase.from('gallery' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gallery'] }),
@@ -164,7 +164,7 @@ export function useWebsiteContent() {
 
   const addTrainer = useMutation({
     mutationFn: async (t: { name: string; specialization?: string; image_url?: string }) => {
-      const { error } = await supabase.from('trainers').insert({ ...t, user_id: user!.id });
+      const { error } = await (supabase.from('trainers' as any) as any).insert({ ...t, user_id: user!.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -176,7 +176,7 @@ export function useWebsiteContent() {
 
   const deleteTrainer = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('trainers').delete().eq('id', id);
+      const { error } = await (supabase.from('trainers' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['trainers'] }),

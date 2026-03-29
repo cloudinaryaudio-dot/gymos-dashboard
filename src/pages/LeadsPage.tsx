@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 
 const statusColors: Record<string, string> = {
@@ -105,7 +105,20 @@ export default function LeadsPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No leads yet</td></tr>
+                  <tr><td colSpan={5} className="p-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                        <UserPlus className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-lg mb-1">No leads yet</h3>
+                      <p className="text-muted-foreground text-sm mb-6 max-w-xs">
+                        Leads from your website will appear here. You can also add them manually.
+                      </p>
+                      <Button onClick={() => setOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" /> Add Your First Lead
+                      </Button>
+                    </div>
+                  </td></tr>
                 )}
               </tbody>
             </table>

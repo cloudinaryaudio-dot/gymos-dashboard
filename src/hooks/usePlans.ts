@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,7 +18,7 @@ export function usePlans() {
     queryKey: ['plans', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('plans')
+        .from('plans' as any)
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -34,8 +34,7 @@ export function useCreatePlan() {
 
   return useMutation({
     mutationFn: async (plan: { name: string; price: number; duration_days: number }) => {
-      const { data, error } = await supabase
-        .from('plans')
+      const { data, error } = await (supabase.from('plans' as any) as any)
         .insert({ ...plan, user_id: user!.id })
         .select()
         .single();
@@ -51,8 +50,7 @@ export function useUpdatePlan() {
 
   return useMutation({
     mutationFn: async ({ id, ...plan }: { id: string; name: string; price: number; duration_days: number }) => {
-      const { data, error } = await supabase
-        .from('plans')
+      const { data, error } = await (supabase.from('plans' as any) as any)
         .update(plan)
         .eq('id', id)
         .select()
@@ -69,7 +67,7 @@ export function useDeletePlan() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('plans').delete().eq('id', id);
+      const { error } = await (supabase.from('plans' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plans'] }),

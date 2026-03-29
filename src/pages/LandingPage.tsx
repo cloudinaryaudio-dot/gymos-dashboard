@@ -1,17 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { db as supabase } from '@/integrations/supabase/db';
+import { usePublicGymSettings, GymSettings } from '@/hooks/useGymSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VideoEmbed } from '@/components/VideoEmbed';
-import { Skeleton } from '@/components/ui/skeleton';
+import { FloatingContactButtons } from '@/components/FloatingContactButtons';
 import { useToast } from '@/hooks/use-toast';
+import { motion, useInView } from 'framer-motion';
 import {
   Dumbbell, Send, ChevronRight, Users, Award, Calendar, Star, ArrowRight, Play, Phone, User, Target,
+  Instagram, MapPin, Mail, Clock, Menu, X,
 } from 'lucide-react';
+
+function AnimatedSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -20,8 +39,15 @@ export default function LandingPage() {
   const [leadPhone, setLeadPhone] = useState('');
   const [leadGoal, setLeadGoal] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Fetch public data (use first user's data for now — in production, use gym slug)
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ['public-landing'],
     queryFn: async () => {
@@ -42,15 +68,36 @@ export default function LandingPage() {
     },
   });
 
+  // Derive gymId for contact settings
+  const gymId = data?.plans?.[0]?.user_id || data?.sections?.[0]?.user_id;
+
+  const ownerId = gymId;
+  const { data: gymBranding } = usePublicGymSettings(ownerId);
+  const brandName = gymBranding?.gym_name || 'GymOS';
+  const brandLogo = gymBranding?.logo_url;
+  const brandPrimary = gymBranding?.primary_color || '142 71% 45%';
+
+  // Apply branding colors to CSS vars for this page
+  useEffect(() => {
+    if (gymBranding?.primary_color) {
+      document.documentElement.style.setProperty('--primary', gymBranding.primary_color);
+    }
+    return () => { document.documentElement.style.removeProperty('--primary'); };
+  }, [gymBranding?.primary_color]);
+
   const hero = data?.sections.find((s: any) => s.section_type === 'hero');
+
+  const scrollTo = (id: string) => {
+    setMobileMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!leadName.trim() || !leadPhone.trim()) return;
     setSubmitting(true);
-    // Get the first available user_id from plans or sections for lead assignment
-    const ownerId = data?.plans?.[0]?.user_id || data?.sections?.[0]?.user_id;
-    if (!ownerId) {
+    const ownerIdForLead = data?.plans?.[0]?.user_id || data?.sections?.[0]?.user_id;
+    if (!ownerIdForLead) {
       toast({ title: 'Error', description: 'Unable to submit. Please try again later.', variant: 'destructive' });
       setSubmitting(false);
       return;
@@ -59,7 +106,7 @@ export default function LandingPage() {
       name: leadName.trim(),
       phone: leadPhone.trim(),
       fitness_goal: leadGoal || null,
-      user_id: ownerId,
+      user_id: ownerIdForLead,
     });
     setSubmitting(false);
     if (error) {
@@ -72,123 +119,182 @@ export default function LandingPage() {
     }
   };
 
+  const navLinks = [
+    { label: 'Home', id: 'hero' },
+    { label: 'Plans', id: 'pricing' },
+    { label: 'Trainers', id: 'trainers' },
+    { label: 'Contact', id: 'lead-form' },
+  ];
+
   return (
-    <div className="min-h-screen bg-[hsl(220,25%,6%)] text-[hsl(220,10%,92%)]">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[hsl(220,25%,6%)]/80 border-b border-[hsl(220,20%,15%)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)] overflow-x-hidden">
+      {/* ─── NAVBAR ─── */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[hsl(220,25%,4%)]/95 backdrop-blur-xl shadow-2xl shadow-black/20' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <Dumbbell className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold font-display">GymOS</span>
+            {brandLogo ? (
+              <img src={brandLogo} alt={brandName} className="h-10 w-10 rounded-xl object-cover shadow-lg" />
+            ) : (
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-[hsl(142,71%,35%)] flex items-center justify-center shadow-lg shadow-primary/25">
+                <Dumbbell className="h-5 w-5 text-primary-foreground" />
+              </div>
+            )}
+            <span className="text-xl font-bold font-display tracking-tight">{brandName}</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm">
-            <a href="#pricing" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)] transition-colors">Pricing</a>
-            <a href="#trainers" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)] transition-colors">Trainers</a>
-            <a href="#testimonials" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)] transition-colors">Testimonials</a>
-            <a href="#gallery" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)] transition-colors">Gallery</a>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+            {navLinks.map(link => (
+              <button key={link.id} onClick={() => scrollTo(link.id)} className="text-[hsl(220,10%,55%)] hover:text-[hsl(220,10%,92%)] transition-colors duration-200 relative group">
+                {link.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)]" onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}>
+          <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,10%)]" onClick={() => scrollTo('lead-form')}>
               Book Free Trial
             </Button>
             <Link to={user ? '/app/dashboard' : '/login'}>
-              <Button variant="outline" size="sm" className="border-[hsl(220,20%,20%)] bg-transparent text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,14%)]">
+              <Button size="sm" className="bg-[hsl(220,20%,12%)] text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,16%)] border border-[hsl(220,20%,18%)]">
                 {user ? 'Dashboard' : 'Admin Login'}
               </Button>
             </Link>
           </div>
+          <button className="md:hidden p-2 text-[hsl(220,10%,60%)]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="md:hidden bg-[hsl(220,25%,6%)] border-t border-[hsl(220,20%,12%)] px-4 py-6 space-y-4">
+            {navLinks.map(link => (
+              <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left text-[hsl(220,10%,70%)] hover:text-[hsl(220,10%,92%)] py-2 text-lg font-medium">
+                {link.label}
+              </button>
+            ))}
+            <Link to={user ? '/app/dashboard' : '/login'} className="block">
+              <Button className="w-full mt-2">{user ? 'Dashboard' : 'Admin Login'}</Button>
+            </Link>
+          </motion.div>
+        )}
       </nav>
 
-      {/* Hero Section */}
+      {/* ─── HERO ─── */}
       <section
-        className="relative min-h-screen flex items-center pt-16"
+        id="hero"
+        className="relative min-h-screen flex items-center justify-center"
         style={hero?.image_url ? {
-          backgroundImage: `linear-gradient(to bottom, hsla(220,25%,6%,0.7), hsla(220,25%,6%,0.95)), url(${hero.image_url})`,
+          backgroundImage: `linear-gradient(180deg, hsla(220,25%,4%,0.5) 0%, hsla(220,25%,4%,0.85) 60%, hsl(220,25%,4%) 100%), url(${hero.image_url})`,
           backgroundSize: 'cover', backgroundPosition: 'center',
         } : {}}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-8">
-              <Star className="h-4 w-4" /> #1 Rated Gym in the City
-            </div>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold font-display leading-[1.1] tracking-tight">
-              {hero?.title || (
-                <>Transform Your Body.{' '}<span className="text-primary">Transform Your Life.</span></>
-              )}
-            </h1>
-            <p className="mt-6 text-lg sm:text-xl text-[hsl(220,10%,60%)] max-w-xl leading-relaxed">
-              {hero?.subtitle || 'World-class equipment, expert trainers, and a community that pushes you to be your best. Your transformation starts here.'}
-            </p>
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Button size="lg" className="h-14 px-8 text-base font-semibold" onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}>
-                Join Now <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base border-[hsl(220,20%,20%)] bg-transparent text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,14%)]" onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}>
-                <Play className="mr-2 h-5 w-5" /> Book Free Trial
-              </Button>
-            </div>
-          </div>
+        {/* Ambient glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
         </div>
-        {hero?.video_url && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
-            <VideoEmbed url={hero.video_url} className="rounded-2xl overflow-hidden border border-[hsl(220,20%,15%)]" />
-          </div>
-        )}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10 text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-semibold mb-8 backdrop-blur-sm">
+              <Star className="h-4 w-4 fill-primary" /> Trusted by 500+ Members
+            </div>
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold font-display leading-[1.05] tracking-tight max-w-5xl mx-auto"
+          >
+            {hero?.title || (
+              <>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Build Your Discipline.</span></>
+            )}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="mt-8 text-lg sm:text-xl text-[hsl(220,10%,55%)] max-w-2xl mx-auto leading-relaxed"
+          >
+            {hero?.subtitle || 'World-class equipment, expert trainers, and a community that pushes you beyond limits. Your transformation starts now.'}
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-12 flex flex-wrap justify-center gap-4"
+          >
+            <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('lead-form')}>
+              Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('pricing')}>
+              View Plans
+            </Button>
+          </motion.div>
+        </div>
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[hsl(220,25%,4%)] to-transparent" />
       </section>
 
-      {/* Social Proof Strip */}
-      <section className="border-y border-[hsl(220,20%,12%)] bg-[hsl(220,25%,8%)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {/* ─── SOCIAL PROOF ─── */}
+      <section className="relative -mt-1 border-y border-[hsl(220,20%,10%)] bg-[hsl(220,25%,6%)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { icon: Users, value: '500+', label: 'Active Members' },
               { icon: Award, value: '200+', label: 'Transformations' },
               { icon: Calendar, value: '10+', label: 'Years Experience' },
-              { icon: Star, value: '4.9', label: 'Google Rating' },
-            ].map((stat) => (
-              <div key={stat.label} className="space-y-2">
-                <stat.icon className="h-6 w-6 text-primary mx-auto" />
-                <p className="text-3xl font-bold font-display">{stat.value}</p>
-                <p className="text-sm text-[hsl(220,10%,50%)]">{stat.label}</p>
-              </div>
+              { icon: Star, value: '4.9★', label: 'Google Rating' },
+            ].map((stat, i) => (
+              <AnimatedSection key={stat.label} delay={i * 0.1} className="text-center space-y-3">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mx-auto">
+                  <stat.icon className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-4xl font-bold font-display">{stat.value}</p>
+                <p className="text-sm text-[hsl(220,10%,45%)] font-medium uppercase tracking-wider">{stat.label}</p>
+              </AnimatedSection>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Plans */}
+      {/* ─── PRICING ─── */}
       {(data?.plans?.length ?? 0) > 0 && (
-        <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">Pricing</p>
-              <h2 className="text-4xl font-bold font-display">Choose Your Plan</h2>
-              <p className="mt-4 text-[hsl(220,10%,50%)] max-w-xl mx-auto">Flexible plans designed to fit your fitness journey. No hidden fees.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <section id="pricing" className="py-28 px-4 sm:px-6 lg:px-8 relative">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
+          </div>
+          <div className="max-w-7xl mx-auto relative z-10">
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Pricing</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">Choose Your Plan</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">Flexible plans designed to fit your fitness journey. No hidden fees.</p>
+              <p className="mt-3 text-primary/80 font-semibold text-sm">⚡ Limited slots available — Join now</p>
+            </AnimatedSection>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {data!.plans.map((plan: any, i: number) => {
                 const isPopular = i === Math.floor((data!.plans.length - 1) / 2);
                 return (
-                  <div key={plan.id} className={`relative rounded-2xl p-8 text-center space-y-6 transition-all duration-300 hover:scale-105 ${isPopular ? 'bg-primary/10 border-2 border-primary ring-1 ring-primary/20' : 'bg-[hsl(220,25%,9%)] border border-[hsl(220,20%,15%)]'}`}>
-                    {isPopular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full uppercase tracking-wider">
-                        Most Popular
+                  <AnimatedSection key={plan.id} delay={i * 0.12}>
+                    <div className={`relative rounded-2xl p-8 text-center space-y-6 transition-all duration-300 hover:-translate-y-2 group ${isPopular ? 'bg-gradient-to-b from-primary/15 to-[hsl(220,25%,7%)] border-2 border-primary/50 shadow-2xl shadow-primary/10' : 'bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,13%)] hover:border-[hsl(220,20%,20%)]'}`}>
+                      {isPopular && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-primary to-[hsl(142,71%,35%)] text-primary-foreground text-xs font-bold rounded-full uppercase tracking-wider shadow-lg">
+                          Most Popular
+                        </div>
+                      )}
+                      <h3 className="font-display font-semibold text-xl">{plan.name}</h3>
+                      <div>
+                        <span className="text-5xl font-bold font-display">₹{plan.price}</span>
+                        <span className="text-[hsl(220,10%,45%)] ml-1 text-sm">/ {plan.duration_days} days</span>
                       </div>
-                    )}
-                    <h3 className="font-display font-semibold text-xl">{plan.name}</h3>
-                    <div>
-                      <span className="text-5xl font-bold font-display">₹{plan.price}</span>
-                      <span className="text-[hsl(220,10%,50%)] ml-1">/ {plan.duration_days} days</span>
+                      <ul className="text-left space-y-3 text-sm text-[hsl(220,10%,60%)]">
+                        <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Full gym access</li>
+                        <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Expert guidance</li>
+                        <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Diet consultation</li>
+                      </ul>
+                      <Button className={`w-full h-12 rounded-xl font-bold transition-all duration-200 ${isPopular ? 'shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30' : 'bg-[hsl(220,20%,12%)] text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,16%)]'}`} onClick={() => scrollTo('lead-form')}>
+                        Get Started <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button className={`w-full h-12 ${isPopular ? '' : 'bg-[hsl(220,20%,14%)] text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,18%)]'}`} onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}>
-                      Get Started <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
+                  </AnimatedSection>
                 );
               })}
             </div>
@@ -196,155 +302,222 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* Trainers */}
+      {/* ─── TRAINERS ─── */}
       {(data?.trainers?.length ?? 0) > 0 && (
-        <section id="trainers" className="py-24 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,8%)]">
+        <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">Expert Coaching</p>
-              <h2 className="text-4xl font-bold font-display">Meet Our Trainers</h2>
-            </div>
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Expert Coaching</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">Meet Our Trainers</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">Certified professionals dedicated to your transformation.</p>
+            </AnimatedSection>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {data!.trainers.map((t: any) => (
-                <div key={t.id} className="group rounded-2xl bg-[hsl(220,25%,9%)] border border-[hsl(220,20%,15%)] overflow-hidden hover:border-primary/40 transition-colors">
-                  {t.image_url ? (
-                    <div className="aspect-[4/5] overflow-hidden">
-                      <img src={t.image_url} alt={t.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+              {data!.trainers.map((t: any, i: number) => (
+                <AnimatedSection key={t.id} delay={i * 0.1}>
+                  <div className="group rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      {t.image_url ? (
+                        <img src={t.image_url} alt={t.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full bg-[hsl(220,20%,10%)] flex items-center justify-center">
+                          <User className="h-20 w-20 text-[hsl(220,10%,25%)]" />
+                        </div>
+                      )}
+                      {/* Overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,25%,4%)] via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                        <h3 className="font-display font-bold text-xl">{t.name}</h3>
+                        {t.specialization && <p className="text-primary font-semibold text-sm mt-1">{t.specialization}</p>}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="aspect-[4/5] bg-[hsl(220,20%,12%)] flex items-center justify-center">
-                      <User className="h-16 w-16 text-[hsl(220,10%,30%)]" />
-                    </div>
-                  )}
-                  <div className="p-6">
-                    <h3 className="font-display font-semibold text-lg">{t.name}</h3>
-                    {t.specialization && <p className="text-sm text-primary mt-1">{t.specialization}</p>}
                   </div>
-                </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* Testimonials */}
+      {/* ─── TESTIMONIALS ─── */}
       {(data?.testimonials?.length ?? 0) > 0 && (
-        <section id="testimonials" className="py-24 px-4 sm:px-6 lg:px-8">
+        <section id="testimonials" className="py-28 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">Success Stories</p>
-              <h2 className="text-4xl font-bold font-display">What Our Members Say</h2>
-            </div>
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Success Stories</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">What Our Members Say</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">Real results from real people. See their stories.</p>
+            </AnimatedSection>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {data!.testimonials.map((t: any) => (
-                <div key={t.id} className="rounded-2xl bg-[hsl(220,25%,9%)] border border-[hsl(220,20%,15%)] p-8 space-y-4">
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                    ))}
+              {data!.testimonials.map((t: any, i: number) => (
+                <AnimatedSection key={t.id} delay={i * 0.1}>
+                  <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-5 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                      ))}
+                    </div>
+                    {t.content && <p className="text-[hsl(220,10%,65%)] leading-relaxed flex-1">"{t.content}"</p>}
+                    {t.video_url && <VideoEmbed url={t.video_url} className="rounded-xl overflow-hidden" />}
+                    <div className="flex items-center gap-3 pt-4 border-t border-[hsl(220,20%,12%)]">
+                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <p className="font-display font-semibold">{t.name}</p>
+                    </div>
                   </div>
-                  {t.content && <p className="text-[hsl(220,10%,70%)] leading-relaxed italic">"{t.content}"</p>}
-                  {t.video_url && <VideoEmbed url={t.video_url} className="rounded-xl overflow-hidden" />}
-                  <p className="font-display font-semibold text-sm pt-2 border-t border-[hsl(220,20%,15%)]">{t.name}</p>
-                </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* Gallery */}
+      {/* ─── GALLERY ─── */}
       {(data?.gallery?.length ?? 0) > 0 && (
-        <section id="gallery" className="py-24 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,8%)]">
+        <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">Our Space</p>
-              <h2 className="text-4xl font-bold font-display">Gallery</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {data!.gallery.map((g: any) => (
-                <div key={g.id} className="rounded-xl overflow-hidden group">
-                  <img src={g.image_url} alt={g.caption || 'Gallery'} className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
-                </div>
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Space</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">Gallery</h2>
+            </AnimatedSection>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {data!.gallery.map((g: any, i: number) => (
+                <AnimatedSection key={g.id} delay={i * 0.05}>
+                  <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-square">
+                    <img src={g.image_url} alt={g.caption || 'Gallery'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300 flex items-end">
+                      {g.caption && (
+                        <p className="p-4 text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">{g.caption}</p>
+                      )}
+                    </div>
+                  </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* CTA Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="rounded-3xl bg-gradient-to-br from-primary/20 via-[hsl(220,25%,9%)] to-primary/10 border border-primary/20 p-12 sm:p-16">
-            <h2 className="text-4xl sm:text-5xl font-bold font-display">
-              Start Your Fitness Journey <span className="text-primary">Today</span>
-            </h2>
-            <p className="mt-6 text-lg text-[hsl(220,10%,55%)] max-w-xl mx-auto">
-              Join hundreds of members who've already transformed their lives. Your best self is waiting.
-            </p>
-            <Button size="lg" className="mt-8 h-14 px-10 text-base font-semibold" onClick={() => document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' })}>
-              Get Started Now <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </div>
+      {/* ─── CTA BLOCK ─── */}
+      <section className="py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-primary/8 rounded-full blur-[150px]" />
         </div>
+        <AnimatedSection>
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-[hsl(220,25%,7%)] to-[hsl(220,25%,5%)] border border-primary/20 p-14 sm:p-20">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight">
+                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Today</span>
+              </h2>
+              <p className="mt-6 text-lg text-[hsl(220,10%,50%)] max-w-xl mx-auto">
+                Join hundreds of members who've transformed their lives. Don't wait for tomorrow — your best self is one decision away.
+              </p>
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
+                <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all" onClick={() => scrollTo('lead-form')}>
+                  Join Now <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-transparent text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] hover:scale-[1.02] transition-all" onClick={() => scrollTo('lead-form')}>
+                  <Play className="mr-2 h-5 w-5" /> Book Free Trial
+                </Button>
+              </div>
+              <p className="mt-6 text-xs text-[hsl(220,10%,40%)]">No credit card required • Cancel anytime</p>
+            </div>
+          </div>
+        </AnimatedSection>
       </section>
 
-      {/* Lead Capture Form */}
-      <section id="lead-form" className="py-24 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,8%)]">
+      {/* ─── LEAD FORM ─── */}
+      <section id="lead-form" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
         <div className="max-w-lg mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">Get Started</p>
-            <h2 className="text-4xl font-bold font-display">Join Us Today</h2>
-            <p className="mt-4 text-[hsl(220,10%,50%)]">Fill in your details and our team will reach out within 24 hours.</p>
-          </div>
-          <form onSubmit={handleLeadSubmit} className="rounded-2xl bg-[hsl(220,25%,9%)] border border-[hsl(220,20%,15%)] p-8 space-y-5">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[hsl(220,10%,70%)] flex items-center gap-2">
-                <User className="h-4 w-4" /> Full Name
-              </label>
-              <Input value={leadName} onChange={e => setLeadName(e.target.value)} placeholder="Your name" required className="h-12 bg-[hsl(220,25%,6%)] border-[hsl(220,20%,15%)] text-[hsl(220,10%,92%)] placeholder:text-[hsl(220,10%,35%)]" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[hsl(220,10%,70%)] flex items-center gap-2">
-                <Phone className="h-4 w-4" /> Phone Number
-              </label>
-              <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+91 98765 43210" required className="h-12 bg-[hsl(220,25%,6%)] border-[hsl(220,20%,15%)] text-[hsl(220,10%,92%)] placeholder:text-[hsl(220,10%,35%)]" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[hsl(220,10%,70%)] flex items-center gap-2">
-                <Target className="h-4 w-4" /> Fitness Goal
-              </label>
-              <Select value={leadGoal} onValueChange={setLeadGoal}>
-                <SelectTrigger className="h-12 bg-[hsl(220,25%,6%)] border-[hsl(220,20%,15%)] text-[hsl(220,10%,92%)]">
-                  <SelectValue placeholder="Select your goal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Weight Loss">Weight Loss</SelectItem>
-                  <SelectItem value="Muscle Gain">Muscle Gain</SelectItem>
-                  <SelectItem value="General Fitness">General Fitness</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full h-14 text-base font-semibold" disabled={submitting}>
-              <Send className="h-4 w-4 mr-2" />{submitting ? 'Submitting...' : 'Get Started'}
-            </Button>
-          </form>
+          <AnimatedSection className="text-center mb-10">
+            <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Get Started</p>
+            <h2 className="text-4xl sm:text-5xl font-bold font-display">Join Us Today</h2>
+            <p className="mt-5 text-[hsl(220,10%,50%)] text-lg">Fill in your details and our team will reach out within 24 hours.</p>
+          </AnimatedSection>
+          <AnimatedSection delay={0.15}>
+            <form onSubmit={handleLeadSubmit} className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-5 shadow-2xl shadow-black/20">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[hsl(220,10%,65%)] flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" /> Full Name
+                </label>
+                <Input value={leadName} onChange={e => setLeadName(e.target.value)} placeholder="Your name" required className="h-12 bg-[hsl(220,25%,4%)] border-[hsl(220,20%,13%)] text-[hsl(220,10%,92%)] placeholder:text-[hsl(220,10%,30%)] focus:border-primary/50 rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[hsl(220,10%,65%)] flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" /> Phone Number
+                </label>
+                <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+91 98765 43210" required className="h-12 bg-[hsl(220,25%,4%)] border-[hsl(220,20%,13%)] text-[hsl(220,10%,92%)] placeholder:text-[hsl(220,10%,30%)] focus:border-primary/50 rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[hsl(220,10%,65%)] flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" /> Fitness Goal
+                </label>
+                <Select value={leadGoal} onValueChange={setLeadGoal}>
+                  <SelectTrigger className="h-12 bg-[hsl(220,25%,4%)] border-[hsl(220,20%,13%)] text-[hsl(220,10%,92%)] rounded-xl">
+                    <SelectValue placeholder="Select your goal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Weight Loss">Weight Loss</SelectItem>
+                    <SelectItem value="Muscle Gain">Muscle Gain</SelectItem>
+                    <SelectItem value="General Fitness">General Fitness</SelectItem>
+                    <SelectItem value="Strength Training">Strength Training</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" className="w-full h-14 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all" disabled={submitting}>
+                <Send className="h-4 w-4 mr-2" />{submitting ? 'Submitting...' : 'Get Started — It\'s Free'}
+              </Button>
+            </form>
+          </AnimatedSection>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-[hsl(220,20%,12%)] text-center">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5 text-primary" />
-            <span className="font-display font-bold">GymOS</span>
+      {/* ─── FOOTER ─── */}
+      <footer className="border-t border-[hsl(220,20%,10%)] bg-[hsl(220,25%,4%)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-[hsl(142,71%,35%)] flex items-center justify-center">
+                  <Dumbbell className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <span className="text-xl font-bold font-display">GymOS</span>
+              </div>
+              <p className="text-[hsl(220,10%,40%)] text-sm max-w-sm leading-relaxed">
+                Your premium fitness destination. World-class equipment, expert trainers, and a community that pushes you to greatness.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h4 className="font-display font-semibold text-sm uppercase tracking-wider text-[hsl(220,10%,60%)]">Quick Links</h4>
+              <div className="space-y-2">
+                {navLinks.map(link => (
+                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block text-sm text-[hsl(220,10%,40%)] hover:text-primary transition-colors">
+                    {link.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h4 className="font-display font-semibold text-sm uppercase tracking-wider text-[hsl(220,10%,60%)]">Contact</h4>
+              <div className="space-y-3 text-sm text-[hsl(220,10%,40%)]">
+                <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary shrink-0" /> Your City, India</p>
+                <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-primary shrink-0" /> +91 98765 43210</p>
+                <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-primary shrink-0" /> hello@gymos.in</p>
+                <p className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary shrink-0" /> 6 AM – 10 PM</p>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-[hsl(220,10%,40%)]">© {new Date().getFullYear()} GymOS. All rights reserved.</p>
-          <Link to={user ? '/app/dashboard' : '/login'} className="text-sm text-[hsl(220,10%,40%)] hover:text-primary transition-colors">
-            {user ? 'Go to Dashboard' : 'Admin Login'}
-          </Link>
+          <div className="mt-12 pt-8 border-t border-[hsl(220,20%,10%)] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-[hsl(220,10%,35%)]">© {new Date().getFullYear()} GymOS. All rights reserved.</p>
+            <Link to={user ? '/app/dashboard' : '/login'} className="text-xs text-[hsl(220,10%,35%)] hover:text-primary transition-colors">
+              {user ? 'Go to Dashboard' : 'Admin Login'}
+            </Link>
+          </div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp & Instagram buttons */}
+      <FloatingContactButtons gymId={gymId} />
     </div>
   );
 }

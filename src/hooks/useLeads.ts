@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,7 @@ export interface Lead {
   user_id: string;
   name: string;
   phone: string;
+  fitness_goal: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -24,7 +25,7 @@ export function useLeads() {
     queryKey: ['leads', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('leads')
+        .from('leads' as any)
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -34,8 +35,8 @@ export function useLeads() {
   });
 
   const addLead = useMutation({
-    mutationFn: async (lead: { name: string; phone: string }) => {
-      const { error } = await supabase.from('leads').insert({ ...lead, user_id: user!.id });
+    mutationFn: async (lead: { name: string; phone: string; fitness_goal?: string }) => {
+      const { error } = await (supabase.from('leads' as any) as any).insert({ ...lead, user_id: user!.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -47,7 +48,7 @@ export function useLeads() {
 
   const updateLeadStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: LeadStatus }) => {
-      const { error } = await supabase.from('leads').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+      const { error } = await (supabase.from('leads' as any) as any).update({ status, updated_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -59,7 +60,7 @@ export function useLeads() {
 
   const deleteLead = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('leads').delete().eq('id', id);
+      const { error } = await (supabase.from('leads' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

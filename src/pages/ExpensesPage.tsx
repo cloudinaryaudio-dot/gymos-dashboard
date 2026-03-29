@@ -125,9 +125,17 @@ export default function ExpensesPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="flex flex-col items-center justify-center p-12 text-center">
-                <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No expenses yet. Add your first expense!</p>
+              <div className="flex flex-col items-center justify-center p-16 text-center">
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Receipt className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg mb-1">No expenses yet</h3>
+                <p className="text-muted-foreground text-sm mb-6 max-w-xs">
+                  Track your gym expenses to monitor profitability.
+                </p>
+                <Button onClick={() => setDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Your First Expense
+                </Button>
               </div>
             )}
           </CardContent>

@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -22,11 +22,10 @@ export function useMembers() {
     queryKey: ['members', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('members')
+        .from('members' as any)
         .select('*, plans(name, duration_days)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      // Auto-update expired statuses client-side for display
       const today = new Date().toISOString().split('T')[0];
       return (data as Member[]).map(m => ({
         ...m,
@@ -43,8 +42,7 @@ export function useCreateMember() {
 
   return useMutation({
     mutationFn: async (member: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
-      const { data, error } = await supabase
-        .from('members')
+      const { data, error } = await (supabase.from('members' as any) as any)
         .insert({ ...member, user_id: user!.id, status: 'active' })
         .select()
         .single();
@@ -62,8 +60,7 @@ export function useUpdateMember() {
     mutationFn: async ({ id, ...member }: { id: string; name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
       const today = new Date().toISOString().split('T')[0];
       const status = member.expiry_date < today ? 'expired' : 'active';
-      const { data, error } = await supabase
-        .from('members')
+      const { data, error } = await (supabase.from('members' as any) as any)
         .update({ ...member, status })
         .eq('id', id)
         .select()
@@ -80,7 +77,7 @@ export function useDeleteMember() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('members').delete().eq('id', id);
+      const { error } = await (supabase.from('members' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['members'] }),

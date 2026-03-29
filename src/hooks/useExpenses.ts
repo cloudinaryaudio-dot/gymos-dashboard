@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,7 +18,7 @@ export function useExpenses() {
     queryKey: ['expenses', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('expenses')
+        .from('expenses' as any)
         .select('*')
         .order('expense_date', { ascending: false });
       if (error) throw error;
@@ -33,7 +33,7 @@ export function useCreateExpense() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (e: { title: string; amount: number; expense_date: string; category?: string }) => {
-      const { data, error } = await supabase.from('expenses').insert({ ...e, user_id: user!.id }).select().single();
+      const { data, error } = await (supabase.from('expenses' as any) as any).insert({ ...e, user_id: user!.id }).select().single();
       if (error) throw error;
       return data;
     },
@@ -45,7 +45,7 @@ export function useDeleteExpense() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('expenses').delete().eq('id', id);
+      const { error } = await (supabase.from('expenses' as any) as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },

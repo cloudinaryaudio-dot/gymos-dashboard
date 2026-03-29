@@ -142,9 +142,17 @@ export default function PlansPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="flex flex-col items-center justify-center p-12 text-center">
-                <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No plans yet. Create your first plan!</p>
+              <div className="flex flex-col items-center justify-center p-16 text-center">
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Package className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="font-display font-semibold text-lg mb-1">No plans yet</h3>
+                <p className="text-muted-foreground text-sm mb-6 max-w-xs">
+                  Create your first membership plan to start adding members to your gym.
+                </p>
+                <Button onClick={() => setDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" /> Create Your First Plan
+                </Button>
               </div>
             )}
           </CardContent>
