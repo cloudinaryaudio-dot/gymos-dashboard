@@ -30,7 +30,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard', user?.id, monthStart],
     queryFn: async () => {
-      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes, leadsRes] = await Promise.all([
+      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes, leadsRes, todayMembersRes, todayPaymentsRes, todayLeadsRes, monthMembersRes] = await Promise.all([
         supabase
           .from('payments')
           .select('amount')
@@ -59,6 +59,30 @@ export function useDashboardStats() {
           .from('leads')
           .select('id')
           .eq('status', 'new'),
+        // Today's new members
+        supabase
+          .from('members')
+          .select('id')
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`),
+        // Today's payments
+        supabase
+          .from('payments')
+          .select('amount')
+          .eq('status', 'paid')
+          .eq('payment_date', today),
+        // Today's leads
+        supabase
+          .from('leads')
+          .select('id')
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`),
+        // This month's new members
+        supabase
+          .from('members')
+          .select('id')
+          .gte('start_date', monthStart)
+          .lte('start_date', monthEnd),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
