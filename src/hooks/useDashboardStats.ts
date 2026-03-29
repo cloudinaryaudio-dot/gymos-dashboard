@@ -12,6 +12,11 @@ export interface DashboardStats {
   pendingPayments: number;
   newLeads: number;
   recentPayments: { member_name: string; amount: number; date: string }[];
+  todayNewMembers: number;
+  todayPayments: number;
+  todayPaymentsAmount: number;
+  todayLeads: number;
+  monthNewMembers: number;
 }
 
 export function useDashboardStats() {
@@ -25,7 +30,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard', user?.id, monthStart],
     queryFn: async () => {
-      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes, leadsRes] = await Promise.all([
+      const [paymentsRes, expensesRes, membersRes, pendingRes, recentRes, leadsRes, todayMembersRes, todayPaymentsRes, todayLeadsRes, monthMembersRes] = await Promise.all([
         supabase
           .from('payments')
           .select('amount')
@@ -54,6 +59,30 @@ export function useDashboardStats() {
           .from('leads')
           .select('id')
           .eq('status', 'new'),
+        // Today's new members
+        supabase
+          .from('members')
+          .select('id')
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`),
+        // Today's payments
+        supabase
+          .from('payments')
+          .select('amount')
+          .eq('status', 'paid')
+          .eq('payment_date', today),
+        // Today's leads
+        supabase
+          .from('leads')
+          .select('id')
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`),
+        // This month's new members
+        supabase
+          .from('members')
+          .select('id')
+          .gte('start_date', monthStart)
+          .lte('start_date', monthEnd),
       ]);
 
       if (paymentsRes.error) throw paymentsRes.error;
@@ -62,12 +91,18 @@ export function useDashboardStats() {
       if (pendingRes.error) throw pendingRes.error;
       if (recentRes.error) throw recentRes.error;
       if (leadsRes.error) throw leadsRes.error;
+      if (todayMembersRes.error) throw todayMembersRes.error;
+      if (todayPaymentsRes.error) throw todayPaymentsRes.error;
+      if (todayLeadsRes.error) throw todayLeadsRes.error;
+      if (monthMembersRes.error) throw monthMembersRes.error;
 
       const monthlyRevenue = (paymentsRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
       const totalExpenses = (expensesRes.data || []).reduce((sum, e) => sum + Number(e.amount), 0);
       const allMembers = membersRes.data || [];
       const activeMembers = allMembers.filter(m => m.expiry_date >= today).length;
       const expiringMemberships = allMembers.filter(m => m.expiry_date >= today && m.expiry_date <= sevenDaysFromNow).length;
+
+      const todayPaymentsData = todayPaymentsRes.data || [];
 
       return {
         monthlyRevenue,
@@ -82,6 +117,11 @@ export function useDashboardStats() {
           amount: Number(p.amount),
           date: p.payment_date,
         })),
+        todayNewMembers: (todayMembersRes.data || []).length,
+        todayPayments: todayPaymentsData.length,
+        todayPaymentsAmount: todayPaymentsData.reduce((sum, p) => sum + Number(p.amount), 0),
+        todayLeads: (todayLeadsRes.data || []).length,
+        monthNewMembers: (monthMembersRes.data || []).length,
       } as DashboardStats;
     },
     enabled: !!user,
