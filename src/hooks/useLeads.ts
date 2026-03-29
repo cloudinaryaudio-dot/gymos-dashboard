@@ -10,6 +10,7 @@ export interface Lead {
   user_id: string;
   name: string;
   phone: string;
+  fitness_goal: string | null;
   status: string;
   created_at: string;
   updated_at: string;
