@@ -91,6 +91,10 @@ export function useDashboardStats() {
       if (pendingRes.error) throw pendingRes.error;
       if (recentRes.error) throw recentRes.error;
       if (leadsRes.error) throw leadsRes.error;
+      if (todayMembersRes.error) throw todayMembersRes.error;
+      if (todayPaymentsRes.error) throw todayPaymentsRes.error;
+      if (todayLeadsRes.error) throw todayLeadsRes.error;
+      if (monthMembersRes.error) throw monthMembersRes.error;
 
       const monthlyRevenue = (paymentsRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
       const totalExpenses = (expensesRes.data || []).reduce((sum, e) => sum + Number(e.amount), 0);
