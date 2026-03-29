@@ -12,6 +12,11 @@ export interface DashboardStats {
   pendingPayments: number;
   newLeads: number;
   recentPayments: { member_name: string; amount: number; date: string }[];
+  todayNewMembers: number;
+  todayPayments: number;
+  todayPaymentsAmount: number;
+  todayLeads: number;
+  monthNewMembers: number;
 }
 
 export function useDashboardStats() {
