@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      contact_settings: {
+        Row: {
+          created_at: string
+          gym_id: string | null
+          id: string
+          instagram_url: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_message: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          gym_id?: string | null
+          id?: string
+          instagram_url?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          gym_id?: string | null
+          id?: string
+          instagram_url?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -67,6 +100,39 @@ export type Database = {
           id?: string
           image_url?: string
           sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gym_settings: {
+        Row: {
+          created_at: string
+          gym_name: string
+          id: string
+          logo_url: string | null
+          primary_color: string
+          secondary_color: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gym_name?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string
+          secondary_color?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gym_name?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string
+          secondary_color?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -343,6 +409,36 @@ export type Database = {
           name?: string
           sort_order?: number
           specialization?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      website_content: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          is_enabled: boolean
+          section_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          section_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          section_key?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

@@ -37,7 +37,7 @@ const App = () => (
 
             {/* Protected admin routes */}
             <Route path="/app" element={<ProtectedRoute />}>
-              <Route element={<BrandingProvider><PlaceholderPage /></BrandingProvider>} />
+              <Route index element={<BrandingProvider><PlaceholderPage /></BrandingProvider>} />
               <Route path="dashboard" element={<BrandingProvider><Dashboard /></BrandingProvider>} />
               <Route path="members" element={<BrandingProvider><MembersPage /></BrandingProvider>} />
               <Route path="members/:memberId" element={<BrandingProvider><MemberProfilePage /></BrandingProvider>} />
