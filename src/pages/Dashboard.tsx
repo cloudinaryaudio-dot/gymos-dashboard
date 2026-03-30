@@ -2,6 +2,7 @@ import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus, C
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { SetupBanner } from '@/components/SetupBanner';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
@@ -92,6 +93,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <SetupBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-display">Dashboard</h1>
