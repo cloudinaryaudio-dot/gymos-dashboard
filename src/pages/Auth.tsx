@@ -41,9 +41,6 @@ export default function Auth() {
           if (error.message.includes('Invalid login credentials')) {
             throw new Error('Invalid email or password. Please try again.');
           }
-          if (error.message.includes('Email not confirmed')) {
-            throw new Error('Your email is not confirmed yet. Please check your inbox or sign up again.');
-          }
           throw error;
         }
         navigate('/app/dashboard');
@@ -61,10 +58,9 @@ export default function Auth() {
         if (error) throw error;
 
         if (data.session) {
-          // Auto-confirmed: the DB trigger creates profile, but we need to create gym & link it
+          // Auto-confirmed: create gym & link profile
           const userId = data.user!.id;
 
-          // Create gym
           const { data: gymData, error: gymErr } = await db
             .from('gyms')
             .insert({ name: gymName || 'My Gym' })
@@ -74,7 +70,6 @@ export default function Auth() {
           if (gymErr) {
             console.error('Gym creation error:', gymErr);
           } else {
-            // Update profile with gym_id and owner role
             await db
               .from('profiles')
               .update({ gym_id: gymData.id, role: 'owner' })
@@ -82,11 +77,6 @@ export default function Auth() {
           }
 
           navigate('/app/dashboard');
-        } else {
-          toast({
-            title: 'Account created!',
-            description: 'Please check your email to confirm your account, then sign in.',
-          });
         }
       }
     } catch (error: any) {

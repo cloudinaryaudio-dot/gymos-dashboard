@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { motion, useInView } from 'framer-motion';
 import {
   Dumbbell, Send, ChevronRight, Users, Award, Calendar, Star, ArrowRight, Play, Phone, User, Target,
-  Instagram, MapPin, Mail, Clock, Menu, X,
+  Instagram, MapPin, Mail, Clock, Menu, X, CalendarCheck,
 } from 'lucide-react';
 
 function AnimatedSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -225,8 +225,8 @@ export default function LandingPage() {
             <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('lead-form')}>
               Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('pricing')}>
-              View Plans
+            <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('lead-form')}>
+              <Calendar className="mr-2 h-5 w-5" /> Book a Visit
             </Button>
           </motion.div>
         </div>

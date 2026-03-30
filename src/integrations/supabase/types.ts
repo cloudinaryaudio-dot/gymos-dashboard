@@ -14,7 +14,433 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contact_settings: {
+        Row: {
+          created_at: string | null
+          gym_id: string | null
+          id: string
+          instagram_url: string | null
+          updated_at: string | null
+          user_id: string
+          whatsapp_message: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gym_id?: string | null
+          id?: string
+          instagram_url?: string | null
+          updated_at?: string | null
+          user_id: string
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gym_id?: string | null
+          id?: string
+          instagram_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string | null
+          expense_date: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          expense_date: string
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          expense_date?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gallery: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          id: string
+          image_url: string
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          image_url: string
+          sort_order?: number | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gym_settings: {
+        Row: {
+          created_at: string | null
+          gym_name: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          gym_name?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          gym_name?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gyms: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          created_at: string | null
+          fitness_goal: string | null
+          id: string
+          name: string
+          phone: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          fitness_goal?: string | null
+          id?: string
+          name: string
+          phone: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fitness_goal?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          created_at: string | null
+          expiry_date: string
+          id: string
+          name: string
+          phone: string
+          plan_id: string | null
+          start_date: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expiry_date: string
+          id?: string
+          name: string
+          phone: string
+          plan_id?: string | null
+          start_date: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expiry_date?: string
+          id?: string
+          name?: string
+          phone?: string
+          plan_id?: string | null
+          start_date?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          member_id: string
+          method: string
+          note: string | null
+          payment_date: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          member_id: string
+          method?: string
+          note?: string | null
+          payment_date: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          member_id?: string
+          method?: string
+          note?: string | null
+          payment_date?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string | null
+          duration_days: number
+          id: string
+          name: string
+          price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration_days?: number
+          id?: string
+          name: string
+          price?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duration_days?: number
+          id?: string
+          name?: string
+          price?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          gym_id: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          gym_id?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          gym_id?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          is_visible: boolean | null
+          name: string
+          sort_order: number | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          name: string
+          sort_order?: number | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean | null
+          name?: string
+          sort_order?: number | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      trainers: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          name: string
+          sort_order: number | null
+          specialization: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          sort_order?: number | null
+          specialization?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          sort_order?: number | null
+          specialization?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      website_sections: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_visible: boolean | null
+          section_type: string
+          sort_order: number | null
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean | null
+          section_type: string
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean | null
+          section_type?: string
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

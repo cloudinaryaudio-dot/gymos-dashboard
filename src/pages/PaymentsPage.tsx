@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, CheckCircle, CreditCard } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, CreditCard, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const methods = [
   { value: 'cash', label: 'Cash' },
@@ -66,6 +67,7 @@ export default function PaymentsPage() {
 
   const paidPayments = payments?.filter(p => p.status === 'paid') ?? [];
   const pendingPayments = payments?.filter(p => p.status === 'pending') ?? [];
+  const overduePayments = payments?.filter(p => p.status === 'overdue') ?? [];
 
   const PaymentTable = ({ data, showMarkPaid }: { data: typeof payments; showMarkPaid?: boolean }) => (
     data && data.length > 0 ? (
@@ -88,13 +90,18 @@ export default function PaymentsPage() {
               <TableCell>{format(new Date(p.payment_date), 'dd MMM yyyy')}</TableCell>
               <TableCell className="capitalize">{p.method.replace('_', ' ')}</TableCell>
               <TableCell>
-                <Badge variant={p.status === 'paid' ? 'default' : 'secondary'}>
+                <Badge variant={p.status === 'paid' ? 'default' : p.status === 'overdue' ? 'destructive' : 'secondary'}
+                  className={cn(
+                    p.status === 'paid' && 'bg-emerald-500/10 text-emerald-600 border border-emerald-300',
+                    p.status === 'overdue' && '',
+                    p.status === 'pending' && 'border-orange-400 text-orange-500 bg-orange-500/10'
+                  )}>
                   {p.status}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                {showMarkPaid && p.status === 'pending' && (
-                  <Button variant="ghost" size="icon" onClick={() => updateStatus.mutateAsync({ id: p.id, status: 'paid' })}>
+                {showMarkPaid && (p.status === 'pending' || p.status === 'overdue') && (
+                  <Button variant="ghost" size="icon" title="Mark as Paid" onClick={() => updateStatus.mutateAsync({ id: p.id, status: 'paid' })}>
                     <CheckCircle className="h-4 w-4 text-primary" />
                   </Button>
                 )}
@@ -111,13 +118,23 @@ export default function PaymentsPage() {
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
           <CreditCard className="h-8 w-8 text-primary" />
         </div>
-        <h3 className="font-semibold text-lg mb-1">No payments found</h3>
+        <h3 className="font-display font-semibold text-lg mb-1">No payments found</h3>
         <p className="text-muted-foreground text-sm mb-6 max-w-xs">
           Record your first payment to start tracking revenue.
         </p>
+        <Button onClick={() => setDialogOpen(true)} disabled={!members || members.length === 0}>
+          <Plus className="h-4 w-4 mr-2" /> Record Your First Payment
+        </Button>
+        {(!members || members.length === 0) && (
+          <p className="text-xs text-muted-foreground mt-3">
+            First, <a href="/app/members" className="text-primary hover:underline">add a member</a> to get started.
+          </p>
+        )}
       </div>
     )
   );
+
+  const totalPendingAmount = [...(pendingPayments), ...(overduePayments)].reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
     <div className="space-y-6">
@@ -171,6 +188,7 @@ export default function PaymentsPage() {
                       <SelectContent>
                         <SelectItem value="paid">Paid</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -188,10 +206,50 @@ export default function PaymentsPage() {
           </Dialog>
         </div>
 
+        {/* Summary Cards */}
+        {(pendingPayments.length > 0 || overduePayments.length > 0) && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{pendingPayments.length}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{overduePayments.length}</p>
+                  <p className="text-xs text-muted-foreground">Overdue</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">₹{totalPendingAmount.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Total Due</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <Tabs defaultValue="all">
           <TabsList>
             <TabsTrigger value="all">All ({payments?.length ?? 0})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingPayments.length})</TabsTrigger>
+            <TabsTrigger value="overdue">Overdue ({overduePayments.length})</TabsTrigger>
             <TabsTrigger value="paid">Paid ({paidPayments.length})</TabsTrigger>
           </TabsList>
           <Card className="mt-4">
@@ -204,6 +262,7 @@ export default function PaymentsPage() {
                 <>
                   <TabsContent value="all" className="m-0"><PaymentTable data={payments} showMarkPaid /></TabsContent>
                   <TabsContent value="pending" className="m-0"><PaymentTable data={pendingPayments} showMarkPaid /></TabsContent>
+                  <TabsContent value="overdue" className="m-0"><PaymentTable data={overduePayments} showMarkPaid /></TabsContent>
                   <TabsContent value="paid" className="m-0"><PaymentTable data={paidPayments} /></TabsContent>
                 </>
               )}

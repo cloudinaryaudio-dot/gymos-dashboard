@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, Member } from '@/hooks/useMembers';
 import { usePlans } from '@/hooks/usePlans';
+import { usePayments, useCreatePayment } from '@/hooks/usePayments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, Zap, MessageCircle, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Zap, MessageCircle, RefreshCw, Bell, CreditCard } from 'lucide-react';
 import { addDays, format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
@@ -162,19 +163,35 @@ function QuickAddForm({ plans, onSubmit, onCancel }: {
   );
 }
 
+function getPaymentStatus(member: Member, payments: any[]) {
+  const memberPayments = payments.filter(p => p.member_id === member.id);
+  const hasPaidThisCycle = memberPayments.some(p => p.status === 'paid' && p.payment_date >= member.start_date);
+  const today = new Date().toISOString().split('T')[0];
+  const isExpired = member.expiry_date < today;
+
+  if (hasPaidThisCycle) return 'paid' as const;
+  if (isExpired) return 'overdue' as const;
+  return 'pending' as const;
+}
+
 export default function MembersPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { data: members, isLoading } = useMembers();
   const { data: plans } = usePlans();
+  const { data: payments } = usePayments();
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
+  const createPayment = useCreatePayment();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | undefined>();
   const [renewMember, setRenewMember] = useState<Member | undefined>();
+  const [collectPaymentMember, setCollectPaymentMember] = useState<Member | undefined>();
+  const [collectAmount, setCollectAmount] = useState('');
+  const [collectMethod, setCollectMethod] = useState('cash');
 
   if (loading) return null;
 
@@ -311,20 +328,31 @@ export default function MembersPage() {
                   <TableHead>Phone</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Payment</TableHead>
                   <TableHead>Expiry Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map(member => {
+                {[...members]
+                  .sort((a, b) => {
+                    const pa = getPaymentStatus(a, payments ?? []);
+                    const pb = getPaymentStatus(b, payments ?? []);
+                    const order = { overdue: 0, pending: 1, paid: 2 };
+                    return order[pa] - order[pb];
+                  })
+                  .map(member => {
                   const expiry = getExpiryInfo(member.expiry_date);
+                  const payStatus = getPaymentStatus(member, payments ?? []);
                   return (
                     <TableRow
                       key={member.id}
                       className={cn(
                         'cursor-pointer',
-                        expiry.variant === 'expired' && 'bg-destructive/5',
-                        expiry.variant === 'expiring' && 'bg-yellow-500/5'
+                        payStatus === 'overdue' && 'bg-destructive/5',
+                        payStatus === 'pending' && 'bg-yellow-500/5',
+                        expiry.variant === 'expired' && payStatus === 'paid' && 'bg-destructive/5',
+                        expiry.variant === 'expiring' && payStatus === 'paid' && 'bg-yellow-500/5'
                       )}
                       onClick={() => navigate(`/app/members/${member.id}`)}
                     >
@@ -343,6 +371,15 @@ export default function MembersPage() {
                         )}
                       </TableCell>
                       <TableCell>
+                        {payStatus === 'paid' ? (
+                          <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 border">Paid</Badge>
+                        ) : payStatus === 'overdue' ? (
+                          <Badge variant="destructive">Overdue</Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-orange-400 text-orange-500 bg-orange-500/10">Pending</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <span className={cn(
                           expiry.variant === 'expired' && 'text-destructive font-medium',
                           expiry.variant === 'expiring' && 'text-yellow-600 font-medium'
@@ -352,6 +389,16 @@ export default function MembersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                          {(payStatus === 'pending' || payStatus === 'overdue') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Collect Payment"
+                              onClick={() => { setCollectPaymentMember(member); setCollectAmount(''); }}
+                            >
+                              <CreditCard className="h-4 w-4 text-orange-500" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -375,6 +422,16 @@ export default function MembersPage() {
                               <MessageCircle className="h-4 w-4" />
                             </a>
                           </Button>
+                          {(expiry.variant === 'expiring' || expiry.variant === 'expired') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Send Reminder (coming soon)"
+                              onClick={() => toast({ title: '📩 Reminder', description: `Reminder feature for ${member.name} coming soon!` })}
+                            >
+                              <Bell className="h-4 w-4 text-yellow-600" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -422,6 +479,57 @@ export default function MembersPage() {
           plans={plans}
         />
       )}
+
+      {/* Collect Payment Dialog */}
+      <Dialog open={!!collectPaymentMember} onOpenChange={(open) => { if (!open) setCollectPaymentMember(undefined); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Collect Payment — {collectPaymentMember?.name}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!collectPaymentMember || !collectAmount) return;
+            try {
+              await createPayment.mutateAsync({
+                member_id: collectPaymentMember.id,
+                amount: parseFloat(collectAmount),
+                payment_date: format(new Date(), 'yyyy-MM-dd'),
+                method: collectMethod,
+                status: 'paid',
+              });
+              toast({ title: '✅ Payment collected!', description: `₹${collectAmount} from ${collectPaymentMember.name}` });
+              setCollectPaymentMember(undefined);
+            } catch (err: any) {
+              toast({ title: 'Error', description: err.message, variant: 'destructive' });
+            }
+          }} className="space-y-4">
+            <div className="p-3 rounded-lg bg-muted text-sm">
+              <p><span className="text-muted-foreground">Plan:</span> {collectPaymentMember?.plans?.name ?? '—'}</p>
+              <p><span className="text-muted-foreground">Phone:</span> {collectPaymentMember?.phone}</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount (₹)</Label>
+              <Input type="number" value={collectAmount} onChange={e => setCollectAmount(e.target.value)} required min="1" autoFocus />
+            </div>
+            <div className="space-y-2">
+              <Label>Method</Label>
+              <Select value={collectMethod} onValueChange={setCollectMethod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={() => setCollectPaymentMember(undefined)}>Cancel</Button>
+              <Button type="submit">Collect Payment</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

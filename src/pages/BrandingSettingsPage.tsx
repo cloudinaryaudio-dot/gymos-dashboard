@@ -31,16 +31,19 @@ export default function BrandingSettingsPage() {
   const [secondaryS, setSecondaryS] = useState(25);
   const [secondaryL, setSecondaryL] = useState(8);
 
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !initialized) {
       setGymName(resolved.gym_name);
       setLogoUrl(resolved.logo_url ?? '');
       const [ph, ps, pl] = parseHSL(resolved.primary_color);
       setPrimaryH(ph); setPrimaryS(ps); setPrimaryL(pl);
       const [sh, ss, sl] = parseHSL(resolved.secondary_color);
       setSecondaryH(sh); setSecondaryS(ss); setSecondaryL(sl);
+      setInitialized(true);
     }
-  }, [isLoading, resolved]);
+  }, [isLoading, initialized]);
 
   const primaryColor = hslToString(primaryH, primaryS, primaryL);
   const secondaryColor = hslToString(secondaryH, secondaryS, secondaryL);

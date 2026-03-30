@@ -1,6 +1,17 @@
 import { db as supabase } from '@/integrations/supabase/db';
 
 export async function seedDemoData(userId: string) {
+  // Check if data already exists for this user
+  const { data: existingPlans } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (existingPlans && existingPlans.length > 0) {
+    throw new Error('Demo data already exists for this account. Clear your data first or use a fresh account.');
+  }
+
   // 1. Plans
   const plans = [
     { name: 'Basic Plan', price: 999, duration_days: 30, user_id: userId },
@@ -8,7 +19,8 @@ export async function seedDemoData(userId: string) {
     { name: 'Premium Plan', price: 4999, duration_days: 365, user_id: userId },
   ];
   const { data: insertedPlans, error: plansErr } = await supabase.from('plans').insert(plans).select();
-  if (plansErr) throw plansErr;
+  if (plansErr) throw new Error(`Plans: ${plansErr.message}`);
+  if (!insertedPlans || insertedPlans.length === 0) throw new Error('Plans insert returned no data');
 
   const planMap = {
     basic: insertedPlans[0].id,
@@ -16,7 +28,7 @@ export async function seedDemoData(userId: string) {
     premium: insertedPlans[2].id,
   };
 
-  // 2. Members (20 members with realistic Indian names)
+  // 2. Members
   const today = new Date();
   const d = (offset: number) => {
     const dt = new Date(today);
@@ -25,26 +37,26 @@ export async function seedDemoData(userId: string) {
   };
 
   const memberDefs = [
-    { name: 'Aarav Patel', phone: '9876543210', plan: 'premium', startOffset: -60, status: 'active' },
-    { name: 'Priya Sharma', phone: '9876543211', plan: 'standard', startOffset: -45, status: 'active' },
-    { name: 'Rohan Gupta', phone: '9876543212', plan: 'basic', startOffset: -25, status: 'active' },
-    { name: 'Sneha Reddy', phone: '9876543213', plan: 'standard', startOffset: -80, status: 'active' },
-    { name: 'Vikram Singh', phone: '9876543214', plan: 'premium', startOffset: -30, status: 'active' },
-    { name: 'Ananya Joshi', phone: '9876543215', plan: 'basic', startOffset: -28, status: 'active' },
-    { name: 'Arjun Nair', phone: '9876543216', plan: 'standard', startOffset: -70, status: 'active' },
-    { name: 'Kavya Iyer', phone: '9876543217', plan: 'basic', startOffset: -35, status: 'expired' },
-    { name: 'Raj Malhotra', phone: '9876543218', plan: 'premium', startOffset: -20, status: 'active' },
-    { name: 'Meera Desai', phone: '9876543219', plan: 'standard', startOffset: -85, status: 'active' },
-    { name: 'Aditya Verma', phone: '9876543220', plan: 'basic', startOffset: -32, status: 'expired' },
-    { name: 'Ishita Kapoor', phone: '9876543221', plan: 'standard', startOffset: -10, status: 'active' },
-    { name: 'Karan Mehta', phone: '9876543222', plan: 'basic', startOffset: -5, status: 'active' },
-    { name: 'Divya Choudhury', phone: '9876543223', plan: 'premium', startOffset: -90, status: 'active' },
-    { name: 'Nikhil Rao', phone: '9876543224', plan: 'standard', startOffset: -50, status: 'active' },
-    { name: 'Pooja Thakur', phone: '9876543225', plan: 'basic', startOffset: -40, status: 'expired' },
-    { name: 'Siddharth Jain', phone: '9876543226', plan: 'standard', startOffset: -15, status: 'active' },
-    { name: 'Riya Bose', phone: '9876543227', plan: 'premium', startOffset: -100, status: 'active' },
-    { name: 'Amit Kumar', phone: '9876543228', plan: 'basic', startOffset: -3, status: 'active' },
-    { name: 'Neha Agarwal', phone: '9876543229', plan: 'standard', startOffset: -55, status: 'active' },
+    { name: 'Aarav Patel', phone: '9876543210', plan: 'premium', startOffset: -60 },
+    { name: 'Priya Sharma', phone: '9876543211', plan: 'standard', startOffset: -45 },
+    { name: 'Rohan Gupta', phone: '9876543212', plan: 'basic', startOffset: -25 },
+    { name: 'Sneha Reddy', phone: '9876543213', plan: 'standard', startOffset: -80 },
+    { name: 'Vikram Singh', phone: '9876543214', plan: 'premium', startOffset: -30 },
+    { name: 'Ananya Joshi', phone: '9876543215', plan: 'basic', startOffset: -28 },
+    { name: 'Arjun Nair', phone: '9876543216', plan: 'standard', startOffset: -70 },
+    { name: 'Kavya Iyer', phone: '9876543217', plan: 'basic', startOffset: -35 },
+    { name: 'Raj Malhotra', phone: '9876543218', plan: 'premium', startOffset: -20 },
+    { name: 'Meera Desai', phone: '9876543219', plan: 'standard', startOffset: -85 },
+    { name: 'Aditya Verma', phone: '9876543220', plan: 'basic', startOffset: -32 },
+    { name: 'Ishita Kapoor', phone: '9876543221', plan: 'standard', startOffset: -10 },
+    { name: 'Karan Mehta', phone: '9876543222', plan: 'basic', startOffset: -5 },
+    { name: 'Divya Choudhury', phone: '9876543223', plan: 'premium', startOffset: -90 },
+    { name: 'Nikhil Rao', phone: '9876543224', plan: 'standard', startOffset: -50 },
+    { name: 'Pooja Thakur', phone: '9876543225', plan: 'basic', startOffset: -40 },
+    { name: 'Siddharth Jain', phone: '9876543226', plan: 'standard', startOffset: -15 },
+    { name: 'Riya Bose', phone: '9876543227', plan: 'premium', startOffset: -100 },
+    { name: 'Amit Kumar', phone: '9876543228', plan: 'basic', startOffset: -3 },
+    { name: 'Neha Agarwal', phone: '9876543229', plan: 'standard', startOffset: -55 },
   ];
 
   const durationMap: Record<string, number> = { basic: 30, standard: 90, premium: 365 };
@@ -66,15 +78,14 @@ export async function seedDemoData(userId: string) {
   });
 
   const { data: insertedMembers, error: membersErr } = await supabase.from('members').insert(members).select();
-  if (membersErr) throw membersErr;
+  if (membersErr) throw new Error(`Members: ${membersErr.message}`);
+  if (!insertedMembers || insertedMembers.length === 0) throw new Error('Members insert returned no data');
 
   // 3. Payments
   const paymentMethods = ['cash', 'upi', 'card'];
-  const payments = insertedMembers.map((m, i) => ({
+  const payments = insertedMembers.map((m: any, i: number) => ({
     member_id: m.id,
-    amount: plans.find(p => p.name.toLowerCase().includes(
-      memberDefs[i].plan
-    ))?.price ?? 999,
+    amount: plans.find(p => p.name.toLowerCase().includes(memberDefs[i].plan))?.price ?? 999,
     payment_date: m.start_date,
     method: paymentMethods[i % 3],
     status: i >= 17 ? 'pending' : 'paid',
@@ -82,7 +93,7 @@ export async function seedDemoData(userId: string) {
   }));
 
   const { error: paymentsErr } = await supabase.from('payments').insert(payments);
-  if (paymentsErr) throw paymentsErr;
+  if (paymentsErr) throw new Error(`Payments: ${paymentsErr.message}`);
 
   // 4. Expenses
   const expenses = [
@@ -99,7 +110,7 @@ export async function seedDemoData(userId: string) {
   ].map(e => ({ ...e, user_id: userId }));
 
   const { error: expensesErr } = await supabase.from('expenses').insert(expenses);
-  if (expensesErr) throw expensesErr;
+  if (expensesErr) throw new Error(`Expenses: ${expensesErr.message}`);
 
   // 5. Leads
   const leads = [
@@ -118,7 +129,7 @@ export async function seedDemoData(userId: string) {
   ].map(l => ({ ...l, user_id: userId }));
 
   const { error: leadsErr } = await supabase.from('leads').insert(leads);
-  if (leadsErr) throw leadsErr;
+  if (leadsErr) throw new Error(`Leads: ${leadsErr.message}`);
 
   // 6. Trainers
   const trainers = [
@@ -129,7 +140,7 @@ export async function seedDemoData(userId: string) {
   ].map(t => ({ ...t, user_id: userId }));
 
   const { error: trainersErr } = await supabase.from('trainers').insert(trainers);
-  if (trainersErr) throw trainersErr;
+  if (trainersErr) throw new Error(`Trainers: ${trainersErr.message}`);
 
   // 7. Testimonials
   const testimonials = [
@@ -142,7 +153,7 @@ export async function seedDemoData(userId: string) {
   ].map(t => ({ ...t, user_id: userId }));
 
   const { error: testimonialsErr } = await supabase.from('testimonials').insert(testimonials);
-  if (testimonialsErr) throw testimonialsErr;
+  if (testimonialsErr) throw new Error(`Testimonials: ${testimonialsErr.message}`);
 
   // 8. Gallery
   const gallery = [
@@ -159,7 +170,7 @@ export async function seedDemoData(userId: string) {
   ].map(g => ({ ...g, user_id: userId }));
 
   const { error: galleryErr } = await supabase.from('gallery').insert(gallery);
-  if (galleryErr) throw galleryErr;
+  if (galleryErr) throw new Error(`Gallery: ${galleryErr.message}`);
 
   // 9. Website Sections
   const sections = [
@@ -185,14 +196,32 @@ export async function seedDemoData(userId: string) {
       section_type: 'cta',
       title: 'Start Your Fitness Journey Today',
       subtitle: 'Limited slots available — Join now and get your first week FREE!',
-      content: 'Don\'t wait for Monday. Don\'t wait for January. The best time to start is NOW. Join 500+ members who chose to transform their lives.',
+      content: "Don't wait for Monday. Don't wait for January. The best time to start is NOW. Join 500+ members who chose to transform their lives.",
       sort_order: 10,
       is_visible: true,
     },
   ].map(s => ({ ...s, user_id: userId }));
 
   const { error: sectionsErr } = await supabase.from('website_sections').insert(sections);
-  if (sectionsErr) throw sectionsErr;
+  if (sectionsErr) throw new Error(`Website Sections: ${sectionsErr.message}`);
 
-  return { members: insertedMembers.length, plans: insertedPlans.length };
+  // 10. Gym Settings (branding)
+  const { error: settingsErr } = await supabase.from('gym_settings').upsert({
+    user_id: userId,
+    gym_name: 'Elite Fitness Club',
+    primary_color: '142 76% 36%',
+    secondary_color: '215 28% 17%',
+  }, { onConflict: 'user_id' });
+  if (settingsErr) throw new Error(`Gym Settings: ${settingsErr.message}`);
+
+  return {
+    members: insertedMembers.length,
+    plans: insertedPlans.length,
+    payments: payments.length,
+    expenses: expenses.length,
+    leads: leads.length,
+    trainers: trainers.length,
+    testimonials: testimonials.length,
+    gallery: gallery.length,
+  };
 }

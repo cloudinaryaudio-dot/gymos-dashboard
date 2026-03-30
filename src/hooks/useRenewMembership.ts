@@ -31,7 +31,7 @@ export function useRenewMembership() {
         payment_date: newStart,
         method,
         status: 'paid',
-        note: 'Membership renewal',
+        note: 'Membership renewal — auto-renewed',
       });
       if (payErr) throw payErr;
 

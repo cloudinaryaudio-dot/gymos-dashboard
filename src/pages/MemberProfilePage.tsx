@@ -4,10 +4,11 @@ import { usePayments } from '@/hooks/usePayments';
 import { usePlans } from '@/hooks/usePlans';
 import { useRenewMembership } from '@/hooks/useRenewMembership';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, MessageCircle, CreditCard, RefreshCw, User, Phone, Calendar, Shield } from 'lucide-react';
+import { ArrowLeft, MessageCircle, CreditCard, RefreshCw, User, Phone, Calendar, Shield, Bell } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
@@ -27,6 +28,7 @@ export default function MemberProfilePage() {
   const { data: payments, isLoading: paymentsLoading } = usePayments();
   const { data: plans } = usePlans();
   const [renewOpen, setRenewOpen] = useState(false);
+  const { toast } = useToast();
 
   const member = members?.find(m => m.id === memberId);
   const memberPayments = payments?.filter(p => p.member_id === memberId) ?? [];
@@ -58,6 +60,9 @@ export default function MemberProfilePage() {
   const daysLeft = differenceInDays(expiry, today);
   const isExpired = daysLeft < 0;
   const isExpiring = !isExpired && daysLeft <= 3;
+
+  const hasPaidThisCycle = memberPayments.some(p => p.status === 'paid' && p.payment_date >= member.start_date);
+  const paymentStatus = hasPaidThisCycle ? 'paid' : isExpired ? 'overdue' : 'pending';
 
   return (
     <div className="space-y-6">
@@ -95,6 +100,15 @@ export default function MemberProfilePage() {
               <MessageCircle className="h-4 w-4 mr-2" /> WhatsApp
             </a>
           </Button>
+          {(isExpired || isExpiring) && (
+            <Button
+              variant="outline"
+              className="border-yellow-300 text-yellow-600 hover:bg-yellow-50"
+              onClick={() => toast({ title: '📩 Reminder', description: `Reminder feature for ${member.name} coming soon!` })}
+            >
+              <Bell className="h-4 w-4 mr-2" /> Send Reminder
+            </Button>
+          )}
         </div>
       </div>
 
@@ -123,6 +137,31 @@ export default function MemberProfilePage() {
           </Card>
         ))}
       </div>
+
+      {/* Payment Status Alert */}
+      {paymentStatus !== 'paid' && (
+        <Card className={cn(
+          'border-2',
+          paymentStatus === 'overdue' ? 'border-destructive bg-destructive/5' : 'border-orange-400 bg-orange-500/5'
+        )}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CreditCard className={cn('h-5 w-5', paymentStatus === 'overdue' ? 'text-destructive' : 'text-orange-500')} />
+              <div>
+                <p className={cn('font-medium text-sm', paymentStatus === 'overdue' ? 'text-destructive' : 'text-orange-600')}>
+                  {paymentStatus === 'overdue' ? '⚠️ Payment Overdue' : '🕐 Payment Pending'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {paymentStatus === 'overdue' ? 'Membership expired without payment' : 'No payment recorded for current cycle'}
+                </p>
+              </div>
+            </div>
+            <Badge variant={paymentStatus === 'overdue' ? 'destructive' : 'secondary'} className="uppercase text-xs">
+              {paymentStatus}
+            </Badge>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Total Paid */}
       <Card>

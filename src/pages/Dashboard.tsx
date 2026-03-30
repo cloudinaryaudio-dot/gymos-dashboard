@@ -1,4 +1,4 @@
-import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus, CalendarDays, Zap, CreditCard, Target } from 'lucide-react';
+import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus, CalendarDays, Zap, CreditCard, Target, UserCheck, Percent, ShieldAlert } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
@@ -17,8 +17,12 @@ export default function Dashboard() {
 
   const s = stats ?? {
     monthlyRevenue: 0, totalExpenses: 0, profit: 0,
-    activeMembers: 0, expiringMemberships: 0, expiredMemberships: 0, pendingPayments: 0, newLeads: 0,
+    activeMembers: 0, expiringMemberships: 0, expiredMemberships: 0, pendingPayments: 0,
+    newLeads: 0, totalLeads: 0, convertedLeads: 0, conversionRate: 0,
     recentPayments: [],
+    todayNewMembers: 0, todayPayments: 0, todayPaymentsAmount: 0, todayLeads: 0, monthNewMembers: 0,
+    revenueAtRisk: 0,
+    overdueCount: 0, totalPendingAmount: 0,
   };
 
   const statCards = [
@@ -46,9 +50,16 @@ export default function Dashboard() {
     {
       title: 'Pending Payments',
       value: s.pendingPayments.toString(),
-      change: s.pendingPayments > 0 ? 'Needs follow-up' : 'All clear!',
+      change: s.totalPendingAmount > 0 ? `₹${s.totalPendingAmount.toLocaleString()} pending` : 'All clear!',
       changeType: s.pendingPayments > 0 ? 'negative' as const : 'positive' as const,
       icon: AlertCircle,
+    },
+    {
+      title: 'Overdue Payments',
+      value: s.overdueCount.toString(),
+      change: s.overdueCount > 0 ? 'Collect now' : 'None overdue',
+      changeType: s.overdueCount > 0 ? 'negative' as const : 'positive' as const,
+      icon: Clock,
     },
     {
       title: 'New Leads',
@@ -56,6 +67,20 @@ export default function Dashboard() {
       change: s.newLeads > 0 ? 'Awaiting contact' : 'No new leads',
       changeType: s.newLeads > 0 ? 'positive' as const : 'neutral' as const,
       icon: UserPlus,
+    },
+    {
+      title: 'Revenue at Risk',
+      value: `₹${s.revenueAtRisk.toLocaleString()}`,
+      change: `${s.expiringMemberships + s.expiredMemberships} members need renewal`,
+      changeType: s.revenueAtRisk > 0 ? 'negative' as const : 'positive' as const,
+      icon: ShieldAlert,
+    },
+    {
+      title: 'Converted Leads',
+      value: s.convertedLeads.toString(),
+      change: `${s.conversionRate}% conversion rate`,
+      changeType: s.conversionRate > 0 ? 'positive' as const : 'neutral' as const,
+      icon: UserCheck,
     },
   ];
 
@@ -135,10 +160,6 @@ export default function Dashboard() {
               <span className={`font-bold text-lg ${s.profit >= 0 ? 'text-primary' : 'text-destructive'}`}>
                 ₹{s.profit.toLocaleString()}
               </span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-              <span className="text-sm text-muted-foreground">New Joins</span>
-              <span className="font-semibold">{s.monthNewJoins}</span>
             </div>
           </div>
         </div>
