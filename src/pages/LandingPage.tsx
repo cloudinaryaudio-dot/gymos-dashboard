@@ -329,38 +329,72 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ─── TESTIMONIALS (only if enabled & has items) ─── */}
-      {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (
-        <section id="testimonials" className="py-28 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Success Stories</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{testimonialsContent.title || 'What Our Members Say'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{testimonialsContent.subtitle || 'Real results from real people.'}</p>
-            </AnimatedSection>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {testimonialsContent.items.map((t, i) => (
-                <AnimatedSection key={i} delay={i * 0.1}>
-                  <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-5 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
-                    <div className="flex gap-1">
-                      {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-primary text-primary" />)}
-                    </div>
-                    {t.content && <p className="text-[hsl(220,10%,65%)] leading-relaxed flex-1">"{t.content}"</p>}
-                    <div className="flex items-center gap-3 pt-4 border-t border-[hsl(220,20%,12%)]">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <p className="font-display font-semibold">{t.name}</p>
-                    </div>
+      {/* ─── TESTIMONIALS (text + video) ─── */}
+      {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (() => {
+        const textItems = testimonialsContent.items.filter(t => !t.video_url);
+        const videoItems = testimonialsContent.items.filter(t => !!t.video_url);
+        return (
+          <>
+            {/* Text testimonials */}
+            {textItems.length > 0 && (
+              <section id="testimonials" className="py-28 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                  <AnimatedSection className="text-center mb-16">
+                    <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Success Stories</p>
+                    <h2 className="text-4xl sm:text-5xl font-bold font-display">{testimonialsContent.title || 'What Our Members Say'}</h2>
+                    <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{testimonialsContent.subtitle || 'Real results from real people.'}</p>
+                  </AnimatedSection>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {textItems.map((t, i) => (
+                      <AnimatedSection key={i} delay={i * 0.1}>
+                        <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-5 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-primary text-primary" />)}
+                          </div>
+                          {t.content && <p className="text-[hsl(220,10%,65%)] leading-relaxed flex-1">"{t.content}"</p>}
+                          <div className="flex items-center gap-3 pt-4 border-t border-[hsl(220,20%,12%)]">
+                            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                              <User className="h-5 w-5 text-primary" />
+                            </div>
+                            <p className="font-display font-semibold">{t.name}</p>
+                          </div>
+                        </div>
+                      </AnimatedSection>
+                    ))}
                   </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+                </div>
+              </section>
+            )}
 
-      {/* ─── GALLERY (only if enabled & has items, limit 6) ─── */}
+            {/* Video testimonials */}
+            {videoItems.length > 0 && (
+              <section id="video-testimonials" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+                <div className="max-w-7xl mx-auto">
+                  <AnimatedSection className="text-center mb-16">
+                    <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Video Stories</p>
+                    <h2 className="text-4xl sm:text-5xl font-bold font-display">Hear From Our Members</h2>
+                  </AnimatedSection>
+                  <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+                    {videoItems.map((t, i) => (
+                      <AnimatedSection key={i} delay={i * 0.1} className="min-w-[320px] max-w-[400px] snap-center flex-shrink-0">
+                        <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/30 transition-colors duration-300">
+                          <VideoEmbed url={t.video_url!} />
+                          <div className="p-5 space-y-2">
+                            <p className="font-display font-semibold">{t.name}</p>
+                            {t.content && <p className="text-sm text-[hsl(220,10%,55%)]">{t.content}</p>}
+                          </div>
+                        </div>
+                      </AnimatedSection>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
+        );
+      })()}
+
+      {/* ─── GALLERY (preview, limit 6) ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (
         <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
@@ -368,18 +402,37 @@ export default function LandingPage() {
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Space</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{galleryContent.title || 'Gallery'}</h2>
             </AnimatedSection>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
-              {galleryContent.items.slice(0, 6).map((g, i) => (
-                <AnimatedSection key={i} delay={i * 0.05}>
-                  <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-square">
-                    <img src={g.image_url} alt={g.caption || 'Gallery'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300 flex items-end">
-                      {g.caption && <p className="p-4 text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">{g.caption}</p>}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {galleryContent.items.slice(0, 6).map((g, i) => {
+                const url = (g as any).url || (g as any).image_url || '';
+                const type = (g as any).type || 'image';
+                return (
+                  <AnimatedSection key={i} delay={i * 0.05}>
+                    <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-square">
+                      {type === 'video' ? (
+                        <div className="w-full h-full bg-[hsl(220,20%,8%)] flex items-center justify-center">
+                          <Play className="h-12 w-12 text-primary/50" />
+                        </div>
+                      ) : (
+                        <img src={url} alt={g.caption || 'Gallery'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300 flex items-end">
+                        {g.caption && <p className="p-4 text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">{g.caption}</p>}
+                      </div>
                     </div>
-                  </div>
-                </AnimatedSection>
-              ))}
+                  </AnimatedSection>
+                );
+              })}
             </div>
+            {galleryContent.items.length > 6 && (
+              <div className="text-center mt-10">
+                <Link to="/gallery">
+                  <Button variant="outline" className="border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)]">
+                    View Full Gallery <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </section>
       )}
