@@ -18,6 +18,7 @@ import BrandingSettingsPage from "./pages/BrandingSettingsPage";
 import ContactSettingsPage from "./pages/ContactSettingsPage";
 import NotFound from "./pages/NotFound";
 import SeedDataPage from "./pages/SeedDataPage";
+import GalleryPage from "./pages/GalleryPage";
 import MemberProfilePage from "./pages/MemberProfilePage";
 import { BrandingProvider } from "./components/BrandingProvider";
 

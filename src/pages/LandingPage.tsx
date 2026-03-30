@@ -14,7 +14,9 @@ import {
   Dumbbell, Send, ChevronRight, Users, Award, Calendar, Star, ArrowRight, Play, Phone, User, Target,
   MapPin, Mail, Clock, Menu, X,
 } from 'lucide-react';
-import type { HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
+import type { HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, WebsiteContentRow } from '@/hooks/useWebsiteContent';
+import { VideoEmbed } from '@/components/VideoEmbed';
+import { Lightbox } from '@/components/Lightbox';
 
 function AnimatedSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null);
