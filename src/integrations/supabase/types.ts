@@ -14,54 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
-      contact_settings: {
-        Row: {
-          created_at: string | null
-          gym_id: string | null
-          id: string
-          instagram_url: string | null
-          updated_at: string | null
-          user_id: string
-          whatsapp_message: string | null
-          whatsapp_number: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          gym_id?: string | null
-          id?: string
-          instagram_url?: string | null
-          updated_at?: string | null
-          user_id: string
-          whatsapp_message?: string | null
-          whatsapp_number?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          gym_id?: string | null
-          id?: string
-          instagram_url?: string | null
-          updated_at?: string | null
-          user_id?: string
-          whatsapp_message?: string | null
-          whatsapp_number?: string | null
-        }
-        Relationships: []
-      }
       expenses: {
         Row: {
           amount: number
           category: string | null
-          created_at: string | null
+          created_at: string
           expense_date: string
           id: string
           title: string
           user_id: string
         }
         Insert: {
-          amount?: number
+          amount: number
           category?: string | null
-          created_at?: string | null
-          expense_date: string
+          created_at?: string
+          expense_date?: string
           id?: string
           title: string
           user_id: string
@@ -69,7 +36,7 @@ export type Database = {
         Update: {
           amount?: number
           category?: string | null
-          created_at?: string | null
+          created_at?: string
           expense_date?: string
           id?: string
           title?: string
@@ -80,76 +47,43 @@ export type Database = {
       gallery: {
         Row: {
           caption: string | null
-          created_at: string | null
+          created_at: string
           id: string
           image_url: string
-          sort_order: number | null
+          sort_order: number
           user_id: string
         }
         Insert: {
           caption?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url: string
-          sort_order?: number | null
+          sort_order?: number
           user_id: string
         }
         Update: {
           caption?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string
-          sort_order?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      gym_settings: {
-        Row: {
-          created_at: string | null
-          gym_name: string | null
-          id: string
-          logo_url: string | null
-          primary_color: string | null
-          secondary_color: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          gym_name?: string | null
-          id?: string
-          logo_url?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          gym_name?: string | null
-          id?: string
-          logo_url?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          updated_at?: string | null
+          sort_order?: number
           user_id?: string
         }
         Relationships: []
       }
       gyms: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           name: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
-          name?: string
+          name: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           name?: string
         }
@@ -157,69 +91,72 @@ export type Database = {
       }
       leads: {
         Row: {
-          created_at: string | null
+          created_at: string
           fitness_goal: string | null
           id: string
           name: string
           phone: string
-          status: string | null
-          updated_at: string | null
+          status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           fitness_goal?: string | null
           id?: string
           name: string
           phone: string
-          status?: string | null
-          updated_at?: string | null
+          status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           fitness_goal?: string | null
           id?: string
           name?: string
           phone?: string
-          status?: string | null
-          updated_at?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       members: {
         Row: {
-          created_at: string | null
+          created_at: string
           expiry_date: string
           id: string
           name: string
           phone: string
           plan_id: string | null
           start_date: string
-          status: string | null
+          status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           expiry_date: string
           id?: string
           name: string
           phone: string
           plan_id?: string | null
-          start_date: string
-          status?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           expiry_date?: string
           id?: string
           name?: string
           phone?: string
           plan_id?: string | null
           start_date?: string
-          status?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -235,7 +172,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
-          created_at: string | null
+          created_at: string
           id: string
           member_id: string
           method: string
@@ -245,19 +182,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount?: number
-          created_at?: string | null
+          amount: number
+          created_at?: string
           id?: string
           member_id: string
           method?: string
           note?: string | null
-          payment_date: string
+          payment_date?: string
           status?: string
           user_id: string
         }
         Update: {
           amount?: number
-          created_at?: string | null
+          created_at?: string
           id?: string
           member_id?: string
           method?: string
@@ -278,89 +215,103 @@ export type Database = {
       }
       plans: {
         Row: {
-          created_at: string | null
+          created_at: string
           duration_days: number
           id: string
           name: string
           price: number
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
-          duration_days?: number
+          created_at?: string
+          duration_days: number
           id?: string
           name: string
-          price?: number
+          price: number
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           duration_days?: number
           id?: string
           name?: string
           price?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          created_at: string | null
+          avatar_url: string | null
+          created_at: string
           full_name: string | null
           gym_id: string | null
           id: string
-          role: string | null
-          updated_at: string | null
+          role: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          avatar_url?: string | null
+          created_at?: string
           full_name?: string | null
           gym_id?: string | null
           id?: string
-          role?: string | null
-          updated_at?: string | null
+          role?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          avatar_url?: string | null
+          created_at?: string
           full_name?: string | null
           gym_id?: string | null
           id?: string
-          role?: string | null
-          updated_at?: string | null
+          role?: string
+          updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       testimonials: {
         Row: {
           content: string | null
-          created_at: string | null
+          created_at: string
           id: string
-          is_visible: boolean | null
+          is_visible: boolean
           name: string
-          sort_order: number | null
+          sort_order: number
           user_id: string
           video_url: string | null
         }
         Insert: {
           content?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_visible?: boolean | null
+          is_visible?: boolean
           name: string
-          sort_order?: number | null
+          sort_order?: number
           user_id: string
           video_url?: string | null
         }
         Update: {
           content?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_visible?: boolean | null
+          is_visible?: boolean
           name?: string
-          sort_order?: number | null
+          sort_order?: number
           user_id?: string
           video_url?: string | null
         }
@@ -368,29 +319,29 @@ export type Database = {
       }
       trainers: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           image_url: string | null
           name: string
-          sort_order: number | null
+          sort_order: number
           specialization: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string | null
           name: string
-          sort_order?: number | null
+          sort_order?: number
           specialization?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string | null
           name?: string
-          sort_order?: number | null
+          sort_order?: number
           specialization?: string | null
           user_id?: string
         }
@@ -399,43 +350,43 @@ export type Database = {
       website_sections: {
         Row: {
           content: string | null
-          created_at: string | null
+          created_at: string
           id: string
           image_url: string | null
-          is_visible: boolean | null
+          is_visible: boolean
           section_type: string
-          sort_order: number | null
+          sort_order: number
           subtitle: string | null
           title: string | null
-          updated_at: string | null
+          updated_at: string
           user_id: string
           video_url: string | null
         }
         Insert: {
           content?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string | null
-          is_visible?: boolean | null
+          is_visible?: boolean
           section_type: string
-          sort_order?: number | null
+          sort_order?: number
           subtitle?: string | null
           title?: string | null
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
           video_url?: string | null
         }
         Update: {
           content?: string | null
-          created_at?: string | null
+          created_at?: string
           id?: string
           image_url?: string | null
-          is_visible?: boolean | null
+          is_visible?: boolean
           section_type?: string
-          sort_order?: number | null
+          sort_order?: number
           subtitle?: string | null
           title?: string | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
           video_url?: string | null
         }
