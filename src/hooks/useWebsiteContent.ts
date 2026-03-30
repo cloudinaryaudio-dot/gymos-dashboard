@@ -8,6 +8,9 @@ export interface HeroContent {
   title?: string;
   subtitle?: string;
   image_url?: string;
+  video_url?: string;
+  mobile_image_url?: string;
+  mobile_video_url?: string;
   cta_text?: string;
 }
 
@@ -31,6 +34,7 @@ export interface TrainersContent {
 export interface TestimonialItem {
   name: string;
   content?: string;
+  video_url?: string;
 }
 export interface TestimonialsContent {
   title?: string;
@@ -38,13 +42,20 @@ export interface TestimonialsContent {
   items: TestimonialItem[];
 }
 
-export interface GalleryImageItem {
-  image_url: string;
+export interface GalleryMediaItem {
+  url: string;
+  type: 'image' | 'video';
   caption?: string;
 }
 export interface GalleryContent {
   title?: string;
-  items: GalleryImageItem[];
+  items: GalleryMediaItem[];
+}
+
+// Keep backward compat alias
+export interface GalleryImageItem {
+  image_url: string;
+  caption?: string;
 }
 
 export type SectionKey = 'hero' | 'pricing' | 'trainers' | 'testimonials' | 'gallery';
@@ -63,7 +74,7 @@ export interface WebsiteContentRow {
 export const SECTION_DEFAULTS: Record<SectionKey, { label: string; defaultContent: any }> = {
   hero: {
     label: 'Hero',
-    defaultContent: { title: '', subtitle: '', image_url: '', cta_text: 'Start Free Trial' } as HeroContent,
+    defaultContent: { title: '', subtitle: '', image_url: '', video_url: '', mobile_image_url: '', mobile_video_url: '', cta_text: 'Start Free Trial' } as HeroContent,
   },
   pricing: {
     label: 'Pricing',

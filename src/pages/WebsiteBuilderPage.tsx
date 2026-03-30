@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   useWebsiteContent, ALL_SECTION_KEYS, SECTION_DEFAULTS, SectionKey,
   HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent,
-  TrainerItem, TestimonialItem, GalleryImageItem,
+  TrainerItem, TestimonialItem, GalleryMediaItem,
 } from '@/hooks/useWebsiteContent';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,17 +12,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save, ExternalLink, Plus, Trash2, Film, Image } from 'lucide-react';
 
 export default function WebsiteBuilderPage() {
   const { user, loading } = useAuth();
   const { sections, isLoading, getSectionContent, isSectionEnabled, upsertSection } = useWebsiteContent();
 
-  // Local draft state per section
   const [drafts, setDrafts] = useState<Record<string, any>>({});
   const [toggles, setToggles] = useState<Record<string, boolean>>({});
 
-  // Sync from server
   useEffect(() => {
     if (!sections.length) return;
     const d: Record<string, any> = {};
@@ -91,8 +90,17 @@ export default function WebsiteBuilderPage() {
             <SectionCard sectionKey="hero" toggles={toggles} setToggles={setToggles} onSave={() => save('hero')} saving={upsertSection.isPending}>
               <Field label="Title" value={drafts.hero?.title} onChange={v => updateDraft('hero', 'title', v)} />
               <Field label="Subtitle" value={drafts.hero?.subtitle} onChange={v => updateDraft('hero', 'subtitle', v)} textarea />
-              <Field label="Background Image URL" value={drafts.hero?.image_url} onChange={v => updateDraft('hero', 'image_url', v)} placeholder="https://..." />
               <Field label="CTA Button Text" value={drafts.hero?.cta_text} onChange={v => updateDraft('hero', 'cta_text', v)} placeholder="Start Free Trial" />
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                <p className="text-sm font-medium">Desktop Background</p>
+                <Field label="Image URL" value={drafts.hero?.image_url} onChange={v => updateDraft('hero', 'image_url', v)} placeholder="https://..." />
+                <Field label="Video URL (overrides image)" value={drafts.hero?.video_url} onChange={v => updateDraft('hero', 'video_url', v)} placeholder="https://...mp4" />
+              </div>
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                <p className="text-sm font-medium">Mobile Background (optional)</p>
+                <Field label="Mobile Image URL" value={drafts.hero?.mobile_image_url} onChange={v => updateDraft('hero', 'mobile_image_url', v)} placeholder="https://..." />
+                <Field label="Mobile Video URL" value={drafts.hero?.mobile_video_url} onChange={v => updateDraft('hero', 'mobile_video_url', v)} placeholder="https://...mp4" />
+              </div>
             </SectionCard>
           </TabsContent>
 
@@ -128,7 +136,10 @@ export default function WebsiteBuilderPage() {
               <ItemList
                 items={drafts.testimonials?.items ?? []}
                 onRemove={i => removeItem('testimonials', i)}
-                renderItem={(item: TestimonialItem) => `${item.name}: "${(item.content ?? '').slice(0, 60)}..."`}
+                renderItem={(item: TestimonialItem) => {
+                  const badge = item.video_url ? '🎥 ' : '';
+                  return `${badge}${item.name}: "${(item.content ?? '').slice(0, 50)}..."`;
+                }}
               />
               <AddTestimonialForm onAdd={item => addItem('testimonials', item)} />
             </SectionCard>
@@ -139,10 +150,18 @@ export default function WebsiteBuilderPage() {
             <SectionCard sectionKey="gallery" toggles={toggles} setToggles={setToggles} onSave={() => save('gallery')} saving={upsertSection.isPending}>
               <Field label="Section Title" value={drafts.gallery?.title} onChange={v => updateDraft('gallery', 'title', v)} />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {(drafts.gallery?.items ?? []).map((g: GalleryImageItem, i: number) => (
-                  <div key={i} className="relative group rounded-lg overflow-hidden border">
-                    <img src={g.image_url} alt={g.caption || 'Gallery'} className="w-full aspect-square object-cover" />
-                    {g.caption && <p className="text-xs p-2 text-muted-foreground">{g.caption}</p>}
+                {(drafts.gallery?.items ?? []).map((g: GalleryMediaItem, i: number) => (
+                  <div key={i} className="relative group rounded-lg overflow-hidden border bg-muted/20">
+                    {g.type === 'video' ? (
+                      <div className="w-full aspect-square flex items-center justify-center bg-muted/30">
+                        <Film className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <img src={g.url} alt={g.caption || 'Gallery'} className="w-full aspect-square object-cover" />
+                    )}
+                    <div className="p-2">
+                      <p className="text-xs text-muted-foreground truncate">{g.type === 'video' ? '🎥 Video' : '🖼️ Image'}{g.caption ? ` — ${g.caption}` : ''}</p>
+                    </div>
                     <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7" onClick={() => removeItem('gallery', i)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -242,10 +261,11 @@ function AddTrainerForm({ onAdd }: { onAdd: (item: TrainerItem) => void }) {
 function AddTestimonialForm({ onAdd }: { onAdd: (item: TestimonialItem) => void }) {
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const add = () => {
     if (!name.trim()) return;
-    onAdd({ name: name.trim(), content: content || undefined });
-    setName(''); setContent('');
+    onAdd({ name: name.trim(), content: content || undefined, video_url: videoUrl || undefined });
+    setName(''); setContent(''); setVideoUrl('');
   };
   return (
     <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
@@ -254,24 +274,35 @@ function AddTestimonialForm({ onAdd }: { onAdd: (item: TestimonialItem) => void 
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="Name" />
         <Input value={content} onChange={e => setContent(e.target.value)} placeholder="Testimonial text" />
       </div>
+      <Input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="Video URL (YouTube / Instagram — optional)" />
       <Button size="sm" onClick={add}><Plus className="h-4 w-4 mr-1" />Add</Button>
     </div>
   );
 }
 
-function AddGalleryForm({ onAdd }: { onAdd: (item: GalleryImageItem) => void }) {
+function AddGalleryForm({ onAdd }: { onAdd: (item: GalleryMediaItem) => void }) {
   const [url, setUrl] = useState('');
   const [caption, setCaption] = useState('');
+  const [type, setType] = useState<'image' | 'video'>('image');
   const add = () => {
     if (!url.trim()) return;
-    onAdd({ image_url: url.trim(), caption: caption || undefined });
-    setUrl(''); setCaption('');
+    onAdd({ url: url.trim(), type, caption: caption || undefined });
+    setUrl(''); setCaption(''); setType('image');
   };
   return (
     <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
-      <p className="text-sm font-medium">Add Image</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="Image URL" />
+      <p className="text-sm font-medium">Add Media</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Select value={type} onValueChange={v => setType(v as 'image' | 'video')}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="image"><span className="flex items-center gap-1.5"><Image className="h-3.5 w-3.5" /> Image</span></SelectItem>
+            <SelectItem value="video"><span className="flex items-center gap-1.5"><Film className="h-3.5 w-3.5" /> Video</span></SelectItem>
+          </SelectContent>
+        </Select>
+        <Input value={url} onChange={e => setUrl(e.target.value)} placeholder={type === 'video' ? 'YouTube / Instagram URL' : 'Image URL'} />
         <Input value={caption} onChange={e => setCaption(e.target.value)} placeholder="Caption (optional)" />
       </div>
       <Button size="sm" onClick={add}><Plus className="h-4 w-4 mr-1" />Add</Button>

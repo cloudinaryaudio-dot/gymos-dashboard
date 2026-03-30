@@ -18,6 +18,7 @@ import BrandingSettingsPage from "./pages/BrandingSettingsPage";
 import ContactSettingsPage from "./pages/ContactSettingsPage";
 import NotFound from "./pages/NotFound";
 import SeedDataPage from "./pages/SeedDataPage";
+import GalleryPage from "./pages/GalleryPage";
 import MemberProfilePage from "./pages/MemberProfilePage";
 import { BrandingProvider } from "./components/BrandingProvider";
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/seed" element={<SeedDataPage />} />
+            <Route path="/gallery" element={<GalleryPage />} />
 
             {/* Protected admin routes */}
             <Route path="/app" element={<ProtectedRoute />}>
