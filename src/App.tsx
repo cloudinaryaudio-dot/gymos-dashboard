@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/seed" element={<SeedDataPage />} />
+            <Route path="/gallery" element={<GalleryPage />} />
 
             {/* Protected admin routes */}
             <Route path="/app" element={<ProtectedRoute />}>

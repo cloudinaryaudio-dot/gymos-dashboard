@@ -169,15 +169,34 @@ export default function LandingPage() {
         )}
       </nav>
 
-      {/* ─── HERO (always show with defaults if enabled or no data yet) ─── */}
-      <section
-        id="hero"
-        className="relative min-h-screen flex items-center justify-center"
-        style={heroContent.image_url ? {
-          backgroundImage: `linear-gradient(180deg, hsla(220,25%,4%,0.5) 0%, hsla(220,25%,4%,0.85) 60%, hsl(220,25%,4%) 100%), url(${heroContent.image_url})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-        } : {}}
-      >
+      {/* ─── HERO ─── */}
+      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Video or Image */}
+        {heroContent.video_url ? (
+          <>
+            <video
+              autoPlay muted loop playsInline
+              className="absolute inset-0 w-full h-full object-cover hidden md:block"
+              src={heroContent.video_url}
+            />
+            {heroContent.mobile_video_url ? (
+              <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover md:hidden" src={heroContent.mobile_video_url} />
+            ) : heroContent.mobile_image_url ? (
+              <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            ) : null}
+          </>
+        ) : heroContent.image_url ? (
+          <>
+            <div className="absolute inset-0 hidden md:block" style={{ backgroundImage: `url(${heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            {heroContent.mobile_image_url ? (
+              <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            ) : (
+              <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            )}
+          </>
+        ) : null}
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsla(220,25%,4%,0.5)] via-[hsla(220,25%,4%,0.7)] to-[hsl(220,25%,4%)]" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
