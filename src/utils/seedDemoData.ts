@@ -333,7 +333,7 @@ export async function seedDemoData(userId: string, { reset = true }: { reset?: b
         ],
       },
     },
-  ].map(wc => ({ ...wc, content: JSON.stringify(wc.content), user_id: userId }));
+  ].map(wc => ({ ...wc, content: wc.content as any, user_id: userId }));
 
   const { error: wcErr } = await supabase.from('website_content').insert(websiteContent);
   if (wcErr) throw new Error(`Website Content: ${wcErr.message}`);
