@@ -98,8 +98,7 @@ export async function seedDemoData(userId: string, { reset = true }: { reset?: b
     const def = memberDefs[i];
     const price = plans.find(p => p.name.toLowerCase().includes(def.plan))?.price ?? 999;
     let status = 'paid';
-    if (i >= 22) status = 'pending';
-    else if (i >= 19) status = 'overdue';
+    if (i >= 19) status = 'pending';
     return {
       member_id: m.id, amount: price, payment_date: m.start_date,
       method: paymentMethods[i % 3], status, user_id: userId,
