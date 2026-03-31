@@ -100,8 +100,33 @@ export default function WebsiteBuilderPage() {
               <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
                 <p className="text-sm font-medium">Mobile Background (optional)</p>
                 <Field label="Mobile Image URL" value={drafts.hero?.mobile_image_url} onChange={v => updateDraft('hero', 'mobile_image_url', v)} placeholder="https://..." />
-                <Field label="Mobile Video URL" value={drafts.hero?.mobile_video_url} onChange={v => updateDraft('hero', 'mobile_video_url', v)} placeholder="https://...mp4" />
+                <Field label="Mobile Video URL" value={drafts.hero?.mobile_video_url} onChange={v => updateDraft('hero', 'mobile_video_url', v)} placeholder="https://...mp4 or YouTube URL" />
               </div>
+              {/* Live Preview */}
+              {(drafts.hero?.image_url || drafts.hero?.video_url) && (
+                <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                  <p className="text-sm font-medium">Preview</p>
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
+                    {drafts.hero?.video_url ? (
+                      (() => {
+                        const ytMatch = drafts.hero.video_url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+                        if (ytMatch) {
+                          return <iframe src={`https://www.youtube.com/embed/${ytMatch[1]}?mute=1`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Hero preview" style={{ border: 0 }} />;
+                        }
+                        return <video src={drafts.hero.video_url} className="w-full h-full object-cover" muted loop playsInline autoPlay />;
+                      })()
+                    ) : drafts.hero?.image_url ? (
+                      <img src={drafts.hero.image_url} alt="Hero preview" className="w-full h-full object-cover" />
+                    ) : null}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/80 flex items-center justify-center">
+                      <div className="text-center text-white px-4">
+                        <p className="text-lg font-bold font-display">{drafts.hero?.title || 'Your Title'}</p>
+                        <p className="text-xs text-white/70 mt-1">{drafts.hero?.subtitle || 'Your Subtitle'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </SectionCard>
           </TabsContent>
 

@@ -236,13 +236,9 @@ export default function LandingPage() {
         {/* Background Video or Image */}
         {heroContent.video_url ? (
           <>
-            <video
-              autoPlay muted loop playsInline
-              className="absolute inset-0 w-full h-full object-cover hidden md:block"
-              src={heroContent.video_url}
-            />
+            <HeroBackground url={heroContent.video_url} className="hidden md:block" />
             {heroContent.mobile_video_url ? (
-              <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover md:hidden" src={heroContent.mobile_video_url} />
+              <HeroBackground url={heroContent.mobile_video_url} className="md:hidden" />
             ) : heroContent.mobile_image_url ? (
               <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
             ) : null}
@@ -250,11 +246,7 @@ export default function LandingPage() {
         ) : heroContent.image_url ? (
           <>
             <div className="absolute inset-0 hidden md:block" style={{ backgroundImage: `url(${heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            {heroContent.mobile_image_url ? (
-              <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            ) : (
-              <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            )}
+            <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url || heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
           </>
         ) : null}
         {/* Overlay gradient */}
