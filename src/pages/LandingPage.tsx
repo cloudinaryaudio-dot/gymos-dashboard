@@ -19,6 +19,35 @@ import { VideoEmbed } from '@/components/VideoEmbed';
 import { Lightbox } from '@/components/Lightbox';
 import { PageLoader } from '@/components/PageLoader';
 
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
+function isDirectVideo(url: string): boolean {
+  return /\.(mp4|webm|ogg)(\?|$)/i.test(url);
+}
+
+function HeroBackground({ url, className }: { url: string; className?: string }) {
+  const ytId = getYouTubeId(url);
+  if (ytId) {
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&modestbranding=1&playsinline=1`}
+        className={`absolute inset-0 w-full h-full pointer-events-none ${className ?? ''}`}
+        style={{ border: 0, transform: 'scale(1.2)' }}
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        title="Hero background"
+      />
+    );
+  }
+  if (isDirectVideo(url)) {
+    return <video autoPlay muted loop playsInline className={`absolute inset-0 w-full h-full object-cover ${className ?? ''}`} src={url} />;
+  }
+  return <div className={`absolute inset-0 ${className ?? ''}`} style={{ backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />;
+}
+
 type AnimationVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'scale' | 'blur';
 
 const variants: Record<AnimationVariant, { initial: any; animate: any }> = {
