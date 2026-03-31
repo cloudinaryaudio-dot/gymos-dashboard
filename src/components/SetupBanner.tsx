@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSetupDetection } from '@/hooks/useSetupDetection';
-import { seedDemoData } from '@/utils/seedDemoData';
+import { seedDemoData, resetDemoData } from '@/utils/seedDemoData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Database, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
+import { Rocket, Database, Loader2, CheckCircle, ArrowRight, Trash2 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export function SetupBanner() {
   const { user } = useAuth();
@@ -23,7 +27,6 @@ export function SetupBanner() {
     try {
       await seedDemoData(user.id);
       setDone(true);
-      // Reload page to refresh all data
       setTimeout(() => window.location.reload(), 1500);
     } catch (e: any) {
       setError(e.message || 'Failed to seed data');

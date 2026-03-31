@@ -58,7 +58,52 @@ export interface GalleryImageItem {
   caption?: string;
 }
 
-export type SectionKey = 'hero' | 'pricing' | 'trainers' | 'testimonials' | 'gallery';
+export interface ServiceItem {
+  title: string;
+  description?: string;
+  icon?: string;
+  image_url?: string;
+}
+export interface ServicesContent {
+  title?: string;
+  subtitle?: string;
+  items: ServiceItem[];
+}
+
+export interface EquipmentItem {
+  name: string;
+  description?: string;
+  image_url?: string;
+}
+export interface EquipmentContent {
+  title?: string;
+  subtitle?: string;
+  items: EquipmentItem[];
+}
+
+export interface ReviewItem {
+  name: string;
+  rating: number;
+  text?: string;
+}
+export interface ReviewsContent {
+  title?: string;
+  subtitle?: string;
+  items: ReviewItem[];
+}
+
+export interface BranchItem {
+  name: string;
+  location?: string;
+  contact?: string;
+}
+export interface BranchesContent {
+  title?: string;
+  subtitle?: string;
+  items: BranchItem[];
+}
+
+export type SectionKey = 'hero' | 'pricing' | 'trainers' | 'testimonials' | 'gallery' | 'services' | 'equipment' | 'reviews' | 'branches';
 
 export interface WebsiteContentRow {
   id: string;
@@ -92,9 +137,25 @@ export const SECTION_DEFAULTS: Record<SectionKey, { label: string; defaultConten
     label: 'Gallery',
     defaultContent: { title: 'Gallery', items: [] } as GalleryContent,
   },
+  services: {
+    label: 'Services',
+    defaultContent: { title: 'Our Services', subtitle: 'Explore our range of fitness programs.', items: [] } as ServicesContent,
+  },
+  equipment: {
+    label: 'Equipment',
+    defaultContent: { title: 'World-Class Equipment', subtitle: 'Train with the best machines and gear.', items: [] } as EquipmentContent,
+  },
+  reviews: {
+    label: 'Reviews',
+    defaultContent: { title: 'Google Reviews', subtitle: 'See what our members say about us.', items: [] } as ReviewsContent,
+  },
+  branches: {
+    label: 'Branches',
+    defaultContent: { title: 'Our Branches', subtitle: 'Find a location near you.', items: [] } as BranchesContent,
+  },
 };
 
-export const ALL_SECTION_KEYS: SectionKey[] = ['hero', 'pricing', 'trainers', 'testimonials', 'gallery'];
+export const ALL_SECTION_KEYS: SectionKey[] = ['hero', 'pricing', 'services', 'equipment', 'trainers', 'testimonials', 'reviews', 'gallery', 'branches'];
 
 // ─── Hook for admin (authenticated) ───
 export function useWebsiteContent() {

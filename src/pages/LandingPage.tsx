@@ -9,22 +9,45 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FloatingContactButtons } from '@/components/FloatingContactButtons';
 import { useToast } from '@/hooks/use-toast';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import {
   Dumbbell, Send, ChevronRight, Users, Award, Calendar, Star, ArrowRight, Play, Phone, User, Target,
   MapPin, Mail, Clock, Menu, X,
 } from 'lucide-react';
-import type { HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, WebsiteContentRow } from '@/hooks/useWebsiteContent';
+import type { HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, ServicesContent, EquipmentContent, ReviewsContent, BranchesContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 import { VideoEmbed } from '@/components/VideoEmbed';
 import { Lightbox } from '@/components/Lightbox';
+import { PageLoader } from '@/components/PageLoader';
 
-function AnimatedSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+type AnimationVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'scale' | 'blur';
+
+const variants: Record<AnimationVariant, { initial: any; animate: any }> = {
+  'fade-up': { initial: { opacity: 0, y: 40 }, animate: { opacity: 1, y: 0 } },
+  'fade-left': { initial: { opacity: 0, x: -40 }, animate: { opacity: 1, x: 0 } },
+  'fade-right': { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 } },
+  'scale': { initial: { opacity: 0, scale: 0.9 }, animate: { opacity: 1, scale: 1 } },
+  'blur': { initial: { opacity: 0, filter: 'blur(10px)' }, animate: { opacity: 1, filter: 'blur(0px)' } },
+};
+
+function AnimatedSection({ children, className = '', delay = 0, variant = 'fade-up' }: { children: React.ReactNode; className?: string; delay?: number; variant?: AnimationVariant }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
+  const v = variants[variant];
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 40 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }} className={className}>
+    <motion.div ref={ref} initial={v.initial} animate={isInView ? v.animate : {}} transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }} className={className}>
       {children}
     </motion.div>
+  );
+}
+
+function ParallaxSection({ children, className = '', speed = 0.15 }: { children: React.ReactNode; className?: string; speed?: number }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], [speed * 100, -speed * 100]);
+  return (
+    <div ref={ref} className={className}>
+      <motion.div style={{ y }}>{children}</motion.div>
+    </div>
   );
 }
 
@@ -62,6 +85,10 @@ export default function LandingPage() {
         trainers: getSection('trainers'),
         testimonials: getSection('testimonials'),
         gallery: getSection('gallery'),
+        services: getSection('services'),
+        equipment: getSection('equipment'),
+        reviews: getSection('reviews'),
+        branches: getSection('branches'),
       };
     },
   });
@@ -83,6 +110,10 @@ export default function LandingPage() {
   const trainersContent = (data?.trainers?.content ?? {}) as TrainersContent;
   const testimonialsContent = (data?.testimonials?.content ?? {}) as TestimonialsContent;
   const galleryContent = (data?.gallery?.content ?? {}) as GalleryContent;
+  const servicesContent = (data?.services?.content ?? {}) as ServicesContent;
+  const equipmentContent = (data?.equipment?.content ?? {}) as EquipmentContent;
+  const reviewsContent = (data?.reviews?.content ?? {}) as ReviewsContent;
+  const branchesContent = (data?.branches?.content ?? {}) as BranchesContent;
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
@@ -113,13 +144,15 @@ export default function LandingPage() {
 
   const navLinks = [
     { label: 'Home', id: 'hero' },
+    ...(data?.services ? [{ label: 'Services', id: 'services' }] : []),
     ...(data?.pricing ? [{ label: 'Plans', id: 'pricing' }] : []),
     ...(data?.trainers ? [{ label: 'Trainers', id: 'trainers' }] : []),
     { label: 'Contact', id: 'lead-form' },
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)] overflow-x-hidden">
+    <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth">
+      <PageLoader brandName={brandName} brandLogo={brandLogo} />
       {/* ─── NAVBAR ─── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[hsl(220,25%,4%)]/95 backdrop-blur-xl shadow-2xl shadow-black/20' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-4">
@@ -217,12 +250,16 @@ export default function LandingPage() {
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }}
             className="mt-12 flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('lead-form')}>
-              {heroContent.cta_text || 'Start Free Trial'} <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm hover:scale-[1.02] transition-all duration-200" onClick={() => scrollTo('lead-form')}>
-              <Calendar className="mr-2 h-5 w-5" /> Book a Visit
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+              <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300" onClick={() => scrollTo('lead-form')}>
+                {heroContent.cta_text || 'Start Free Trial'} <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+              <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
+                <Calendar className="mr-2 h-5 w-5" /> Book a Visit
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[hsl(220,25%,4%)] to-transparent" />
@@ -250,7 +287,79 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── PRICING (only if enabled) ─── */}
+      {/* ─── SERVICES (only if enabled & has items) ─── */}
+      {data?.services && (servicesContent.items?.length ?? 0) > 0 && (
+        <section id="services" className="py-28 px-4 sm:px-6 lg:px-8 relative">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
+          </div>
+          <div className="max-w-7xl mx-auto relative z-10">
+            <AnimatedSection className="text-center mb-16" variant="blur">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">What We Offer</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">{servicesContent.title || 'Our Services'}</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{servicesContent.subtitle || 'Explore our range of fitness programs.'}</p>
+            </AnimatedSection>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {servicesContent.items.map((s, i) => (
+                <AnimatedSection key={i} delay={i * 0.08}>
+                  <div className="group rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
+                    {s.image_url ? (
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        <img src={s.image_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,25%,7%)] via-transparent to-transparent opacity-60" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center pt-8 pb-2">
+                        <span className="text-5xl">{s.icon || '💪'}</span>
+                      </div>
+                    )}
+                    <div className="p-6 flex-1 flex flex-col">
+                      <h3 className="font-display font-bold text-lg mb-2">{s.title}</h3>
+                      {s.description && <p className="text-sm text-[hsl(220,10%,50%)] leading-relaxed flex-1">{s.description}</p>}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── EQUIPMENT (only if enabled & has items) ─── */}
+      {data?.equipment && (equipmentContent.items?.length ?? 0) > 0 && (
+        <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+          <div className="max-w-7xl mx-auto">
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Facility</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">{equipmentContent.title || 'World-Class Equipment'}</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{equipmentContent.subtitle || 'Train with the best machines and gear.'}</p>
+            </AnimatedSection>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {equipmentContent.items.map((eq, i) => (
+                <AnimatedSection key={i} delay={i * 0.08}>
+                  <div className="group rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
+                    {eq.image_url ? (
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img src={eq.image_url} alt={eq.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,25%,7%)] via-transparent to-transparent opacity-60" />
+                      </div>
+                    ) : (
+                      <div className="aspect-[4/3] bg-[hsl(220,20%,10%)] flex items-center justify-center">
+                        <Dumbbell className="h-16 w-16 text-[hsl(220,10%,25%)]" />
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <h3 className="font-display font-bold text-lg mb-2">{eq.name}</h3>
+                      {eq.description && <p className="text-sm text-[hsl(220,10%,50%)] leading-relaxed">{eq.description}</p>}
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {data?.pricing && (data?.plans?.length ?? 0) > 0 && (
         <section id="pricing" className="py-28 px-4 sm:px-6 lg:px-8 relative">
           <div className="absolute inset-0 pointer-events-none">
@@ -437,12 +546,82 @@ export default function LandingPage() {
         </section>
       )}
 
+      {/* ─── GOOGLE REVIEWS (only if enabled & has items) ─── */}
+      {data?.reviews && (reviewsContent.items?.length ?? 0) > 0 && (
+        <section id="reviews" className="py-28 px-4 sm:px-6 lg:px-8 relative">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute bottom-0 left-1/4 w-[600px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
+          </div>
+          <div className="max-w-7xl mx-auto relative z-10">
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Trusted By Many</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">{reviewsContent.title || 'Google Reviews'}</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{reviewsContent.subtitle || 'See what our members say about us.'}</p>
+            </AnimatedSection>
+            <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:grid lg:grid-cols-3 lg:overflow-visible lg:mx-0 lg:px-0">
+              {reviewsContent.items.map((r, i) => (
+                <AnimatedSection key={i} delay={i * 0.08} className="min-w-[300px] snap-center flex-shrink-0 lg:min-w-0">
+                  <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-4 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, j) => (
+                        <Star key={j} className={`h-5 w-5 ${j < r.rating ? 'fill-yellow-400 text-yellow-400' : 'fill-[hsl(220,10%,20%)] text-[hsl(220,10%,20%)]'}`} />
+                      ))}
+                    </div>
+                    {r.text && <p className="text-[hsl(220,10%,65%)] leading-relaxed flex-1 text-sm">"{r.text}"</p>}
+                    <div className="flex items-center gap-3 pt-4 border-t border-[hsl(220,20%,12%)]">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/20 to-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                        {r.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-display font-semibold text-sm">{r.name}</p>
+                        <p className="text-xs text-[hsl(220,10%,40%)]">Google Review</p>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── BRANCHES / FRANCHISE (only if enabled & has items) ─── */}
+      {data?.branches && (branchesContent.items?.length ?? 0) > 0 && (
+        <section id="branches" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+          <div className="max-w-7xl mx-auto">
+            <AnimatedSection className="text-center mb-16">
+              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Locations</p>
+              <h2 className="text-4xl sm:text-5xl font-bold font-display">{branchesContent.title || 'Our Branches'}</h2>
+              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{branchesContent.subtitle || 'Find a location near you.'}</p>
+            </AnimatedSection>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {branchesContent.items.map((b, i) => (
+                <AnimatedSection key={i} delay={i * 0.08}>
+                  <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-4 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
+                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10">
+                      <MapPin className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="font-display font-bold text-xl">{b.name}</h3>
+                    {b.location && <p className="text-sm text-[hsl(220,10%,50%)] leading-relaxed">{b.location}</p>}
+                    {b.contact && (
+                      <p className="text-sm text-[hsl(220,10%,60%)] flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-primary shrink-0" /> {b.contact}
+                      </p>
+                    )}
+                  </div>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ─── CTA BLOCK ─── */}
       <section className="py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-primary/8 rounded-full blur-[150px]" />
         </div>
-        <AnimatedSection>
+        <AnimatedSection variant="scale">
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-[hsl(220,25%,7%)] to-[hsl(220,25%,5%)] border border-primary/20 p-14 sm:p-20">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight">
@@ -450,12 +629,16 @@ export default function LandingPage() {
               </h2>
               <p className="mt-6 text-lg text-[hsl(220,10%,50%)] max-w-xl mx-auto">Join hundreds of members who've transformed their lives.</p>
               <div className="mt-10 flex flex-wrap justify-center gap-4">
-                <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:scale-[1.02] transition-all" onClick={() => scrollTo('lead-form')}>
-                  Join Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-transparent text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] hover:scale-[1.02] transition-all" onClick={() => scrollTo('lead-form')}>
-                  <Play className="mr-2 h-5 w-5" /> Book Free Trial
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+                  <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300" onClick={() => scrollTo('lead-form')}>
+                    Join Now <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+                  <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-transparent text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] transition-all duration-300" onClick={() => scrollTo('lead-form')}>
+                    <Play className="mr-2 h-5 w-5" /> Book Free Trial
+                  </Button>
+                </motion.div>
               </div>
             </div>
           </div>
