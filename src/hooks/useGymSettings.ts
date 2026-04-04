@@ -9,6 +9,8 @@ export interface GymSettings {
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;
+  accent_color: string;
+  highlight_color: string;
   created_at: string;
   updated_at: string;
 }
@@ -16,8 +18,10 @@ export interface GymSettings {
 const DEFAULT_SETTINGS = {
   gym_name: 'GymOS',
   logo_url: null,
-  primary_color: '142 71% 45%',
-  secondary_color: '220 25% 8%',
+  primary_color: '222 47% 11%',
+  secondary_color: '220 26% 14%',
+  accent_color: '142 71% 45%',
+  highlight_color: '142 80% 55%',
 };
 
 export function useGymSettings() {
@@ -44,6 +48,8 @@ export function useGymSettings() {
     logo_url: settings?.logo_url ?? DEFAULT_SETTINGS.logo_url,
     primary_color: settings?.primary_color ?? DEFAULT_SETTINGS.primary_color,
     secondary_color: settings?.secondary_color ?? DEFAULT_SETTINGS.secondary_color,
+    accent_color: settings?.accent_color ?? DEFAULT_SETTINGS.accent_color,
+    highlight_color: settings?.highlight_color ?? DEFAULT_SETTINGS.highlight_color,
   };
 
   return { settings, resolved, isLoading, upsertSettings };

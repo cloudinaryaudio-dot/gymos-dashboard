@@ -169,7 +169,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth">
+    <div className="min-h-screen text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth" style={{ background: 'hsl(var(--website-bg))' }}>
       <PageLoader
         brandName={brandName}
         brandLogo={brandLogo}
@@ -202,7 +202,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url || heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
           </>
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-b from-[hsla(220,25%,4%,0.5)] via-[hsla(220,25%,4%,0.7)] to-[hsl(220,25%,4%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsla(var(--website-bg)/0.5)] via-[hsla(var(--website-bg)/0.7)] to-[hsl(var(--website-bg))]" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
@@ -210,20 +210,20 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-8 items-center">
           {/* LEFT: Content */}
           <div className="text-center md:text-left">
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
               <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-semibold mb-8 backdrop-blur-sm">
                 <Star className="h-4 w-4 fill-primary" /> Trusted by 500+ Members
               </div>
             </motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15 }}
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold font-display leading-[1.05] tracking-tight">
-              {heroContent.title || (<>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Build Your Discipline.</span></>)}
+              {heroContent.title || (<>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-[hsl(var(--highlight))] bg-clip-text text-transparent">Build Your Discipline.</span></>)}
             </motion.h1>
-            <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="mt-6 text-lg text-[hsl(220,10%,55%)] max-w-lg mx-auto md:mx-0 leading-relaxed">
               {heroContent.subtitle || 'World-class equipment, expert trainers, and a community that pushes you beyond limits.'}
             </motion.p>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }}
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="mt-10 flex flex-wrap justify-center md:justify-start gap-4">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
                 <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300" onClick={() => scrollTo('lead-form')}>
@@ -231,7 +231,7 @@ export default function LandingPage() {
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
-                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
+                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(var(--website-bg-secondary))]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
                   <Calendar className="mr-2 h-5 w-5" /> Book a Visit
                 </Button>
               </motion.div>
@@ -240,9 +240,9 @@ export default function LandingPage() {
             {/* Social Proof */}
             {heroContent.social_proof?.enabled !== false && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.6, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-10 flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-6"
               >
                 {/* Happy Customers */}
@@ -262,8 +262,8 @@ export default function LandingPage() {
                         alt="Member"
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.4, delay: 0.8 + i * 0.1 }}
-                        className="h-9 w-9 rounded-full border-2 border-[hsl(220,25%,8%)] object-cover shadow-md"
+                        transition={{ duration: 0.4, delay: 0.7 + i * 0.08 }}
+                        className="h-9 w-9 rounded-full border-2 border-[hsl(var(--website-bg))] object-cover shadow-md"
                         loading="lazy"
                       />
                     ))}
@@ -307,7 +307,7 @@ export default function LandingPage() {
             </motion.div>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[hsl(220,25%,4%)] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[hsl(var(--website-bg))] to-transparent" />
       </section>
 
       {/* ─── SOCIAL PROOF ─── */}
@@ -667,7 +667,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-[hsl(220,25%,7%)] to-[hsl(220,25%,5%)] border border-primary/20 p-14 sm:p-20">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight">
-                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Today</span>
+                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-[hsl(var(--highlight))] bg-clip-text text-transparent">Today</span>
               </h2>
               <p className="mt-6 text-lg text-[hsl(220,10%,50%)] max-w-xl mx-auto">Join hundreds of members who've transformed their lives.</p>
               <div className="mt-10 flex flex-wrap justify-center gap-4">

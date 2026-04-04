@@ -36,6 +36,10 @@
 
     --radius: 0.75rem;
 
+    --highlight: 142 80% 55%;
+    --website-bg: 222 47% 11%;
+    --website-bg-secondary: 220 26% 14%;
+
     --sidebar-background: 220 25% 8%;
     --sidebar-foreground: 220 10% 70%;
     --sidebar-primary: 142 71% 45%;
