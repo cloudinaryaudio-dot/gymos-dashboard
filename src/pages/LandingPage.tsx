@@ -240,9 +240,9 @@ export default function LandingPage() {
             {/* Social Proof */}
             {heroContent.social_proof?.enabled !== false && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.6, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-10 flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-6"
               >
                 {/* Happy Customers */}
