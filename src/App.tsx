@@ -2,10 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { BrandingProvider } from "./components/BrandingProvider";
 import LandingPage from "./pages/LandingPage";
-import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import MembersPage from "./pages/MembersPage";
 import PlansPage from "./pages/PlansPage";
@@ -17,45 +16,45 @@ import PlaceholderPage from "./pages/PlaceholderPage";
 import BrandingSettingsPage from "./pages/BrandingSettingsPage";
 import ContactSettingsPage from "./pages/ContactSettingsPage";
 import NotFound from "./pages/NotFound";
-import SeedDataPage from "./pages/SeedDataPage";
 import GalleryPage from "./pages/GalleryPage";
 import MemberProfilePage from "./pages/MemberProfilePage";
-import { BrandingProvider } from "./components/BrandingProvider";
 
 const queryClient = new QueryClient();
+
+function AppLayout() {
+  return (
+    <BrandingProvider>
+      <DashboardLayout>
+        <Routes>
+          <Route index element={<PlaceholderPage />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="members" element={<MembersPage />} />
+          <Route path="members/:memberId" element={<MemberProfilePage />} />
+          <Route path="plans" element={<PlansPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
+          <Route path="leads" element={<LeadsPage />} />
+          <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="website" element={<WebsiteBuilderPage />} />
+          <Route path="contact" element={<ContactSettingsPage />} />
+          <Route path="settings" element={<BrandingSettingsPage />} />
+        </Routes>
+      </DashboardLayout>
+    </BrandingProvider>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Auth />} />
-            <Route path="/seed" element={<SeedDataPage />} />
-            <Route path="/gallery" element={<GalleryPage />} />
-
-            {/* Protected admin routes */}
-            <Route path="/app" element={<ProtectedRoute />}>
-              <Route index element={<BrandingProvider><PlaceholderPage /></BrandingProvider>} />
-              <Route path="dashboard" element={<BrandingProvider><Dashboard /></BrandingProvider>} />
-              <Route path="members" element={<BrandingProvider><MembersPage /></BrandingProvider>} />
-              <Route path="members/:memberId" element={<BrandingProvider><MemberProfilePage /></BrandingProvider>} />
-              <Route path="plans" element={<BrandingProvider><PlansPage /></BrandingProvider>} />
-              <Route path="payments" element={<BrandingProvider><PaymentsPage /></BrandingProvider>} />
-              <Route path="leads" element={<BrandingProvider><LeadsPage /></BrandingProvider>} />
-              <Route path="expenses" element={<BrandingProvider><ExpensesPage /></BrandingProvider>} />
-              <Route path="website" element={<BrandingProvider><WebsiteBuilderPage /></BrandingProvider>} />
-              <Route path="contact" element={<BrandingProvider><ContactSettingsPage /></BrandingProvider>} />
-              <Route path="settings" element={<BrandingProvider><BrandingSettingsPage /></BrandingProvider>} />
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/app/*" element={<AppLayout />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

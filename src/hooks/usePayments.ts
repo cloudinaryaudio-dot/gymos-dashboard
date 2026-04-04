@@ -1,6 +1,5 @@
-import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import * as ds from '@/services/dataService';
 
 export interface Payment {
   id: string;
@@ -16,30 +15,17 @@ export interface Payment {
 }
 
 export function usePayments() {
-  const { user } = useAuth();
   return useQuery({
-    queryKey: ['payments', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payments' as any)
-        .select('*, members(name)')
-        .order('payment_date', { ascending: false });
-      if (error) throw error;
-      return data as Payment[];
-    },
-    enabled: !!user,
+    queryKey: ['payments'],
+    queryFn: () => ds.getPayments() as Promise<Payment[]>,
   });
 }
 
 export function useCreatePayment() {
   const qc = useQueryClient();
-  const { user } = useAuth();
   return useMutation({
-    mutationFn: async (p: { member_id: string; amount: number; payment_date: string; method: string; status: string; note?: string }) => {
-      const { data, error } = await (supabase.from('payments' as any) as any).insert({ ...p, user_id: user!.id }).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (p: { member_id: string; amount: number; payment_date: string; method: string; status: string; note?: string }) =>
+      ds.createPayment(p),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['payments'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },
   });
 }
@@ -47,10 +33,7 @@ export function useCreatePayment() {
 export function useDeletePayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase.from('payments' as any) as any).delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => ds.deletePayment(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['payments'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },
   });
 }
@@ -58,10 +41,7 @@ export function useDeletePayment() {
 export function useUpdatePaymentStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await (supabase.from('payments' as any) as any).update({ status }).eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, status }: { id: string; status: string }) => ds.updatePaymentStatus(id, status),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['payments'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },
   });
 }

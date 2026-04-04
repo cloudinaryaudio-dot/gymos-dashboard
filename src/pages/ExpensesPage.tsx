@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useExpenses, useCreateExpense, useDeleteExpense } from '@/hooks/useExpenses';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ import { Plus, Trash2, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ExpensesPage() {
-  const { user, loading } = useAuth();
   const { data: expenses, isLoading } = useExpenses();
   const createExpense = useCreateExpense();
   const deleteExpense = useDeleteExpense();
@@ -23,7 +21,7 @@ export default function ExpensesPage() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [category, setCategory] = useState('');
 
-  if (loading) return null;
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,5 @@
-import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import * as ds from '@/services/dataService';
 
 export interface Plan {
   id: string;
@@ -12,64 +11,33 @@ export interface Plan {
 }
 
 export function usePlans() {
-  const { user } = useAuth();
-
   return useQuery({
-    queryKey: ['plans', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('plans' as any)
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Plan[];
-    },
-    enabled: !!user,
+    queryKey: ['plans'],
+    queryFn: () => ds.getPlans() as Promise<Plan[]>,
   });
 }
 
 export function useCreatePlan() {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (plan: { name: string; price: number; duration_days: number }) => {
-      const { data, error } = await (supabase.from('plans' as any) as any)
-        .insert({ ...plan, user_id: user!.id })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plans'] }),
+    mutationFn: (plan: { name: string; price: number; duration_days: number }) => ds.createPlan(plan),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['plans'] }),
   });
 }
 
 export function useUpdatePlan() {
-  const queryClient = useQueryClient();
-
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...plan }: { id: string; name: string; price: number; duration_days: number }) => {
-      const { data, error } = await (supabase.from('plans' as any) as any)
-        .update(plan)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plans'] }),
+    mutationFn: ({ id, ...plan }: { id: string; name: string; price: number; duration_days: number }) =>
+      ds.updatePlan(id, plan),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['plans'] }),
   });
 }
 
 export function useDeletePlan() {
-  const queryClient = useQueryClient();
-
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase.from('plans' as any) as any).delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plans'] }),
+    mutationFn: (id: string) => ds.deletePlan(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['plans'] }),
   });
 }

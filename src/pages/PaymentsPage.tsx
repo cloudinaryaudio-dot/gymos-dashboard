@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePayments, useCreatePayment, useDeletePayment, useUpdatePaymentStatus } from '@/hooks/usePayments';
 import { useMembers } from '@/hooks/useMembers';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ const methods = [
 ];
 
 export default function PaymentsPage() {
-  const { user, loading } = useAuth();
   const { data: payments, isLoading } = usePayments();
   const { data: members } = useMembers();
   const createPayment = useCreatePayment();
@@ -39,7 +37,7 @@ export default function PaymentsPage() {
   const [status, setStatus] = useState('paid');
   const [note, setNote] = useState('');
 
-  if (loading) return null;
+  
 
   const resetForm = () => {
     setMemberId(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));

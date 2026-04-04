@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { useLeads, LeadStatus, LEAD_STAGES } from '@/hooks/useLeads';
 import { usePlans } from '@/hooks/usePlans';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,6 @@ const statusConfig: Record<string, { color: string; bg: string; border: string }
 };
 
 export default function LeadsPage() {
-  const { loading } = useAuth();
   const { leads, isLoading, addLead, updateLeadStatus, deleteLead, convertToMember } = useLeads();
   const { data: plans } = usePlans();
   const [open, setOpen] = useState(false);
@@ -32,7 +31,7 @@ export default function LeadsPage() {
   const [filter, setFilter] = useState<string>('all');
   const [convertLead, setConvertLead] = useState<typeof leads[0] | null>(null);
 
-  if (loading) return null;
+  
 
   const handleAdd = () => {
     if (!name.trim() || !phone.trim()) return;

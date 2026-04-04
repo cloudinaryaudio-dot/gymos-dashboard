@@ -1,6 +1,5 @@
-import { db as supabase } from '@/integrations/supabase/db';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import * as ds from '@/services/dataService';
 
 export interface Expense {
   id: string;
@@ -13,30 +12,17 @@ export interface Expense {
 }
 
 export function useExpenses() {
-  const { user } = useAuth();
   return useQuery({
-    queryKey: ['expenses', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('expenses' as any)
-        .select('*')
-        .order('expense_date', { ascending: false });
-      if (error) throw error;
-      return data as Expense[];
-    },
-    enabled: !!user,
+    queryKey: ['expenses'],
+    queryFn: () => ds.getExpenses() as Promise<Expense[]>,
   });
 }
 
 export function useCreateExpense() {
   const qc = useQueryClient();
-  const { user } = useAuth();
   return useMutation({
-    mutationFn: async (e: { title: string; amount: number; expense_date: string; category?: string }) => {
-      const { data, error } = await (supabase.from('expenses' as any) as any).insert({ ...e, user_id: user!.id }).select().single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (e: { title: string; amount: number; expense_date: string; category?: string }) =>
+      ds.createExpense(e),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },
   });
 }
@@ -44,10 +30,7 @@ export function useCreateExpense() {
 export function useDeleteExpense() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase.from('expenses' as any) as any).delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => ds.deleteExpense(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['expenses'] }); qc.invalidateQueries({ queryKey: ['dashboard'] }); },
   });
 }

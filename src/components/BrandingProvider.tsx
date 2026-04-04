@@ -1,10 +1,6 @@
 import { useEffect } from 'react';
 import { useGymSettings } from '@/hooks/useGymSettings';
 
-/**
- * Applies gym branding (primary/secondary colors) as CSS custom properties
- * on the document root, so all themed components update live.
- */
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const { resolved, isLoading } = useGymSettings();
 
@@ -19,7 +15,6 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--chart-1', resolved.primary_color);
 
     return () => {
-      // Reset to defaults when unmounting (e.g., logging out)
       root.style.removeProperty('--primary');
       root.style.removeProperty('--ring');
       root.style.removeProperty('--accent');

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, Member } from '@/hooks/useMembers';
 import { usePlans } from '@/hooks/usePlans';
 import { usePayments, useCreatePayment } from '@/hooks/usePayments';
@@ -175,7 +175,6 @@ function getPaymentStatus(member: Member, payments: any[]) {
 }
 
 export default function MembersPage() {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { data: members, isLoading } = useMembers();
   const { data: plans } = usePlans();
@@ -193,7 +192,7 @@ export default function MembersPage() {
   const [collectAmount, setCollectAmount] = useState('');
   const [collectMethod, setCollectMethod] = useState('cash');
 
-  if (loading) return null;
+  
 
   const handleSubmit = async (data: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
     try {

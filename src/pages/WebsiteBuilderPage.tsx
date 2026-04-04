@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   useWebsiteContent, ALL_SECTION_KEYS, SECTION_DEFAULTS, SectionKey,
-  HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent,
+  HeroContent, SocialProofConfig, PricingContent, TrainersContent, TestimonialsContent, GalleryContent,
   ServicesContent, EquipmentContent, ReviewsContent, BranchesContent,
-  TrainerItem, TestimonialItem, GalleryMediaItem, ServiceItem, EquipmentItem, ReviewItem, BranchItem,
+  TrainerItem, TestimonialItem, GalleryMediaItem, ServiceItem, EquipmentItem, ReviewItem, BranchItem, OrbitContent, OrbitIconItem, NavbarContent, LoaderContent,
 } from '@/hooks/useWebsiteContent';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +13,9 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, ExternalLink, Plus, Trash2, Film, Image, Dumbbell, Sparkles, Star, MapPin, Phone } from 'lucide-react';
+import { Save, ExternalLink, Plus, Trash2, Film, Image, Dumbbell, Sparkles, Star, MapPin, Phone, Navigation, Loader2 } from 'lucide-react';
 
 export default function WebsiteBuilderPage() {
-  const { user, loading } = useAuth();
   const { sections, isLoading, getSectionContent, isSectionEnabled, upsertSection } = useWebsiteContent();
 
   const [drafts, setDrafts] = useState<Record<string, any>>({});
@@ -35,7 +33,7 @@ export default function WebsiteBuilderPage() {
     setToggles(t);
   }, [sections]);
 
-  if (loading) return null;
+  
 
   const updateDraft = (key: SectionKey, field: string, value: any) => {
     setDrafts(prev => ({ ...prev, [key]: { ...(prev[key] ?? SECTION_DEFAULTS[key].defaultContent), [field]: value } }));
@@ -101,6 +99,65 @@ export default function WebsiteBuilderPage() {
                 <p className="text-sm font-medium">Mobile Background (optional)</p>
                 <Field label="Mobile Image URL" value={drafts.hero?.mobile_image_url} onChange={v => updateDraft('hero', 'mobile_image_url', v)} placeholder="https://..." />
                 <Field label="Mobile Video URL" value={drafts.hero?.mobile_video_url} onChange={v => updateDraft('hero', 'mobile_video_url', v)} placeholder="https://...mp4 or YouTube URL" />
+              </div>
+              {/* Social Proof */}
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Social Proof (below CTA)</p>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs">Enabled</Label>
+                    <Switch
+                      checked={drafts.hero?.social_proof?.enabled !== false}
+                      onCheckedChange={v => {
+                        const sp = { ...(drafts.hero?.social_proof ?? {}), enabled: v };
+                        updateDraft('hero', 'social_proof', sp);
+                      }}
+                    />
+                  </div>
+                </div>
+                <Field
+                  label="Member Count Text"
+                  value={drafts.hero?.social_proof?.member_count_text}
+                  onChange={v => {
+                    const sp = { ...(drafts.hero?.social_proof ?? {}), member_count_text: v };
+                    updateDraft('hero', 'social_proof', sp);
+                  }}
+                  placeholder="500+ Happy Members"
+                />
+                <div className="space-y-2">
+                  <Label className="text-xs">Profile Image URLs (3 images)</Label>
+                  {[0, 1, 2].map(i => (
+                    <Input
+                      key={i}
+                      value={(drafts.hero?.social_proof?.profile_images ?? [])[i] ?? ''}
+                      onChange={e => {
+                        const imgs = [...(drafts.hero?.social_proof?.profile_images ?? ['', '', ''])];
+                        imgs[i] = e.target.value;
+                        const sp = { ...(drafts.hero?.social_proof ?? {}), profile_images: imgs };
+                        updateDraft('hero', 'social_proof', sp);
+                      }}
+                      placeholder={`Profile image ${i + 1} URL`}
+                    />
+                  ))}
+                </div>
+                <Field
+                  label="Rating Value"
+                  value={drafts.hero?.social_proof?.rating_value}
+                  onChange={v => {
+                    const sp = { ...(drafts.hero?.social_proof ?? {}), rating_value: v };
+                    updateDraft('hero', 'social_proof', sp);
+                  }}
+                  placeholder="4.8"
+                />
+                <Field
+                  label="Rating Text"
+                  value={drafts.hero?.social_proof?.rating_text}
+                  onChange={v => {
+                    const sp = { ...(drafts.hero?.social_proof ?? {}), rating_text: v };
+                    updateDraft('hero', 'social_proof', sp);
+                  }}
+                  placeholder="Rated on Google"
+                />
               </div>
               {/* Live Preview */}
               {(drafts.hero?.image_url || drafts.hero?.video_url) && (
@@ -251,6 +308,90 @@ export default function WebsiteBuilderPage() {
                 renderItem={(item: BranchItem) => `${item.name}${item.location ? ` — ${item.location}` : ''}`}
               />
               <AddBranchForm onAdd={item => addItem('branches', item)} />
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── ORBIT ANIMATION ─── */}
+          <TabsContent value="orbit">
+            <SectionCard sectionKey="orbit" toggles={toggles} setToggles={setToggles} onSave={() => save('orbit')} saving={upsertSection.isPending}>
+              <p className="text-sm text-muted-foreground">Configure the orbit animation in your hero section. Provide image URLs for the center person and each orbiting icon.</p>
+              <Field label="Center Person Image URL" value={drafts.orbit?.person_url} onChange={v => updateDraft('orbit', 'person_url', v)} placeholder="https://... (transparent PNG recommended)" />
+              <div className="border rounded-lg p-4 space-y-4 bg-muted/20">
+                <p className="text-sm font-medium">Orbiting Icons (5 icons)</p>
+                {(drafts.orbit?.icons ?? SECTION_DEFAULTS.orbit.defaultContent.icons).map((icon: OrbitIconItem, i: number) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg border bg-background">
+                    <div>
+                      <Label className="text-xs">Icon {i + 1} Label</Label>
+                      <Input
+                        value={icon.label ?? ''}
+                        onChange={e => {
+                          const icons = [...(drafts.orbit?.icons ?? SECTION_DEFAULTS.orbit.defaultContent.icons)];
+                          icons[i] = { ...icons[i], label: e.target.value };
+                          updateDraft('orbit', 'icons', icons);
+                        }}
+                        placeholder="e.g. Strength Training"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Icon {i + 1} Image URL</Label>
+                      <Input
+                        value={icon.url ?? ''}
+                        onChange={e => {
+                          const icons = [...(drafts.orbit?.icons ?? SECTION_DEFAULTS.orbit.defaultContent.icons)];
+                          icons[i] = { ...icons[i], url: e.target.value };
+                          updateDraft('orbit', 'icons', icons);
+                        }}
+                        placeholder="https://... (transparent PNG recommended)"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── NAVBAR ─── */}
+          <TabsContent value="navbar">
+            <SectionCard sectionKey="navbar" toggles={toggles} setToggles={setToggles} onSave={() => save('navbar')} saving={upsertSection.isPending}>
+              <p className="text-sm text-muted-foreground">Customize your public website navbar. Leave fields empty to use defaults from Branding Settings.</p>
+              <Field label="Logo URL (overrides branding)" value={drafts.navbar?.logo_url} onChange={v => updateDraft('navbar', 'logo_url', v)} placeholder="https://..." />
+              <Field label="Brand Name (overrides branding)" value={drafts.navbar?.brand_name} onChange={v => updateDraft('navbar', 'brand_name', v)} placeholder="GymOS" />
+              <Field label="CTA Button Text" value={drafts.navbar?.cta_text} onChange={v => updateDraft('navbar', 'cta_text', v)} placeholder="Join Now" />
+              <Field label="CTA Scroll Target (section id)" value={drafts.navbar?.cta_link} onChange={v => updateDraft('navbar', 'cta_link', v)} placeholder="lead-form" />
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                <Label className="text-sm">Show Dashboard Link</Label>
+                <Switch
+                  checked={drafts.navbar?.show_dashboard_link !== false}
+                  onCheckedChange={v => updateDraft('navbar', 'show_dashboard_link', v)}
+                />
+              </div>
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── LOADER ─── */}
+          <TabsContent value="loader">
+            <SectionCard sectionKey="loader" toggles={toggles} setToggles={setToggles} onSave={() => save('loader')} saving={upsertSection.isPending}>
+              <p className="text-sm text-muted-foreground">Configure the loading animation shown on first visit. Leave text empty to use gym name.</p>
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                <Label className="text-sm">Enable Page Loader</Label>
+                <Switch
+                  checked={drafts.loader?.enabled !== false}
+                  onCheckedChange={v => updateDraft('loader', 'enabled', v)}
+                />
+              </div>
+              <Field label="Loader Text (e.g., gym name or tagline)" value={drafts.loader?.text} onChange={v => updateDraft('loader', 'text', v)} placeholder="Build Your Strength" />
+              <Field label="Custom Icon/Logo URL (optional)" value={drafts.loader?.icon_url} onChange={v => updateDraft('loader', 'icon_url', v)} placeholder="https://... (transparent PNG recommended)" />
+              <div>
+                <Label>Duration (seconds)</Label>
+                <Select value={String(drafts.loader?.duration ?? 3)} onValueChange={v => updateDraft('loader', 'duration', Number(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2">2 seconds</SelectItem>
+                    <SelectItem value="3">3 seconds (default)</SelectItem>
+                    <SelectItem value="4">4 seconds</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </SectionCard>
           </TabsContent>
         </Tabs>

@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { db as supabase } from '@/integrations/supabase/db';
 import { usePublicGymSettings } from '@/hooks/useGymSettings';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,12 +10,15 @@ import { useToast } from '@/hooks/use-toast';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import {
   Dumbbell, Send, ChevronRight, Users, Award, Calendar, Star, ArrowRight, Play, Phone, User, Target,
-  MapPin, Mail, Clock, Menu, X,
+  MapPin, Mail, Clock,
 } from 'lucide-react';
-import type { HeroContent, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, ServicesContent, EquipmentContent, ReviewsContent, BranchesContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
+import type { HeroContent, SocialProofConfig, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, ServicesContent, EquipmentContent, ReviewsContent, BranchesContent, OrbitContent, NavbarContent, LoaderContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 import { VideoEmbed } from '@/components/VideoEmbed';
+import OrbitAnimation from '@/components/OrbitAnimation';
 import { Lightbox } from '@/components/Lightbox';
 import { PageLoader } from '@/components/PageLoader';
+import { PublicNavbar } from '@/components/PublicNavbar';
+import * as ds from '@/services/dataService';
 
 function getYouTubeId(url: string): string | null {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
@@ -81,34 +82,25 @@ function ParallaxSection({ children, className = '', speed = 0.15 }: { children:
 }
 
 export default function LandingPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [leadName, setLeadName] = useState('');
   const [leadPhone, setLeadPhone] = useState('');
   const [leadGoal, setLeadGoal] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Fetch website_content + plans
+  // Fetch website_content + plans from mock data
   const { data, isLoading } = useQuery({
     queryKey: ['public-landing'],
     queryFn: async () => {
-      const [contentRes, plansRes] = await Promise.all([
-        supabase.from('website_content' as any).select('*').eq('is_enabled', true),
-        supabase.from('plans').select('*').order('price').limit(10),
+      const [content, plans] = await Promise.all([
+        ds.getPublicWebsiteContent(),
+        ds.getPlans(),
       ]);
-      const rows = (contentRes.data ?? []) as WebsiteContentRow[];
+      const rows = content as WebsiteContentRow[];
       const getSection = (key: string) => rows.find(r => r.section_key === key);
       return {
         sections: rows,
-        plans: plansRes.data ?? [],
+        plans: plans.sort((a, b) => a.price - b.price),
         hero: getSection('hero'),
         pricing: getSection('pricing'),
         trainers: getSection('trainers'),
@@ -118,12 +110,14 @@ export default function LandingPage() {
         equipment: getSection('equipment'),
         reviews: getSection('reviews'),
         branches: getSection('branches'),
+        orbit: getSection('orbit'),
+        navbar: getSection('navbar'),
+        loader: getSection('loader'),
       };
     },
   });
 
-  const gymId = data?.sections?.[0]?.user_id || (data?.plans?.[0] as any)?.user_id;
-  const { data: gymBranding } = usePublicGymSettings(gymId);
+  const { data: gymBranding } = usePublicGymSettings();
   const brandName = gymBranding?.gym_name || 'GymOS';
   const brandLogo = gymBranding?.logo_url;
 
@@ -143,9 +137,12 @@ export default function LandingPage() {
   const equipmentContent = (data?.equipment?.content ?? {}) as EquipmentContent;
   const reviewsContent = (data?.reviews?.content ?? {}) as ReviewsContent;
   const branchesContent = (data?.branches?.content ?? {}) as BranchesContent;
+  const orbitContent = (data?.orbit?.content ?? {}) as OrbitContent;
+  const orbitEnabled = data?.orbit?.is_enabled !== false;
+  const navbarContent = (data?.navbar?.content ?? {}) as NavbarContent;
+  const loaderContent = (data?.loader?.content ?? {}) as LoaderContent;
 
   const scrollTo = (id: string) => {
-    setMobileMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -153,22 +150,14 @@ export default function LandingPage() {
     e.preventDefault();
     if (!leadName.trim() || !leadPhone.trim()) return;
     setSubmitting(true);
-    const ownerIdForLead = gymId;
-    if (!ownerIdForLead) {
-      toast({ title: 'Error', description: 'Unable to submit. Please try again later.', variant: 'destructive' });
-      setSubmitting(false);
-      return;
-    }
-    const { error } = await supabase.from('leads').insert({
-      name: leadName.trim(), phone: leadPhone.trim(), fitness_goal: leadGoal || null, user_id: ownerIdForLead,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
+    try {
+      await ds.createLead({ name: leadName.trim(), phone: leadPhone.trim(), fitness_goal: leadGoal || undefined });
       toast({ title: '🎉 Welcome!', description: "We'll contact you shortly to get started." });
       setLeadName(''); setLeadPhone(''); setLeadGoal('');
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
+    setSubmitting(false);
   };
 
   const navLinks = [
@@ -181,59 +170,23 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth">
-      <PageLoader brandName={brandName} brandLogo={brandLogo} />
-      {/* ─── NAVBAR ─── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[hsl(220,25%,4%)]/95 backdrop-blur-xl shadow-2xl shadow-black/20' : 'bg-transparent'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-4">
-          <div className="flex items-center gap-3">
-            {brandLogo ? (
-              <img src={brandLogo} alt={brandName} className="h-10 w-10 rounded-xl object-cover shadow-lg" />
-            ) : (
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-[hsl(142,71%,35%)] flex items-center justify-center shadow-lg shadow-primary/25">
-                <Dumbbell className="h-5 w-5 text-primary-foreground" />
-              </div>
-            )}
-            <span className="text-xl font-bold font-display tracking-tight">{brandName}</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            {navLinks.map(link => (
-              <button key={link.id} onClick={() => scrollTo(link.id)} className="text-[hsl(220,10%,55%)] hover:text-[hsl(220,10%,92%)] transition-colors duration-200 relative group">
-                {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-              </button>
-            ))}
-          </div>
-          <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" className="text-[hsl(220,10%,60%)] hover:text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,10%)]" onClick={() => scrollTo('lead-form')}>
-              Book Free Trial
-            </Button>
-            <Link to={user ? '/app/dashboard' : '/login'}>
-              <Button size="sm" className="bg-[hsl(220,20%,12%)] text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,16%)] border border-[hsl(220,20%,18%)]">
-                {user ? 'Dashboard' : 'Admin Login'}
-              </Button>
-            </Link>
-          </div>
-          <button className="md:hidden p-2 text-[hsl(220,10%,60%)]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-        {mobileMenuOpen && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="md:hidden bg-[hsl(220,25%,6%)] border-t border-[hsl(220,20%,12%)] px-4 py-6 space-y-4">
-            {navLinks.map(link => (
-              <button key={link.id} onClick={() => scrollTo(link.id)} className="block w-full text-left text-[hsl(220,10%,70%)] hover:text-[hsl(220,10%,92%)] py-2 text-lg font-medium">
-                {link.label}
-              </button>
-            ))}
-            <Link to={user ? '/app/dashboard' : '/login'} className="block">
-              <Button className="w-full mt-2">{user ? 'Dashboard' : 'Admin Login'}</Button>
-            </Link>
-          </motion.div>
-        )}
-      </nav>
+      <PageLoader
+        brandName={brandName}
+        brandLogo={brandLogo}
+        loaderText={loaderContent.text || undefined}
+        duration={(loaderContent.duration || 3) * 1000}
+        enabled={loaderContent.enabled !== false}
+      />
+      <PublicNavbar
+        config={navbarContent}
+        brandName={brandName}
+        brandLogo={brandLogo}
+        navLinks={navLinks}
+        onScrollTo={scrollTo}
+      />
 
       {/* ─── HERO ─── */}
-      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Video or Image */}
+      <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
         {heroContent.video_url ? (
           <>
             <HeroBackground url={heroContent.video_url} className="hidden md:block" />
@@ -249,39 +202,110 @@ export default function LandingPage() {
             <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url || heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
           </>
         ) : null}
-        {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-[hsla(220,25%,4%,0.5)] via-[hsla(220,25%,4%,0.7)] to-[hsl(220,25%,4%)]" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10 text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-semibold mb-8 backdrop-blur-sm">
-              <Star className="h-4 w-4 fill-primary" /> Trusted by 500+ Members
-            </div>
-          </motion.div>
-          <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15 }}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold font-display leading-[1.05] tracking-tight max-w-5xl mx-auto">
-            {heroContent.title || (<>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Build Your Discipline.</span></>)}
-          </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-8 text-lg sm:text-xl text-[hsl(220,10%,55%)] max-w-2xl mx-auto leading-relaxed">
-            {heroContent.subtitle || 'World-class equipment, expert trainers, and a community that pushes you beyond limits.'}
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-12 flex flex-wrap justify-center gap-4">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
-              <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300" onClick={() => scrollTo('lead-form')}>
-                {heroContent.cta_text || 'Start Free Trial'} <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-8 items-center">
+          {/* LEFT: Content */}
+          <div className="text-center md:text-left">
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-semibold mb-8 backdrop-blur-sm">
+                <Star className="h-4 w-4 fill-primary" /> Trusted by 500+ Members
+              </div>
             </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
-              <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
-                <Calendar className="mr-2 h-5 w-5" /> Book a Visit
-              </Button>
+            <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15 }}
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold font-display leading-[1.05] tracking-tight">
+              {heroContent.title || (<>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Build Your Discipline.</span></>)}
+            </motion.h1>
+            <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+              className="mt-6 text-lg text-[hsl(220,10%,55%)] max-w-lg mx-auto md:mx-0 leading-relaxed">
+              {heroContent.subtitle || 'World-class equipment, expert trainers, and a community that pushes you beyond limits.'}
+            </motion.p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }}
+              className="mt-10 flex flex-wrap justify-center md:justify-start gap-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+                <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300" onClick={() => scrollTo('lead-form')}>
+                  {heroContent.cta_text || 'Start Free Trial'} <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
+                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
+                  <Calendar className="mr-2 h-5 w-5" /> Book a Visit
+                </Button>
+              </motion.div>
             </motion.div>
-          </motion.div>
+
+            {/* Social Proof */}
+            {heroContent.social_proof?.enabled !== false && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-10 flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-6"
+              >
+                {/* Happy Customers */}
+                <div className="flex items-center gap-3 group cursor-default transition-transform duration-200 hover:scale-[1.03]">
+                  <div className="flex -space-x-3">
+                    {(heroContent.social_proof?.profile_images?.length
+                      ? heroContent.social_proof.profile_images.slice(0, 3)
+                      : [
+                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=face',
+                          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+                          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face',
+                        ]
+                    ).map((url, i) => (
+                      <motion.img
+                        key={i}
+                        src={url}
+                        alt="Member"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4, delay: 0.8 + i * 0.1 }}
+                        className="h-9 w-9 rounded-full border-2 border-[hsl(220,25%,8%)] object-cover shadow-md"
+                        loading="lazy"
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold text-[hsl(220,10%,75%)]">
+                    {heroContent.social_proof?.member_count_text || '500+ Happy Members'}
+                  </span>
+                </div>
+
+                <div className="hidden sm:block w-px h-8 bg-[hsl(220,20%,18%)]" />
+
+                {/* Google Rating */}
+                <div className="flex items-center gap-2 group cursor-default transition-transform duration-200 hover:scale-[1.03]">
+                  <div className="flex items-center gap-1">
+                    <span className="text-lg font-bold text-[hsl(220,10%,92%)]">
+                      {heroContent.social_proof?.rating_value || '4.8'}
+                    </span>
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} className="h-4 w-4 fill-[hsl(45,93%,47%)] text-[hsl(45,93%,47%)]" />
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-sm text-[hsl(220,10%,50%)]">
+                    {heroContent.social_proof?.rating_text || 'Rated on Google'}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </div>
+          {/* RIGHT: Orbit Animation */}
+          {orbitEnabled && (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, delay: 0.4 }}
+              className="flex items-center justify-center">
+              <OrbitAnimation
+                speed="normal"
+                pauseOnHover
+                personUrl={orbitContent.person_url || undefined}
+                icons={orbitContent.icons?.some(i => i.url) ? orbitContent.icons.filter(i => i.url).map(i => ({ src: i.url, alt: i.label })) : undefined}
+              />
+            </motion.div>
+          )}
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[hsl(220,25%,4%)] to-transparent" />
       </section>
@@ -308,7 +332,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── SERVICES (only if enabled & has items) ─── */}
+      {/* ─── SERVICES ─── */}
       {data?.services && (servicesContent.items?.length ?? 0) > 0 && (
         <section id="services" className="py-28 px-4 sm:px-6 lg:px-8 relative">
           <div className="absolute inset-0 pointer-events-none">
@@ -346,7 +370,7 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ─── EQUIPMENT (only if enabled & has items) ─── */}
+      {/* ─── EQUIPMENT ─── */}
       {data?.equipment && (equipmentContent.items?.length ?? 0) > 0 && (
         <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
@@ -424,7 +448,7 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ─── TRAINERS (only if enabled & has items) ─── */}
+      {/* ─── TRAINERS ─── */}
       {data?.trainers && (trainersContent.items?.length ?? 0) > 0 && (
         <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
@@ -459,13 +483,12 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ─── TESTIMONIALS (text + video) ─── */}
+      {/* ─── TESTIMONIALS ─── */}
       {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (() => {
         const textItems = testimonialsContent.items.filter(t => !t.video_url);
         const videoItems = testimonialsContent.items.filter(t => !!t.video_url);
         return (
           <>
-            {/* Text testimonials */}
             {textItems.length > 0 && (
               <section id="testimonials" className="py-28 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
@@ -495,8 +518,6 @@ export default function LandingPage() {
                 </div>
               </section>
             )}
-
-            {/* Video testimonials */}
             {videoItems.length > 0 && (
               <section id="video-testimonials" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
                 <div className="max-w-7xl mx-auto">
@@ -524,7 +545,7 @@ export default function LandingPage() {
         );
       })()}
 
-      {/* ─── GALLERY (preview, limit 6) ─── */}
+      {/* ─── GALLERY ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (
         <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
@@ -567,7 +588,7 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ─── GOOGLE REVIEWS (only if enabled & has items) ─── */}
+      {/* ─── GOOGLE REVIEWS ─── */}
       {data?.reviews && (reviewsContent.items?.length ?? 0) > 0 && (
         <section id="reviews" className="py-28 px-4 sm:px-6 lg:px-8 relative">
           <div className="absolute inset-0 pointer-events-none">
@@ -606,7 +627,7 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ─── BRANCHES / FRANCHISE (only if enabled & has items) ─── */}
+      {/* ─── BRANCHES ─── */}
       {data?.branches && (branchesContent.items?.length ?? 0) > 0 && (
         <section id="branches" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
           <div className="max-w-7xl mx-auto">
@@ -737,14 +758,14 @@ export default function LandingPage() {
           </div>
           <div className="mt-12 pt-8 border-t border-[hsl(220,20%,10%)] flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-[hsl(220,10%,35%)]">© {new Date().getFullYear()} {brandName}. All rights reserved.</p>
-            <Link to={user ? '/app/dashboard' : '/login'} className="text-xs text-[hsl(220,10%,35%)] hover:text-primary transition-colors">
-              {user ? 'Go to Dashboard' : 'Admin Login'}
+            <Link to="/app/dashboard" className="text-xs text-[hsl(220,10%,35%)] hover:text-primary transition-colors">
+              Go to Dashboard
             </Link>
           </div>
         </div>
       </footer>
 
-      <FloatingContactButtons gymId={gymId} />
+      <FloatingContactButtons />
     </div>
   );
 }

@@ -2,12 +2,8 @@ import { usePublicContactSettings } from '@/hooks/useContactSettings';
 import { motion } from 'framer-motion';
 import { MessageCircle, Instagram } from 'lucide-react';
 
-interface Props {
-  gymId: string | undefined;
-}
-
-export function FloatingContactButtons({ gymId }: Props) {
-  const { data: contactSettings } = usePublicContactSettings(gymId);
+export function FloatingContactButtons() {
+  const { data: contactSettings } = usePublicContactSettings();
 
   if (!contactSettings) return null;
 
@@ -28,9 +24,7 @@ export function FloatingContactButtons({ gymId }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg shadow-pink-500/25 hover:scale-110 transition-transform duration-200"
-          style={{
-            background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-          }}
+          style={{ background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)' }}
           animate={{ scale: [1, 1.08, 1] }}
           transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
           aria-label="Contact us on Instagram"

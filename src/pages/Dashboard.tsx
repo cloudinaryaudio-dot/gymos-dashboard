@@ -1,12 +1,35 @@
-import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus, CalendarDays, Zap, CreditCard, Target, UserCheck, Percent, ShieldAlert } from 'lucide-react';
+import { useState } from 'react';
+import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus, CalendarDays, Zap, CreditCard, Target, UserCheck, Percent, ShieldAlert, Database, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { SetupBanner } from '@/components/SetupBanner';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { seedDemoData, resetDemoData, clearLocalData } from '@/data/mockDb';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useDashboardStats();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const handleSeed = () => {
+    seedDemoData();
+    qc.invalidateQueries();
+    toast({ title: '✅ Demo data loaded!' });
+  };
+
+  const handleReset = () => {
+    resetDemoData();
+    qc.invalidateQueries();
+    toast({ title: '🗑️ All data cleared!' });
+  };
 
   if (isLoading) {
     return (
@@ -94,12 +117,67 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <SetupBanner />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold font-display">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {format(new Date(), 'EEEE, dd MMMM yyyy')}
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Database className="mr-2 h-4 w-4" /> Load Demo Data
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Load Demo Data?</AlertDialogTitle>
+                <AlertDialogDescription>This will overwrite current data with demo data. Continue?</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSeed}>Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                <RotateCcw className="mr-2 h-4 w-4" /> Reset Data
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reset All Data?</AlertDialogTitle>
+                <AlertDialogDescription>This will remove all data. Continue?</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                <Trash2 className="mr-2 h-4 w-4" /> Clear Local Data
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear Local Data?</AlertDialogTitle>
+                <AlertDialogDescription>This will clear all local data and reload the app. Continue?</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { toast({ title: '🧹 Local data cleared!' }); setTimeout(clearLocalData, 300); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

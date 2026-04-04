@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan, Plan } from '@/hooks/usePlans';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +46,6 @@ function PlanForm({ plan, onSubmit, onCancel }: {
 }
 
 export default function PlansPage() {
-  const { user, loading } = useAuth();
   const { data: plans, isLoading } = usePlans();
   const createPlan = useCreatePlan();
   const updatePlan = useUpdatePlan();
@@ -56,7 +54,7 @@ export default function PlansPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
-  if (loading) return null;
+  
 
   const handleSubmit = async (data: { name: string; price: number; duration_days: number }) => {
     try {
