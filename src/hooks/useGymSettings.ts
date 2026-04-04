@@ -48,6 +48,8 @@ export function useGymSettings() {
     logo_url: settings?.logo_url ?? DEFAULT_SETTINGS.logo_url,
     primary_color: settings?.primary_color ?? DEFAULT_SETTINGS.primary_color,
     secondary_color: settings?.secondary_color ?? DEFAULT_SETTINGS.secondary_color,
+    accent_color: settings?.accent_color ?? DEFAULT_SETTINGS.accent_color,
+    highlight_color: settings?.highlight_color ?? DEFAULT_SETTINGS.highlight_color,
   };
 
   return { settings, resolved, isLoading, upsertSettings };

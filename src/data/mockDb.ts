@@ -16,7 +16,8 @@ export interface MockDb {
 
 export interface GymSettingsRow {
   id: string; user_id: string; gym_name: string; logo_url: string | null;
-  primary_color: string; secondary_color: string; created_at: string; updated_at: string;
+  primary_color: string; secondary_color: string; accent_color: string; highlight_color: string;
+  created_at: string; updated_at: string;
 }
 export interface PlanRow {
   id: string; user_id: string; name: string; price: number; duration_days: number; created_at: string;
