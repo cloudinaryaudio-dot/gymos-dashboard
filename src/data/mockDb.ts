@@ -337,7 +337,8 @@ export function createSeedData(): MockDb {
   // Gym settings
   const gym_settings: GymSettingsRow[] = [{
     id: genId(), user_id: DEMO_USER_ID, gym_name: 'Elite Fitness Club',
-    logo_url: null, primary_color: '142 71% 45%', secondary_color: '220 25% 8%',
+    logo_url: null, primary_color: '222 47% 11%', secondary_color: '220 26% 14%',
+    accent_color: '142 71% 45%', highlight_color: '142 80% 55%',
     created_at: nowIso, updated_at: nowIso,
   }];
 

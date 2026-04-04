@@ -240,8 +240,10 @@ export async function upsertGymSettings(updates: Partial<Omit<GymSettingsRow, 'i
       id: genId(), user_id: 'demo-user',
       gym_name: updates.gym_name || 'GymOS',
       logo_url: updates.logo_url || null,
-      primary_color: updates.primary_color || '142 71% 45%',
-      secondary_color: updates.secondary_color || '220 25% 8%',
+      primary_color: updates.primary_color || '222 47% 11%',
+      secondary_color: updates.secondary_color || '220 26% 14%',
+      accent_color: updates.accent_color || '142 71% 45%',
+      highlight_color: updates.highlight_color || '142 80% 55%',
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     });
   }
