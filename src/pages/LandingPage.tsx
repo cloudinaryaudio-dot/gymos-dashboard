@@ -262,8 +262,8 @@ export default function LandingPage() {
                         alt="Member"
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.4, delay: 0.8 + i * 0.1 }}
-                        className="h-9 w-9 rounded-full border-2 border-[hsl(220,25%,8%)] object-cover shadow-md"
+                        transition={{ duration: 0.4, delay: 0.7 + i * 0.08 }}
+                        className="h-9 w-9 rounded-full border-2 border-[hsl(var(--website-bg))] object-cover shadow-md"
                         loading="lazy"
                       />
                     ))}
