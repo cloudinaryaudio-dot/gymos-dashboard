@@ -202,7 +202,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url || heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
           </>
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-b from-[hsla(220,25%,4%,0.5)] via-[hsla(220,25%,4%,0.7)] to-[hsl(220,25%,4%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsla(var(--website-bg)/0.5)] via-[hsla(var(--website-bg)/0.7)] to-[hsl(var(--website-bg))]" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
