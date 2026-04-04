@@ -88,7 +88,6 @@ export default function LandingPage() {
   const [leadGoal, setLeadGoal] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch website_content + plans from mock data
   const { data, isLoading } = useQuery({
     queryKey: ['public-landing'],
     queryFn: async () => {
@@ -120,13 +119,6 @@ export default function LandingPage() {
   const { data: gymBranding } = usePublicGymSettings();
   const brandName = gymBranding?.gym_name || 'GymOS';
   const brandLogo = gymBranding?.logo_url;
-
-  useEffect(() => {
-    if (gymBranding?.primary_color) {
-      document.documentElement.style.setProperty('--primary', gymBranding.primary_color);
-    }
-    return () => { document.documentElement.style.removeProperty('--primary'); };
-  }, [gymBranding?.primary_color]);
 
   const heroContent = (data?.hero?.content ?? {}) as HeroContent;
   const pricingContent = (data?.pricing?.content ?? {}) as PricingContent;
@@ -169,7 +161,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth" style={{ background: 'hsl(var(--website-bg))' }}>
+    <div className="min-h-screen text-ws-text overflow-x-hidden scroll-smooth bg-website-bg">
       <PageLoader
         brandName={brandName}
         brandLogo={brandLogo}
@@ -202,7 +194,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 md:hidden" style={{ backgroundImage: `url(${heroContent.mobile_image_url || heroContent.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
           </>
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-b from-[hsla(var(--website-bg)/0.5)] via-[hsla(var(--website-bg)/0.7)] to-[hsl(var(--website-bg))]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-website-bg/50 via-website-bg/70 to-website-bg" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
@@ -217,10 +209,10 @@ export default function LandingPage() {
             </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold font-display leading-[1.05] tracking-tight">
-              {heroContent.title || (<>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-[hsl(var(--highlight))] bg-clip-text text-transparent">Build Your Discipline.</span></>)}
+              {heroContent.title || (<>Transform Your Body.{' '}<br className="hidden sm:block" /><span className="bg-gradient-to-r from-primary to-highlight bg-clip-text text-transparent">Build Your Discipline.</span></>)}
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-6 text-lg text-[hsl(220,10%,55%)] max-w-lg mx-auto md:mx-0 leading-relaxed">
+              className="mt-6 text-lg text-ws-text-muted max-w-lg mx-auto md:mx-0 leading-relaxed">
               {heroContent.subtitle || 'World-class equipment, expert trainers, and a community that pushes you beyond limits.'}
             </motion.p>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -231,7 +223,7 @@ export default function LandingPage() {
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
-                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-[hsl(var(--website-bg-secondary))]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
+                <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-ws-border-light bg-website-bg-secondary/50 text-ws-text hover:bg-ws-border backdrop-blur-sm transition-all duration-300" onClick={() => scrollTo('lead-form')}>
                   <Calendar className="mr-2 h-5 w-5" /> Book a Visit
                 </Button>
               </motion.div>
@@ -245,7 +237,6 @@ export default function LandingPage() {
                 transition={{ duration: 0.6, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-10 flex flex-col sm:flex-row items-center sm:items-start md:items-center gap-6"
               >
-                {/* Happy Customers */}
                 <div className="flex items-center gap-3 group cursor-default transition-transform duration-200 hover:scale-[1.03]">
                   <div className="flex -space-x-3">
                     {(heroContent.social_proof?.profile_images?.length
@@ -263,31 +254,30 @@ export default function LandingPage() {
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.4, delay: 0.7 + i * 0.08 }}
-                        className="h-9 w-9 rounded-full border-2 border-[hsl(var(--website-bg))] object-cover shadow-md"
+                        className="h-9 w-9 rounded-full border-2 border-website-bg object-cover shadow-md"
                         loading="lazy"
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-semibold text-[hsl(220,10%,75%)]">
+                  <span className="text-sm font-semibold text-ws-text-label">
                     {heroContent.social_proof?.member_count_text || '500+ Happy Members'}
                   </span>
                 </div>
 
-                <div className="hidden sm:block w-px h-8 bg-[hsl(220,20%,18%)]" />
+                <div className="hidden sm:block w-px h-8 bg-ws-border-light" />
 
-                {/* Google Rating */}
                 <div className="flex items-center gap-2 group cursor-default transition-transform duration-200 hover:scale-[1.03]">
                   <div className="flex items-center gap-1">
-                    <span className="text-lg font-bold text-[hsl(220,10%,92%)]">
+                    <span className="text-lg font-bold text-ws-text">
                       {heroContent.social_proof?.rating_value || '4.8'}
                     </span>
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} className="h-4 w-4 fill-[hsl(45,93%,47%)] text-[hsl(45,93%,47%)]" />
+                        <Star key={s} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       ))}
                     </div>
                   </div>
-                  <span className="text-sm text-[hsl(220,10%,50%)]">
+                  <span className="text-sm text-ws-text-subtle">
                     {heroContent.social_proof?.rating_text || 'Rated on Google'}
                   </span>
                 </div>
@@ -307,11 +297,11 @@ export default function LandingPage() {
             </motion.div>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[hsl(var(--website-bg))] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-website-bg to-transparent" />
       </section>
 
       {/* ─── SOCIAL PROOF ─── */}
-      <section className="relative -mt-1 border-y border-[hsl(220,20%,10%)] bg-[hsl(220,25%,6%)]">
+      <section className="relative -mt-1 border-y border-ws-border-dim bg-ws-social-proof">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
@@ -325,7 +315,7 @@ export default function LandingPage() {
                   <stat.icon className="h-5 w-5 text-primary" />
                 </div>
                 <p className="text-4xl font-bold font-display">{stat.value}</p>
-                <p className="text-sm text-[hsl(220,10%,45%)] font-medium uppercase tracking-wider">{stat.label}</p>
+                <p className="text-sm text-ws-text-dim font-medium uppercase tracking-wider">{stat.label}</p>
               </AnimatedSection>
             ))}
           </div>
@@ -342,16 +332,16 @@ export default function LandingPage() {
             <AnimatedSection className="text-center mb-16" variant="blur">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">What We Offer</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{servicesContent.title || 'Our Services'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{servicesContent.subtitle || 'Explore our range of fitness programs.'}</p>
+              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{servicesContent.subtitle || 'Explore our range of fitness programs.'}</p>
             </AnimatedSection>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {servicesContent.items.map((s, i) => (
                 <AnimatedSection key={i} delay={i * 0.08}>
-                  <div className="group rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
+                  <div className="group rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
                     {s.image_url ? (
                       <div className="relative aspect-[16/10] overflow-hidden">
                         <img src={s.image_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,25%,7%)] via-transparent to-transparent opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-ws-card via-transparent to-transparent opacity-60" />
                       </div>
                     ) : (
                       <div className="flex items-center justify-center pt-8 pb-2">
@@ -360,7 +350,7 @@ export default function LandingPage() {
                     )}
                     <div className="p-6 flex-1 flex flex-col">
                       <h3 className="font-display font-bold text-lg mb-2">{s.title}</h3>
-                      {s.description && <p className="text-sm text-[hsl(220,10%,50%)] leading-relaxed flex-1">{s.description}</p>}
+                      {s.description && <p className="text-sm text-ws-text-subtle leading-relaxed flex-1">{s.description}</p>}
                     </div>
                   </div>
                 </AnimatedSection>
@@ -372,30 +362,30 @@ export default function LandingPage() {
 
       {/* ─── EQUIPMENT ─── */}
       {data?.equipment && (equipmentContent.items?.length ?? 0) > 0 && (
-        <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+        <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
           <div className="max-w-7xl mx-auto">
             <AnimatedSection className="text-center mb-16">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Facility</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{equipmentContent.title || 'World-Class Equipment'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{equipmentContent.subtitle || 'Train with the best machines and gear.'}</p>
+              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{equipmentContent.subtitle || 'Train with the best machines and gear.'}</p>
             </AnimatedSection>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {equipmentContent.items.map((eq, i) => (
                 <AnimatedSection key={i} delay={i * 0.08}>
-                  <div className="group rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
+                  <div className="group rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
                     {eq.image_url ? (
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <img src={eq.image_url} alt={eq.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,25%,7%)] via-transparent to-transparent opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-ws-card via-transparent to-transparent opacity-60" />
                       </div>
                     ) : (
-                      <div className="aspect-[4/3] bg-[hsl(220,20%,10%)] flex items-center justify-center">
-                        <Dumbbell className="h-16 w-16 text-[hsl(220,10%,25%)]" />
+                      <div className="aspect-[4/3] bg-ws-border-dim flex items-center justify-center">
+                        <Dumbbell className="h-16 w-16 text-ws-text-icon" />
                       </div>
                     )}
                     <div className="p-6">
                       <h3 className="font-display font-bold text-lg mb-2">{eq.name}</h3>
-                      {eq.description && <p className="text-sm text-[hsl(220,10%,50%)] leading-relaxed">{eq.description}</p>}
+                      {eq.description && <p className="text-sm text-ws-text-subtle leading-relaxed">{eq.description}</p>}
                     </div>
                   </div>
                 </AnimatedSection>
@@ -414,7 +404,7 @@ export default function LandingPage() {
             <AnimatedSection className="text-center mb-16">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Pricing</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{pricingContent.title || 'Choose Your Plan'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{pricingContent.subtitle || 'Flexible plans designed to fit your fitness journey.'}</p>
+              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{pricingContent.subtitle || 'Flexible plans designed to fit your fitness journey.'}</p>
               {pricingContent.cta_note && <p className="mt-3 text-primary/80 font-semibold text-sm">{pricingContent.cta_note}</p>}
             </AnimatedSection>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -422,21 +412,21 @@ export default function LandingPage() {
                 const isPopular = i === Math.floor((data!.plans.length - 1) / 2);
                 return (
                   <AnimatedSection key={plan.id} delay={i * 0.12}>
-                    <div className={`relative rounded-2xl p-8 text-center space-y-6 transition-all duration-300 hover:-translate-y-2 ${isPopular ? 'bg-gradient-to-b from-primary/15 to-[hsl(220,25%,7%)] border-2 border-primary/50 shadow-2xl shadow-primary/10' : 'bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,13%)] hover:border-[hsl(220,20%,20%)]'}`}>
+                    <div className={`relative rounded-2xl p-8 text-center space-y-6 transition-all duration-300 hover:-translate-y-2 ${isPopular ? 'bg-gradient-to-b from-primary/15 to-ws-card border-2 border-primary/50 shadow-2xl shadow-primary/10' : 'bg-ws-card border border-ws-border hover:border-ws-border-light'}`}>
                       {isPopular && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-primary to-[hsl(142,71%,35%)] text-primary-foreground text-xs font-bold rounded-full uppercase tracking-wider shadow-lg">Most Popular</div>
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-primary to-highlight text-primary-foreground text-xs font-bold rounded-full uppercase tracking-wider shadow-lg">Most Popular</div>
                       )}
                       <h3 className="font-display font-semibold text-xl">{plan.name}</h3>
                       <div>
                         <span className="text-5xl font-bold font-display">₹{plan.price}</span>
-                        <span className="text-[hsl(220,10%,45%)] ml-1 text-sm">/ {plan.duration_days} days</span>
+                        <span className="text-ws-text-dim ml-1 text-sm">/ {plan.duration_days} days</span>
                       </div>
-                      <ul className="text-left space-y-3 text-sm text-[hsl(220,10%,60%)]">
+                      <ul className="text-left space-y-3 text-sm text-ws-text-muted">
                         <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Full gym access</li>
                         <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Expert guidance</li>
                         <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Diet consultation</li>
                       </ul>
-                      <Button className={`w-full h-12 rounded-xl font-bold transition-all duration-200 ${isPopular ? 'shadow-lg shadow-primary/25' : 'bg-[hsl(220,20%,12%)] text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,16%)]'}`} onClick={() => scrollTo('lead-form')}>
+                      <Button className={`w-full h-12 rounded-xl font-bold transition-all duration-200 ${isPopular ? 'shadow-lg shadow-primary/25' : 'bg-ws-border text-ws-text hover:bg-ws-border-light'}`} onClick={() => scrollTo('lead-form')}>
                         Get Started <ChevronRight className="ml-1 h-4 w-4" />
                       </Button>
                     </div>
@@ -450,26 +440,26 @@ export default function LandingPage() {
 
       {/* ─── TRAINERS ─── */}
       {data?.trainers && (trainersContent.items?.length ?? 0) > 0 && (
-        <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+        <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
           <div className="max-w-7xl mx-auto">
             <AnimatedSection className="text-center mb-16">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Expert Coaching</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{trainersContent.title || 'Meet Our Trainers'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{trainersContent.subtitle || 'Certified professionals dedicated to your transformation.'}</p>
+              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{trainersContent.subtitle || 'Certified professionals dedicated to your transformation.'}</p>
             </AnimatedSection>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {trainersContent.items.map((t, i) => (
                 <AnimatedSection key={i} delay={i * 0.1}>
-                  <div className="group rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
+                  <div className="group rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
                     <div className="relative aspect-[4/5] overflow-hidden">
                       {t.image_url ? (
                         <img src={t.image_url} alt={t.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
                       ) : (
-                        <div className="w-full h-full bg-[hsl(220,20%,10%)] flex items-center justify-center">
-                          <User className="h-20 w-20 text-[hsl(220,10%,25%)]" />
+                        <div className="w-full h-full bg-ws-border-dim flex items-center justify-center">
+                          <User className="h-20 w-20 text-ws-text-icon" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,25%,4%)] via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-ws-darker via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
                       <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
                         <h3 className="font-display font-bold text-xl">{t.name}</h3>
                         {t.specialization && <p className="text-primary font-semibold text-sm mt-1">{t.specialization}</p>}
@@ -495,17 +485,17 @@ export default function LandingPage() {
                   <AnimatedSection className="text-center mb-16">
                     <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Success Stories</p>
                     <h2 className="text-4xl sm:text-5xl font-bold font-display">{testimonialsContent.title || 'What Our Members Say'}</h2>
-                    <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{testimonialsContent.subtitle || 'Real results from real people.'}</p>
+                    <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{testimonialsContent.subtitle || 'Real results from real people.'}</p>
                   </AnimatedSection>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {textItems.map((t, i) => (
                       <AnimatedSection key={i} delay={i * 0.1}>
-                        <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-5 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
+                        <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-5 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
                           <div className="flex gap-1">
                             {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-primary text-primary" />)}
                           </div>
-                          {t.content && <p className="text-[hsl(220,10%,65%)] leading-relaxed flex-1">"{t.content}"</p>}
-                          <div className="flex items-center gap-3 pt-4 border-t border-[hsl(220,20%,12%)]">
+                          {t.content && <p className="text-ws-text-label leading-relaxed flex-1">"{t.content}"</p>}
+                          <div className="flex items-center gap-3 pt-4 border-t border-ws-border">
                             <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
                               <User className="h-5 w-5 text-primary" />
                             </div>
@@ -519,7 +509,7 @@ export default function LandingPage() {
               </section>
             )}
             {videoItems.length > 0 && (
-              <section id="video-testimonials" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+              <section id="video-testimonials" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
                 <div className="max-w-7xl mx-auto">
                   <AnimatedSection className="text-center mb-16">
                     <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Video Stories</p>
@@ -528,11 +518,11 @@ export default function LandingPage() {
                   <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
                     {videoItems.map((t, i) => (
                       <AnimatedSection key={i} delay={i * 0.1} className="min-w-[320px] max-w-[400px] snap-center flex-shrink-0">
-                        <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] overflow-hidden hover:border-primary/30 transition-colors duration-300">
+                        <div className="rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/30 transition-colors duration-300">
                           <VideoEmbed url={t.video_url!} />
                           <div className="p-5 space-y-2">
                             <p className="font-display font-semibold">{t.name}</p>
-                            {t.content && <p className="text-sm text-[hsl(220,10%,55%)]">{t.content}</p>}
+                            {t.content && <p className="text-sm text-ws-text-muted">{t.content}</p>}
                           </div>
                         </div>
                       </AnimatedSection>
@@ -547,7 +537,7 @@ export default function LandingPage() {
 
       {/* ─── GALLERY ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (
-        <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+        <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
           <div className="max-w-7xl mx-auto">
             <AnimatedSection className="text-center mb-16">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Space</p>
@@ -561,7 +551,7 @@ export default function LandingPage() {
                   <AnimatedSection key={i} delay={i * 0.05}>
                     <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-square">
                       {type === 'video' ? (
-                        <div className="w-full h-full bg-[hsl(220,20%,8%)] flex items-center justify-center">
+                        <div className="w-full h-full bg-ws-border-dim flex items-center justify-center">
                           <Play className="h-12 w-12 text-primary/50" />
                         </div>
                       ) : (
@@ -578,7 +568,7 @@ export default function LandingPage() {
             {galleryContent.items.length > 6 && (
               <div className="text-center mt-10">
                 <Link to="/gallery">
-                  <Button variant="outline" className="border-[hsl(220,20%,18%)] bg-[hsl(220,25%,8%)]/50 text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)]">
+                  <Button variant="outline" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border">
                     View Full Gallery <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -598,25 +588,25 @@ export default function LandingPage() {
             <AnimatedSection className="text-center mb-16">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Trusted By Many</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{reviewsContent.title || 'Google Reviews'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{reviewsContent.subtitle || 'See what our members say about us.'}</p>
+              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{reviewsContent.subtitle || 'See what our members say about us.'}</p>
             </AnimatedSection>
             <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:grid lg:grid-cols-3 lg:overflow-visible lg:mx-0 lg:px-0">
               {reviewsContent.items.map((r, i) => (
                 <AnimatedSection key={i} delay={i * 0.08} className="min-w-[300px] snap-center flex-shrink-0 lg:min-w-0">
-                  <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-4 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
+                  <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-4 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
                     <div className="flex gap-1">
                       {[...Array(5)].map((_, j) => (
-                        <Star key={j} className={`h-5 w-5 ${j < r.rating ? 'fill-yellow-400 text-yellow-400' : 'fill-[hsl(220,10%,20%)] text-[hsl(220,10%,20%)]'}`} />
+                        <Star key={j} className={`h-5 w-5 ${j < r.rating ? 'fill-yellow-400 text-yellow-400' : 'fill-ws-text-icon text-ws-text-icon'}`} />
                       ))}
                     </div>
-                    {r.text && <p className="text-[hsl(220,10%,65%)] leading-relaxed flex-1 text-sm">"{r.text}"</p>}
-                    <div className="flex items-center gap-3 pt-4 border-t border-[hsl(220,20%,12%)]">
+                    {r.text && <p className="text-ws-text-label leading-relaxed flex-1 text-sm">"{r.text}"</p>}
+                    <div className="flex items-center gap-3 pt-4 border-t border-ws-border">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/20 to-primary/20 flex items-center justify-center text-sm font-bold text-primary">
                         {r.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="font-display font-semibold text-sm">{r.name}</p>
-                        <p className="text-xs text-[hsl(220,10%,40%)]">Google Review</p>
+                        <p className="text-xs text-ws-text-dimmer">Google Review</p>
                       </div>
                     </div>
                   </div>
@@ -629,24 +619,24 @@ export default function LandingPage() {
 
       {/* ─── BRANCHES ─── */}
       {data?.branches && (branchesContent.items?.length ?? 0) > 0 && (
-        <section id="branches" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+        <section id="branches" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
           <div className="max-w-7xl mx-auto">
             <AnimatedSection className="text-center mb-16">
               <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Locations</p>
               <h2 className="text-4xl sm:text-5xl font-bold font-display">{branchesContent.title || 'Our Branches'}</h2>
-              <p className="mt-5 text-[hsl(220,10%,50%)] max-w-xl mx-auto text-lg">{branchesContent.subtitle || 'Find a location near you.'}</p>
+              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{branchesContent.subtitle || 'Find a location near you.'}</p>
             </AnimatedSection>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {branchesContent.items.map((b, i) => (
                 <AnimatedSection key={i} delay={i * 0.08}>
-                  <div className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-4 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
+                  <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-4 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
                     <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10">
                       <MapPin className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="font-display font-bold text-xl">{b.name}</h3>
-                    {b.location && <p className="text-sm text-[hsl(220,10%,50%)] leading-relaxed">{b.location}</p>}
+                    {b.location && <p className="text-sm text-ws-text-subtle leading-relaxed">{b.location}</p>}
                     {b.contact && (
-                      <p className="text-sm text-[hsl(220,10%,60%)] flex items-center gap-2">
+                      <p className="text-sm text-ws-text-muted flex items-center gap-2">
                         <Phone className="h-4 w-4 text-primary shrink-0" /> {b.contact}
                       </p>
                     )}
@@ -665,11 +655,11 @@ export default function LandingPage() {
         </div>
         <AnimatedSection variant="scale">
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-[hsl(220,25%,7%)] to-[hsl(220,25%,5%)] border border-primary/20 p-14 sm:p-20">
+            <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-ws-card to-ws-card-alt border border-primary/20 p-14 sm:p-20">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight">
-                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-[hsl(var(--highlight))] bg-clip-text text-transparent">Today</span>
+                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-highlight bg-clip-text text-transparent">Today</span>
               </h2>
-              <p className="mt-6 text-lg text-[hsl(220,10%,50%)] max-w-xl mx-auto">Join hundreds of members who've transformed their lives.</p>
+              <p className="mt-6 text-lg text-ws-text-subtle max-w-xl mx-auto">Join hundreds of members who've transformed their lives.</p>
               <div className="mt-10 flex flex-wrap justify-center gap-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
                   <Button size="lg" className="h-14 px-10 text-base font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300" onClick={() => scrollTo('lead-form')}>
@@ -677,7 +667,7 @@ export default function LandingPage() {
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
-                  <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-[hsl(220,20%,18%)] bg-transparent text-[hsl(220,10%,92%)] hover:bg-[hsl(220,20%,12%)] transition-all duration-300" onClick={() => scrollTo('lead-form')}>
+                  <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold rounded-xl border-ws-border-light bg-transparent text-ws-text hover:bg-ws-border transition-all duration-300" onClick={() => scrollTo('lead-form')}>
                     <Play className="mr-2 h-5 w-5" /> Book Free Trial
                   </Button>
                 </motion.div>
@@ -688,27 +678,27 @@ export default function LandingPage() {
       </section>
 
       {/* ─── LEAD FORM ─── */}
-      <section id="lead-form" className="py-28 px-4 sm:px-6 lg:px-8 bg-[hsl(220,25%,5%)]">
+      <section id="lead-form" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
         <div className="max-w-lg mx-auto">
           <AnimatedSection className="text-center mb-10">
             <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Get Started</p>
             <h2 className="text-4xl sm:text-5xl font-bold font-display">Join Us Today</h2>
-            <p className="mt-5 text-[hsl(220,10%,50%)] text-lg">Fill in your details and our team will reach out within 24 hours.</p>
+            <p className="mt-5 text-ws-text-subtle text-lg">Fill in your details and our team will reach out within 24 hours.</p>
           </AnimatedSection>
           <AnimatedSection delay={0.15}>
-            <form onSubmit={handleLeadSubmit} className="rounded-2xl bg-[hsl(220,25%,7%)] border border-[hsl(220,20%,12%)] p-8 space-y-5 shadow-2xl shadow-black/20">
+            <form onSubmit={handleLeadSubmit} className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-5 shadow-2xl shadow-black/20">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[hsl(220,10%,65%)] flex items-center gap-2"><User className="h-4 w-4 text-primary" /> Full Name</label>
-                <Input value={leadName} onChange={e => setLeadName(e.target.value)} placeholder="Your name" required className="h-12 bg-[hsl(220,25%,4%)] border-[hsl(220,20%,13%)] text-[hsl(220,10%,92%)] placeholder:text-[hsl(220,10%,30%)] focus:border-primary/50 rounded-xl" />
+                <label className="text-sm font-medium text-ws-text-label flex items-center gap-2"><User className="h-4 w-4 text-primary" /> Full Name</label>
+                <Input value={leadName} onChange={e => setLeadName(e.target.value)} placeholder="Your name" required className="h-12 bg-ws-input border-ws-border text-ws-text placeholder:text-ws-text-faint focus:border-primary/50 rounded-xl" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[hsl(220,10%,65%)] flex items-center gap-2"><Phone className="h-4 w-4 text-primary" /> Phone Number</label>
-                <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+91 98765 43210" required className="h-12 bg-[hsl(220,25%,4%)] border-[hsl(220,20%,13%)] text-[hsl(220,10%,92%)] placeholder:text-[hsl(220,10%,30%)] focus:border-primary/50 rounded-xl" />
+                <label className="text-sm font-medium text-ws-text-label flex items-center gap-2"><Phone className="h-4 w-4 text-primary" /> Phone Number</label>
+                <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+91 98765 43210" required className="h-12 bg-ws-input border-ws-border text-ws-text placeholder:text-ws-text-faint focus:border-primary/50 rounded-xl" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[hsl(220,10%,65%)] flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> Fitness Goal</label>
+                <label className="text-sm font-medium text-ws-text-label flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> Fitness Goal</label>
                 <Select value={leadGoal} onValueChange={setLeadGoal}>
-                  <SelectTrigger className="h-12 bg-[hsl(220,25%,4%)] border-[hsl(220,20%,13%)] text-[hsl(220,10%,92%)] rounded-xl"><SelectValue placeholder="Select your goal" /></SelectTrigger>
+                  <SelectTrigger className="h-12 bg-ws-input border-ws-border text-ws-text rounded-xl"><SelectValue placeholder="Select your goal" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Weight Loss">Weight Loss</SelectItem>
                     <SelectItem value="Muscle Gain">Muscle Gain</SelectItem>
@@ -726,29 +716,29 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="border-t border-[hsl(220,20%,10%)] bg-[hsl(220,25%,4%)]">
+      <footer className="border-t border-ws-border-dim bg-ws-darker">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="md:col-span-2 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-[hsl(142,71%,35%)] flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-highlight flex items-center justify-center">
                   <Dumbbell className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <span className="text-xl font-bold font-display">{brandName}</span>
               </div>
-              <p className="text-[hsl(220,10%,40%)] text-sm max-w-sm leading-relaxed">Your premium fitness destination.</p>
+              <p className="text-ws-text-dimmer text-sm max-w-sm leading-relaxed">Your premium fitness destination.</p>
             </div>
             <div className="space-y-4">
-              <h4 className="font-display font-semibold text-sm uppercase tracking-wider text-[hsl(220,10%,60%)]">Quick Links</h4>
+              <h4 className="font-display font-semibold text-sm uppercase tracking-wider text-ws-text-muted">Quick Links</h4>
               <div className="space-y-2">
                 {navLinks.map(link => (
-                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block text-sm text-[hsl(220,10%,40%)] hover:text-primary transition-colors">{link.label}</button>
+                  <button key={link.id} onClick={() => scrollTo(link.id)} className="block text-sm text-ws-text-dimmer hover:text-primary transition-colors">{link.label}</button>
                 ))}
               </div>
             </div>
             <div className="space-y-4">
-              <h4 className="font-display font-semibold text-sm uppercase tracking-wider text-[hsl(220,10%,60%)]">Contact</h4>
-              <div className="space-y-3 text-sm text-[hsl(220,10%,40%)]">
+              <h4 className="font-display font-semibold text-sm uppercase tracking-wider text-ws-text-muted">Contact</h4>
+              <div className="space-y-3 text-sm text-ws-text-dimmer">
                 <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary shrink-0" /> Your City, India</p>
                 <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-primary shrink-0" /> +91 98765 43210</p>
                 <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-primary shrink-0" /> hello@gymos.in</p>
@@ -756,9 +746,9 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-[hsl(220,20%,10%)] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[hsl(220,10%,35%)]">© {new Date().getFullYear()} {brandName}. All rights reserved.</p>
-            <Link to="/app/dashboard" className="text-xs text-[hsl(220,10%,35%)] hover:text-primary transition-colors">
+          <div className="mt-12 pt-8 border-t border-ws-border-dim flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-ws-text-micro">© {new Date().getFullYear()} {brandName}. All rights reserved.</p>
+            <Link to="/app/dashboard" className="text-xs text-ws-text-micro hover:text-primary transition-colors">
               Go to Dashboard
             </Link>
           </div>
