@@ -169,7 +169,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth">
+    <div className="min-h-screen text-[hsl(220,10%,92%)] overflow-x-hidden scroll-smooth" style={{ background: 'hsl(var(--website-bg))' }}>
       <PageLoader
         brandName={brandName}
         brandLogo={brandLogo}
