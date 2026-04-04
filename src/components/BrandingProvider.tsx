@@ -7,22 +7,26 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     const root = document.documentElement;
-    root.style.setProperty('--primary', resolved.primary_color);
-    root.style.setProperty('--ring', resolved.primary_color);
-    root.style.setProperty('--accent', resolved.primary_color);
-    root.style.setProperty('--sidebar-primary', resolved.primary_color);
-    root.style.setProperty('--sidebar-ring', resolved.primary_color);
-    root.style.setProperty('--chart-1', resolved.primary_color);
+
+    // Primary/secondary are now background tones; accent is the brand color
+    root.style.setProperty('--primary', resolved.accent_color);
+    root.style.setProperty('--ring', resolved.accent_color);
+    root.style.setProperty('--sidebar-primary', resolved.accent_color);
+    root.style.setProperty('--sidebar-ring', resolved.accent_color);
+    root.style.setProperty('--chart-1', resolved.accent_color);
+    root.style.setProperty('--accent', resolved.accent_color);
+
+    // Expose highlight for gradient usage
+    root.style.setProperty('--highlight', resolved.highlight_color);
+
+    // Website background tones
+    root.style.setProperty('--website-bg', resolved.primary_color);
+    root.style.setProperty('--website-bg-secondary', resolved.secondary_color);
 
     return () => {
-      root.style.removeProperty('--primary');
-      root.style.removeProperty('--ring');
-      root.style.removeProperty('--accent');
-      root.style.removeProperty('--sidebar-primary');
-      root.style.removeProperty('--sidebar-ring');
-      root.style.removeProperty('--chart-1');
+      ['--primary', '--ring', '--sidebar-primary', '--sidebar-ring', '--chart-1', '--accent', '--highlight', '--website-bg', '--website-bg-secondary'].forEach(v => root.style.removeProperty(v));
     };
-  }, [resolved.primary_color, isLoading]);
+  }, [resolved, isLoading]);
 
   return <>{children}</>;
 }
