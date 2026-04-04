@@ -667,7 +667,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-[hsl(220,25%,7%)] to-[hsl(220,25%,5%)] border border-primary/20 p-14 sm:p-20">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight">
-                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-[hsl(142,80%,55%)] bg-clip-text text-transparent">Today</span>
+                Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-[hsl(var(--highlight))] bg-clip-text text-transparent">Today</span>
               </h2>
               <p className="mt-6 text-lg text-[hsl(220,10%,50%)] max-w-xl mx-auto">Join hundreds of members who've transformed their lives.</p>
               <div className="mt-10 flex flex-wrap justify-center gap-4">
