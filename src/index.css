@@ -40,6 +40,25 @@
     --website-bg: 222 47% 11%;
     --website-bg-secondary: 220 26% 14%;
 
+    /* Website derived shades */
+    --ws-card: 220 25% 7%;
+    --ws-card-alt: 220 25% 5%;
+    --ws-darker: 220 25% 4%;
+    --ws-border: 220 20% 12%;
+    --ws-border-light: 220 20% 18%;
+    --ws-border-dim: 220 20% 10%;
+    --ws-text: 220 10% 92%;
+    --ws-text-muted: 220 10% 55%;
+    --ws-text-dim: 220 10% 45%;
+    --ws-text-dimmer: 220 10% 40%;
+    --ws-text-label: 220 10% 65%;
+    --ws-text-subtle: 220 10% 50%;
+    --ws-text-faint: 220 10% 30%;
+    --ws-text-micro: 220 10% 35%;
+    --ws-text-icon: 220 10% 25%;
+    --ws-input: 220 25% 4%;
+    --ws-social-proof: 220 25% 6%;
+
     --sidebar-background: 220 25% 8%;
     --sidebar-foreground: 220 10% 70%;
     --sidebar-primary: 142 71% 45%;
