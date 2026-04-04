@@ -1,0 +1,2 @@
+ALTER TABLE public.gym_settings ADD COLUMN IF NOT EXISTS accent_color text NOT NULL DEFAULT '142 71% 45%';
+ALTER TABLE public.gym_settings ADD COLUMN IF NOT EXISTS highlight_color text NOT NULL DEFAULT '142 80% 55%';

@@ -106,8 +106,10 @@ export type Database = {
       }
       gym_settings: {
         Row: {
+          accent_color: string
           created_at: string
           gym_name: string
+          highlight_color: string
           id: string
           logo_url: string | null
           primary_color: string
@@ -116,8 +118,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accent_color?: string
           created_at?: string
           gym_name?: string
+          highlight_color?: string
           id?: string
           logo_url?: string | null
           primary_color?: string
@@ -126,8 +130,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accent_color?: string
           created_at?: string
           gym_name?: string
+          highlight_color?: string
           id?: string
           logo_url?: string | null
           primary_color?: string
