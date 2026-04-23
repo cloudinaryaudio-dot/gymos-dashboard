@@ -11,6 +11,10 @@ export interface GymSettings {
   secondary_color: string;
   accent_color: string;
   highlight_color: string;
+  card_color?: string | null;
+  heading_color?: string | null;
+  description_color?: string | null;
+  button_color?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +26,10 @@ const DEFAULT_SETTINGS = {
   secondary_color: '220 26% 14%',
   accent_color: '142 71% 45%',
   highlight_color: '142 80% 55%',
+  card_color: '',
+  heading_color: '',
+  description_color: '',
+  button_color: '',
 };
 
 export function useGymSettings() {
@@ -50,6 +58,10 @@ export function useGymSettings() {
     secondary_color: settings?.secondary_color ?? DEFAULT_SETTINGS.secondary_color,
     accent_color: settings?.accent_color ?? DEFAULT_SETTINGS.accent_color,
     highlight_color: settings?.highlight_color ?? DEFAULT_SETTINGS.highlight_color,
+    card_color: settings?.card_color ?? DEFAULT_SETTINGS.card_color,
+    heading_color: settings?.heading_color ?? DEFAULT_SETTINGS.heading_color,
+    description_color: settings?.description_color ?? DEFAULT_SETTINGS.description_color,
+    button_color: settings?.button_color ?? DEFAULT_SETTINGS.button_color,
   };
 
   return { settings, resolved, isLoading, upsertSettings };

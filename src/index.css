@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
@@ -39,6 +49,24 @@
     --highlight: 142 80% 55%;
     --website-bg: 222 47% 11%;
     --website-bg-secondary: 220 26% 14%;
+
+    /* ── Theme alias tokens (kept in sync by BrandingProvider) ──
+       Use these when you need the raw composed colors. */
+    --bg-primary: hsl(var(--website-bg));
+    --bg-secondary: hsl(var(--website-bg-secondary));
+    --card-bg: hsl(var(--ws-card));
+    --card-border: hsl(var(--ws-border));
+    --color-accent: hsl(var(--accent));
+    --button-bg: hsl(var(--primary));
+    --button-hover: hsl(var(--highlight));
+    --button-text: hsl(var(--primary-foreground));
+    --text-heading: hsl(var(--ws-text));
+    --text-description: hsl(var(--ws-text-muted));
+    --navbar-bg: hsl(var(--website-bg));
+    --footer-bg: hsl(var(--website-bg-secondary));
+
+    /* Full theme gradient (overridden by BrandingProvider) */
+    --bg-gradient: linear-gradient(to bottom, hsl(var(--website-bg)), hsl(var(--website-bg-secondary)));
 
     /* Website derived shades */
     --ws-card: 220 25% 7%;
@@ -128,6 +156,18 @@
     font-family: var(--font-body);
   }
 
+  /* Public website root inherits dual-tone gradient automatically.
+     Applied to html/body/#root so no leftover background bleeds through. */
+  html.theme-public,
+  html.theme-public body,
+  html.theme-public #root,
+  body.theme-public,
+  body.theme-public #root {
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-heading);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
   }
@@ -152,3 +192,74 @@
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 0.7; transform: scale(1.05); }
 }
+
+/* ── #theme-root wrapper override ──
+   Forces every section, card, heading, paragraph and button inside the
+   public landing page to follow the theme variables set by BrandingProvider,
+   without having to touch individual components. */
+#theme-root {
+  background: var(--bg-gradient);
+  color: var(--text-heading);
+  min-height: 100vh;
+}
+
+/* Sections inherit the root gradient */
+#theme-root section {
+  background-color: transparent;
+}
+
+/* Cards — always visually separated from the section background.
+   color-mix lifts the card a touch above the section so they never
+   collide visually, even when admin sets card == bg. */
+#theme-root .card,
+#theme-root [class*="bg-ws-card"],
+#theme-root [class*="bg-card"] {
+  background: color-mix(in srgb, var(--card-bg) 92%, white 8%) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.04), 0 4px 16px hsl(0 0% 0% / 0.06);
+}
+
+/* Headings */
+#theme-root h1,
+#theme-root h2,
+#theme-root h3,
+#theme-root h4,
+#theme-root h5,
+#theme-root h6 {
+  color: var(--text-heading) !important;
+}
+
+/* Descriptions */
+#theme-root p:not([data-theme-skip]) {
+  color: var(--text-description);
+}
+
+/* Primary buttons */
+#theme-root button.bg-primary,
+#theme-root .btn-primary {
+  background: var(--button-bg) !important;
+  color: var(--button-text) !important;
+}
+
+#theme-root button.bg-primary:hover,
+#theme-root .btn-primary:hover {
+  background: var(--button-hover) !important;
+}
+
+/* ── Light-section guard ──
+   When BrandingProvider detects a light theme it sets [data-theme-mode="light"]
+   on <html>. Flip text tokens so no white-on-white can ever occur. */
+html[data-theme-mode="light"] {
+  --text-heading: hsl(220 25% 12%);
+  --text-description: hsl(220 15% 35%);
+  --button-text: #ffffff;
+}
+
+/* Inside #theme-root, force any leftover `text-white` / `text-white/70` etc.
+   utilities to fall back to the contrast-safe heading token so user content
+   stays readable on light themes. */
+html[data-theme-mode="light"] #theme-root .text-white,
+html[data-theme-mode="light"] #theme-root [class*="text-white/"] {
+  color: var(--text-heading) !important;
+}
+

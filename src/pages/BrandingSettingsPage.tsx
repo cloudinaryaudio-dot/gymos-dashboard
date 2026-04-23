@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Save, Dumbbell, Eye, Palette, Check } from 'lucide-react';
 
+
+
 /* ── helpers ── */
 function hexToHsl(hex: string): string {
   hex = hex.replace('#', '');
@@ -25,20 +27,120 @@ function hexToHsl(hex: string): string {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+function hslToHex(hsl) {
+    // Extract H, S, L values
+    const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
+
+    const sNorm = s / 100;
+    const lNorm = l / 100;
+
+    // Calculate chroma
+    const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = lNorm - c / 2;
+
+    let r = 0, g = 0, b = 0;
+
+    // Determine RGB based on hue
+    if (h < 60) {
+        [r, g, b] = [c, x, 0];
+    } else if (h < 120) {
+        [r, g, b] = [x, c, 0];
+    } else if (h < 180) {
+        [r, g, b] = [0, c, x];
+    } else if (h < 240) {
+        [r, g, b] = [0, x, c];
+    } else if (h < 300) {
+        [r, g, b] = [x, 0, c];
+    } else {
+        [r, g, b] = [c, 0, x];
+    }
+
+    // Convert to HEX
+    const toHex = (v) => {
+        const hex = Math.round((v + m) * 255).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+    };
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 function hslToCss(hsl: string) { return `hsl(${hsl})`; }
 
-/* ── presets ── */
 interface ThemePreset {
   name: string;
-  primary: string; secondary: string; accent: string; highlight: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  highlight: string;
+
+  card: string;
+  heading: string;
+  description: string;
+  button: string;
 }
 
 const PRESETS: ThemePreset[] = [
-  { name: 'Fitness Green',  primary: '#0F172A', secondary: '#111827', accent: '#22C55E', highlight: '#4ADE80' },
-  { name: 'Energy Orange',  primary: '#0B0F19', secondary: '#111827', accent: '#F97316', highlight: '#FB923C' },
-  { name: 'Power Red',      primary: '#0F172A', secondary: '#111827', accent: '#EF4444', highlight: '#F87171' },
-  { name: 'Premium Gold',   primary: '#0B0B0B', secondary: '#171717', accent: '#EAB308', highlight: '#FACC15' },
-  { name: 'Electric Blue',  primary: '#0A0F1F', secondary: '#111827', accent: '#3B82F6', highlight: '#60A5FA' },
+  {
+    name: 'Fitness Green',
+    primary: '#0F172A',
+    secondary: '#111827',
+    accent: '#22C55E',
+    highlight: '#4ADE80',
+
+    card: '#1F2937',
+    heading: '#FFFFFF',
+    description: '#9CA3AF',
+    button: '#22C55E',
+  },
+  {
+    name: 'Royal Blue',
+    primary: '#0A192F',
+    secondary: '#112240',
+    accent: '#3B82F6',
+    highlight: '#60A5FA',
+
+    card: '#1E293B',
+    heading: '#FFFFFF',
+    description: '#94A3B8',
+    button: '#3B82F6',
+  },
+  {
+    name: 'Power Red',
+    primary: '#1F0A0A',
+    secondary: '#2A0E0E',
+    accent: '#EF4444',
+    highlight: '#F87171',
+
+    card: '#2B1111',
+    heading: '#FFFFFF',
+    description: '#FCA5A5',
+    button: '#EF4444',
+  },
+  {
+    name: 'Premium Gold',
+    primary: '#1A1405',
+    secondary: '#2A2108',
+    accent: '#EAB308',
+    highlight: '#FACC15',
+
+    card: '#2B220A',
+    heading: '#FFFFFF',
+    description: '#FDE68A',
+    button: '#EAB308',
+  },
+  {
+    name: 'Neon Purple',
+    primary: '#140A1F',
+    secondary: '#1E0F2A',
+    accent: '#8B5CF6',
+    highlight: '#A78BFA',
+
+    card: '#221133',
+    heading: '#FFFFFF',
+    description: '#C4B5FD',
+    button: '#8B5CF6',
+  },
 ];
 
 export default function BrandingSettingsPage() {
@@ -50,28 +152,63 @@ export default function BrandingSettingsPage() {
   const [secondaryColor, setSecondaryColor] = useState('');
   const [accentColor, setAccentColor] = useState('');
   const [highlightColor, setHighlightColor] = useState('');
+  const [cardColor, setCardColor] = useState('');
+  const [headingColor, setHeadingColor] = useState('');
+  const [descriptionColor, setDescriptionColor] = useState('');
+  const [buttonColor, setButtonColor] = useState('');
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !initialized) {
-      setGymName(resolved.gym_name);
-      setLogoUrl(resolved.logo_url ?? '');
-      setPrimaryColor(resolved.primary_color);
-      setSecondaryColor(resolved.secondary_color);
-      setAccentColor(resolved.accent_color);
-      setHighlightColor(resolved.highlight_color);
-      setInitialized(true);
-    }
-  }, [isLoading, initialized, resolved]);
+  if (!isLoading && !initialized) {
+    setGymName(resolved.gym_name);
+    setLogoUrl(resolved.logo_url ?? '');
 
-  const applyPreset = (p: ThemePreset) => {
-    setPrimaryColor(hexToHsl(p.primary));
-    setSecondaryColor(hexToHsl(p.secondary));
-    setAccentColor(hexToHsl(p.accent));
-    setHighlightColor(hexToHsl(p.highlight));
-    setActivePreset(p.name);
-  };
+    setPrimaryColor(resolved.primary_color || "222 47% 11%");
+    setSecondaryColor(resolved.secondary_color || "222 47% 15%");
+    setAccentColor(resolved.accent_color || "142 71% 45%");
+    setHighlightColor(resolved.highlight_color || "142 76% 60%");
+    setCardColor(resolved.card_color || "217 33% 17%");
+    setHeadingColor(resolved.heading_color || "0 0% 100%");
+    setDescriptionColor(resolved.description_color || "215 20% 65%");
+    setButtonColor(resolved.button_color || "142 71% 45%");
+
+    // ✅ ADD HERE
+    if (!resolved.primary_color) {
+      applyPreset(PRESETS[0]);
+      setActivePreset(PRESETS[0].name);
+    }
+
+    if (!resolved.card_color) {
+  setCardColor(primaryColor);
+}
+if (!resolved.heading_color) {
+  setHeadingColor("0 0% 100%");
+}
+if (!resolved.description_color) {
+  setDescriptionColor("215 20% 65%");
+}
+if (!resolved.button_color) {
+  setButtonColor(accentColor);
+}
+
+    setInitialized(true);
+  }
+}, [isLoading, initialized, resolved]);
+
+  function applyPreset(preset: ThemePreset) {
+  setPrimaryColor(hexToHsl(preset.primary));
+  setSecondaryColor(hexToHsl(preset.secondary));
+  setAccentColor(hexToHsl(preset.accent));
+  setHighlightColor(hexToHsl(preset.highlight));
+
+  setCardColor(hexToHsl(preset.card));
+  setHeadingColor(hexToHsl(preset.heading));
+  setDescriptionColor(hexToHsl(preset.description));
+  setButtonColor(hexToHsl(preset.button));
+
+  setActivePreset(preset.name);
+}
 
   const handleSave = () => {
     upsertSettings.mutate({
@@ -81,6 +218,10 @@ export default function BrandingSettingsPage() {
       secondary_color: secondaryColor,
       accent_color: accentColor,
       highlight_color: highlightColor,
+      card_color: cardColor.trim() || null,
+      heading_color: headingColor.trim() || null,
+      description_color: descriptionColor.trim() || null,
+      button_color: buttonColor.trim() || null,
     });
   };
 
@@ -145,24 +286,67 @@ export default function BrandingSettingsPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Custom Colors (HSL)</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { label: 'Background (Primary)', value: primaryColor, set: setPrimaryColor },
-                { label: 'Background (Secondary)', value: secondaryColor, set: setSecondaryColor },
-                { label: 'Accent Color', value: accentColor, set: setAccentColor },
-                { label: 'Highlight Color', value: highlightColor, set: setHighlightColor },
-              ].map(c => (
-                <div key={c.label} className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg border border-border shrink-0" style={{ background: hslToCss(c.value) }} />
-                  <div className="flex-1">
-                    <Label className="text-xs">{c.label}</Label>
-                    <Input value={c.value} onChange={e => { c.set(e.target.value); setActivePreset(null); }} className="h-8 text-xs" placeholder="142 71% 45%" />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+  <CardHeader>
+    <CardTitle>Custom Colors (HSL)</CardTitle>
+  </CardHeader>
+
+  <CardContent className="space-y-4">
+    {[
+      { label: 'Background (Primary)', value: primaryColor, set: setPrimaryColor },
+      { label: 'Background (Secondary)', value: secondaryColor, set: setSecondaryColor },
+      { label: 'Accent Color', value: accentColor, set: setAccentColor },
+      { label: 'Highlight Color', value: highlightColor, set: setHighlightColor },
+      { label: 'Card Background', value: cardColor, set: setCardColor },
+      { label: 'Heading Text Color', value: headingColor, set: setHeadingColor },
+      { label: 'Description Text Color', value: descriptionColor, set: setDescriptionColor },
+      { label: 'Button Color', value: buttonColor, set: setButtonColor },
+    ].map((c) => (
+      <div key={c.label} className="space-y-1">
+        
+        {/* ✅ LABEL */}
+        <Label className="text-xs">{c.label}</Label>
+
+        <div className="flex items-center gap-3">
+          
+          {/* Color preview box */}
+          <div
+            className="h-8 w-8 rounded-lg border border-border shrink-0"
+            style={{
+              background: c.value ? hslToCss(c.value) : 'transparent',
+            }}
+          />
+
+          {/* Picker + Input */}
+          <div className="flex gap-2 flex-1">
+            <input
+              type="color"
+              value={c.value ? hslToHex(c.value) : "#111827"}
+              onChange={(e) => {
+                c.set(hexToHsl(e.target.value));
+                setActivePreset(null);
+              }}
+              className="h-8 w-10 p-0 border rounded"
+            />
+
+            <Input
+              value={c.value}
+              onChange={(e) => {
+                c.set(e.target.value);
+                setActivePreset(null);
+              }}
+              className="h-8 text-xs"
+              placeholder="e.g. 142 71% 45%"
+            />
+          </div>
+        </div>
+      </div>
+    ))}
+
+    <p className="text-xs text-muted-foreground">
+      Use color picker or adjust HSL manually. Leave optional fields empty to auto-derive from Primary/Accent.
+    </p>
+  </CardContent>
+</Card>
 
           <Button onClick={handleSave} disabled={upsertSettings.isPending} className="w-full">
             <Save className="h-4 w-4 mr-2" />{upsertSettings.isPending ? 'Saving...' : 'Save Branding'}
@@ -175,18 +359,18 @@ export default function BrandingSettingsPage() {
           <CardContent>
             <div className="rounded-xl overflow-hidden border border-border" style={{ background: hslToCss(primaryColor) }}>
               {/* Preview Navbar */}
-              <div className="px-4 py-3 flex items-center justify-between" style={{ background: hslToCss(secondaryColor), borderBottom: `1px solid hsl(${primaryColor.split(' ')[0]} 20% 20%)` }}>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ background: hslToCss(cardColor || secondaryColor), borderBottom: `1px solid hsl(${primaryColor.split(' ')[0]} 20% 20%)` }}>
                 <div className="flex items-center gap-2">
                   {logoUrl ? (
                     <img src={logoUrl} alt="Logo" className="h-7 w-7 rounded object-cover" />
                   ) : (
-                    <div className="h-7 w-7 rounded flex items-center justify-center" style={{ background: hslToCss(accentColor) }}>
+                    <div className="h-7 w-7 rounded flex items-center justify-center" style={{ background: hslToCss(buttonColor || accentColor) }}>
                       <Dumbbell className="h-3.5 w-3.5 text-white" />
                     </div>
                   )}
                   <span className="text-sm font-bold text-white">{gymName || 'My Gym'}</span>
                 </div>
-                <div className="h-6 px-3 rounded text-[10px] font-medium flex items-center text-white" style={{ background: hslToCss(accentColor) }}>
+                <div className="h-6 px-3 rounded text-[10px] font-medium flex items-center text-white" style={{ background: hslToCss(buttonColor || accentColor) }}>
                   Join Now
                 </div>
               </div>
@@ -194,10 +378,21 @@ export default function BrandingSettingsPage() {
               <div className="px-6 py-10 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10" style={{ background: `radial-gradient(circle at 50% 0%, ${hslToCss(accentColor)}, transparent 70%)` }} />
                 <div className="relative z-10">
-                  <h3 className="text-lg font-bold text-white mb-2">Transform Your Body</h3>
-                  <p className="text-xs mb-4 text-white/50">Build discipline. Get results.</p>
+                  <h3
+  className="text-lg font-bold mb-2"
+  style={{ color: hslToCss(headingColor) }}
+>
+  Transform Your Body
+</h3>
+
+<p
+  className="text-xs mb-4"
+  style={{ color: hslToCss(descriptionColor) }}
+>
+  Build discipline. Get results.
+</p>
                   <div className="flex justify-center gap-2">
-                    <div className="h-7 px-4 rounded text-[10px] font-medium flex items-center text-white" style={{ background: hslToCss(accentColor) }}>
+                    <div className="h-7 px-4 rounded text-[10px] font-medium flex items-center text-white" style={{ background: hslToCss(buttonColor || accentColor) }}>
                       Start Trial
                     </div>
                     <div className="h-7 px-4 rounded text-[10px] font-medium flex items-center border border-white/15 text-white">
@@ -209,7 +404,7 @@ export default function BrandingSettingsPage() {
               {/* Preview Cards */}
               <div className="px-4 pb-4 grid grid-cols-3 gap-2">
                 {['Basic', 'Standard', 'Premium'].map((plan, i) => (
-                  <div key={plan} className="rounded-lg p-3 text-center" style={{ background: hslToCss(secondaryColor) }}>
+                  <div key={plan} className="rounded-lg p-3 text-center" style={{ background: hslToCss(cardColor || secondaryColor) }}>
                     <p className="text-[10px] text-white/50">{plan}</p>
                     <p className="text-sm font-bold text-white">₹{[999, 1999, 4999][i]}</p>
                     <div className="mt-2 h-5 rounded text-[8px] font-medium flex items-center justify-center text-white"

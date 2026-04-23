@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   useWebsiteContent, ALL_SECTION_KEYS, SECTION_DEFAULTS, SectionKey,
   HeroContent, SocialProofConfig, PricingContent, TrainersContent, TestimonialsContent, GalleryContent,
-  ServicesContent, EquipmentContent, ReviewsContent, BranchesContent,
+  ServicesContent, EquipmentContent, ReviewsContent, BranchesContent, StatsContent, StatItem,
   TrainerItem, TestimonialItem, GalleryMediaItem, ServiceItem, EquipmentItem, ReviewItem, BranchItem, OrbitContent, OrbitIconItem, NavbarContent, LoaderContent,
+  FooterSocialContent, SupplementsContent, SupplementItem, AchievementsContent, AchievementItem,
+  ProductsContent, ProductItem,
 } from '@/hooks/useWebsiteContent';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, ExternalLink, Plus, Trash2, Film, Image, Dumbbell, Sparkles, Star, MapPin, Phone, Navigation, Loader2 } from 'lucide-react';
+import { Save, ExternalLink, Plus, Trash2, Film, Image, Dumbbell, Sparkles, Star, MapPin, Phone, Navigation, Loader2, BarChart3 } from 'lucide-react';
 
 export default function WebsiteBuilderPage() {
   const { sections, isLoading, getSectionContent, isSectionEnabled, upsertSection } = useWebsiteContent();
@@ -205,7 +207,7 @@ export default function WebsiteBuilderPage() {
               <ItemList
                 items={drafts.services?.items ?? []}
                 onRemove={i => removeItem('services', i)}
-                renderItem={(item: ServiceItem) => `${item.title}${item.description ? ` — ${item.description.slice(0, 40)}...` : ''}`}
+                renderItem={(item: ServiceItem) => `${item.title}${item.image_url ? ' 🖼️' : ''}${item.description ? ` — ${item.description.slice(0, 40)}...` : ''}`}
               />
               <AddServiceForm onAdd={item => addItem('services', item)} />
             </SectionCard>
@@ -394,6 +396,142 @@ export default function WebsiteBuilderPage() {
               </div>
             </SectionCard>
           </TabsContent>
+
+          {/* ─── STATS ─── */}
+          <TabsContent value="stats">
+            <SectionCard sectionKey="stats" toggles={toggles} setToggles={setToggles} onSave={() => save('stats')} saving={upsertSection.isPending}>
+              <p className="text-sm text-muted-foreground">Configure the social proof / stats section shown on your website. Min 2, max 6 items.</p>
+              <div className="space-y-3">
+                {(drafts.stats?.items ?? []).map((item: StatItem, i: number) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <Input
+                        value={item.value}
+                        onChange={e => {
+                          const items = [...(drafts.stats?.items ?? [])];
+                          items[i] = { ...items[i], value: e.target.value };
+                          setDrafts(prev => ({ ...prev, stats: { ...prev.stats, items } }));
+                        }}
+                        placeholder="500+"
+                      />
+                      <Input
+                        value={item.label}
+                        onChange={e => {
+                          const items = [...(drafts.stats?.items ?? [])];
+                          items[i] = { ...items[i], label: e.target.value };
+                          setDrafts(prev => ({ ...prev, stats: { ...prev.stats, items } }));
+                        }}
+                        placeholder="Happy Members"
+                      />
+                      <Input
+                        value={item.icon_url ?? ''}
+                        onChange={e => {
+                          const items = [...(drafts.stats?.items ?? [])];
+                          items[i] = { ...items[i], icon_url: e.target.value };
+                          setDrafts(prev => ({ ...prev, stats: { ...prev.stats, items } }));
+                        }}
+                        placeholder="Icon URL (optional)"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost" size="icon"
+                      disabled={(drafts.stats?.items ?? []).length <= 2}
+                      onClick={() => {
+                        const items = [...(drafts.stats?.items ?? [])];
+                        items.splice(i, 1);
+                        setDrafts(prev => ({ ...prev, stats: { ...prev.stats, items } }));
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              {(drafts.stats?.items ?? []).length < 6 && (
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => {
+                    const items = [...(drafts.stats?.items ?? []), { icon_url: '', value: '', label: '' }];
+                    setDrafts(prev => ({ ...prev, stats: { ...prev.stats, items } }));
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />Add Stat
+                </Button>
+              )}
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── FOOTER SOCIAL ─── */}
+          <TabsContent value="footer_social">
+            <SectionCard sectionKey="footer_social" toggles={toggles} setToggles={setToggles} onSave={() => save('footer_social')} saving={upsertSection.isPending}>
+              <p className="text-sm text-muted-foreground">Add social media links displayed in your website footer.</p>
+              <Field label="Instagram URL" value={drafts.footer_social?.instagram_url} onChange={v => updateDraft('footer_social', 'instagram_url', v)} placeholder="https://instagram.com/yourgym" />
+              <div className="flex items-center justify-between p-2 rounded border bg-muted/20">
+                <Label className="text-sm">Show Instagram</Label>
+                <Switch checked={drafts.footer_social?.instagram_enabled !== false} onCheckedChange={v => updateDraft('footer_social', 'instagram_enabled', v)} />
+              </div>
+              <Field label="WhatsApp Link" value={drafts.footer_social?.whatsapp_url} onChange={v => updateDraft('footer_social', 'whatsapp_url', v)} placeholder="https://wa.me/919876543210" />
+              <div className="flex items-center justify-between p-2 rounded border bg-muted/20">
+                <Label className="text-sm">Show WhatsApp</Label>
+                <Switch checked={drafts.footer_social?.whatsapp_enabled !== false} onCheckedChange={v => updateDraft('footer_social', 'whatsapp_enabled', v)} />
+              </div>
+              <Field label="Facebook URL" value={drafts.footer_social?.facebook_url} onChange={v => updateDraft('footer_social', 'facebook_url', v)} placeholder="https://facebook.com/yourgym" />
+              <div className="flex items-center justify-between p-2 rounded border bg-muted/20">
+                <Label className="text-sm">Show Facebook</Label>
+                <Switch checked={drafts.footer_social?.facebook_enabled !== false} onCheckedChange={v => updateDraft('footer_social', 'facebook_enabled', v)} />
+              </div>
+              <Field label="YouTube URL" value={drafts.footer_social?.youtube_url} onChange={v => updateDraft('footer_social', 'youtube_url', v)} placeholder="https://youtube.com/@yourgym" />
+              <div className="flex items-center justify-between p-2 rounded border bg-muted/20">
+                <Label className="text-sm">Show YouTube</Label>
+                <Switch checked={drafts.footer_social?.youtube_enabled !== false} onCheckedChange={v => updateDraft('footer_social', 'youtube_enabled', v)} />
+              </div>
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── SUPPLEMENTS ─── */}
+          <TabsContent value="supplements">
+            <SectionCard sectionKey="supplements" toggles={toggles} setToggles={setToggles} onSave={() => save('supplements')} saving={upsertSection.isPending}>
+              <Field label="Section Title" value={drafts.supplements?.title} onChange={v => updateDraft('supplements', 'title', v)} />
+              <Field label="Subtitle" value={drafts.supplements?.subtitle} onChange={v => updateDraft('supplements', 'subtitle', v)} />
+              <ItemList
+                items={drafts.supplements?.items ?? []}
+                onRemove={i => removeItem('supplements', i)}
+                renderItem={(item: SupplementItem) => `${item.title}${item.external_link ? ' → ' + item.external_link.slice(0, 30) + '...' : ''}`}
+              />
+              <AddSupplementForm onAdd={item => addItem('supplements', item)} />
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── ACHIEVEMENTS ─── */}
+          <TabsContent value="achievements">
+            <SectionCard sectionKey="achievements" toggles={toggles} setToggles={setToggles} onSave={() => save('achievements')} saving={upsertSection.isPending}>
+              <Field label="Section Title" value={drafts.achievements?.title} onChange={v => updateDraft('achievements', 'title', v)} />
+              <Field label="Subtitle" value={drafts.achievements?.subtitle} onChange={v => updateDraft('achievements', 'subtitle', v)} />
+              <ItemList
+                items={drafts.achievements?.items ?? []}
+                onRemove={i => removeItem('achievements', i)}
+                renderItem={(item: AchievementItem) => `${item.title}${item.description ? ' — ' + item.description.slice(0, 40) + '...' : ''}`}
+              />
+              <AddAchievementForm onAdd={item => addItem('achievements', item)} />
+            </SectionCard>
+          </TabsContent>
+
+          {/* ─── PRODUCTS ─── */}
+          <TabsContent value="products">
+            <SectionCard sectionKey="products" toggles={toggles} setToggles={setToggles} onSave={() => save('products')} saving={upsertSection.isPending}>
+              <Field label="Banner Title" value={drafts.products?.title} onChange={v => updateDraft('products', 'title', v)} placeholder="Shop Fitness Essentials" />
+              <Field label="Banner Subtitle" value={drafts.products?.subtitle} onChange={v => updateDraft('products', 'subtitle', v)} textarea />
+              <Field label="CTA Button Text" value={drafts.products?.cta_text} onChange={v => updateDraft('products', 'cta_text', v)} placeholder="Explore Products" />
+              <Field label="Coupon Highlight" value={drafts.products?.coupon_highlight} onChange={v => updateDraft('products', 'coupon_highlight', v)} placeholder="Use code GYM10 for 10% off" />
+              <Field label="Banner Background Images (one URL per line)" value={(drafts.products?.banner_images ?? []).join('\n')} onChange={v => updateDraft('products', 'banner_images', v.split('\n').map(s => s.trim()).filter(Boolean))} textarea />
+              <ItemList
+                items={drafts.products?.items ?? []}
+                onRemove={i => removeItem('products', i)}
+                renderItem={(item: ProductItem) => `${item.title}${item.coupon_code ? ' · 🎟 ' + item.coupon_code : ''}`}
+              />
+              <AddProductForm onAdd={item => addItem('products', item)} />
+            </SectionCard>
+          </TabsContent>
         </Tabs>
       )}
     </div>
@@ -573,6 +711,80 @@ function AddEquipmentForm({ onAdd }: { onAdd: (item: EquipmentItem) => void }) {
       </div>
       <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Short description (optional)" rows={2} />
       <Button size="sm" onClick={add}><Plus className="h-4 w-4 mr-1" />Add Equipment</Button>
+    </div>
+  );
+}
+
+function AddSupplementForm({ onAdd }: { onAdd: (item: SupplementItem) => void }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [link, setLink] = useState('');
+  const add = () => {
+    if (!title.trim()) return;
+    onAdd({ title: title.trim(), description: description || undefined, image_url: imageUrl || undefined, external_link: link || undefined });
+    setTitle(''); setDescription(''); setImageUrl(''); setLink('');
+  };
+  return (
+    <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+      <p className="text-sm font-medium">Add Supplement</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Product title" />
+        <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Image URL" />
+      </div>
+      <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Short description" rows={2} />
+      <Input value={link} onChange={e => setLink(e.target.value)} placeholder="Buy link (external URL)" />
+      <Button size="sm" onClick={add}><Plus className="h-4 w-4 mr-1" />Add Supplement</Button>
+    </div>
+  );
+}
+
+function AddProductForm({ onAdd }: { onAdd: (item: ProductItem) => void }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [buyLink, setBuyLink] = useState('');
+  const [coupon, setCoupon] = useState('GYM10');
+  const add = () => {
+    if (!title) return;
+    onAdd({ title, description, image_url: imageUrl, buy_link: buyLink, coupon_code: coupon });
+    setTitle(''); setDescription(''); setImageUrl(''); setBuyLink(''); setCoupon('GYM10');
+  };
+  return (
+    <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+      <p className="text-sm font-medium">Add Product</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Product title" />
+        <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Image URL" />
+      </div>
+      <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Short description" rows={2} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input value={buyLink} onChange={e => setBuyLink(e.target.value)} placeholder="Buy Now link (external URL)" />
+        <Input value={coupon} onChange={e => setCoupon(e.target.value)} placeholder="Coupon code (e.g. GYM10)" />
+      </div>
+      <Button size="sm" onClick={add}><Plus className="h-4 w-4 mr-1" />Add Product</Button>
+    </div>
+  );
+}
+
+function AddAchievementForm({ onAdd }: { onAdd: (item: AchievementItem) => void }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const add = () => {
+    if (!title.trim()) return;
+    onAdd({ title: title.trim(), description: description || undefined, image_url: imageUrl || undefined });
+    setTitle(''); setDescription(''); setImageUrl('');
+  };
+  return (
+    <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+      <p className="text-sm font-medium">Add Achievement / Certification</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Certificate title" />
+        <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Image/Logo URL" />
+      </div>
+      <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optional)" rows={2} />
+      <Button size="sm" onClick={add}><Plus className="h-4 w-4 mr-1" />Add Achievement</Button>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Rocket, Database, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function SetupBanner() {
   const { needsSetup, checking } = useSetupDetection();
@@ -16,21 +17,28 @@ export function SetupBanner() {
 
   const handleSeed = () => {
     setSeeding(true);
-    seedDemoData();
-    setDone(true);
-    setTimeout(() => window.location.reload(), 500);
-  };
+    try {
+      console.log('[SetupBanner] Starting demo data load...');
+      resetDemoData();
+      const result = seedDemoData();
 
-  if (done) {
-    return (
-      <Card className="border-primary/30 bg-primary/5 mb-6">
-        <CardContent className="flex items-center gap-3 py-4">
-          <CheckCircle className="h-6 w-6 text-primary" />
-          <span className="text-sm font-medium">Demo data loaded! Refreshing...</span>
-        </CardContent>
-      </Card>
-    );
-  }
+      // Validate
+      if (result.members.length > 0 && result.plans.length > 0 && result.website_content) {
+        console.log('[SetupBanner] ✅ Demo data loaded successfully');
+        toast.success('Demo data loaded successfully');
+        setDone(true);
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        console.error('[SetupBanner] ❌ Demo data load failed — validation failed');
+        toast.error('Demo data load failed');
+        setSeeding(false);
+      }
+    } catch (e) {
+      console.error('[SetupBanner] ❌ Error loading demo data:', e);
+      toast.error('Demo data load failed');
+      setSeeding(false);
+    }
+  };
 
   return (
     <Card className="border-primary/30 bg-primary/5 mb-6">

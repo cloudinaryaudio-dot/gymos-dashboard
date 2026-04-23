@@ -16,27 +16,46 @@ export interface HeroContent {
   social_proof?: SocialProofConfig;
 }
 export interface PricingContent { title?: string; subtitle?: string; cta_note?: string; }
-export interface TrainerItem { name: string; specialization?: string; image_url?: string; }
+export interface TrainerItem { name: string; specialization?: string; image_url?: string; show_on_homepage?: boolean; }
 export interface TrainersContent { title?: string; subtitle?: string; items: TrainerItem[]; }
-export interface TestimonialItem { name: string; content?: string; video_url?: string; }
+export interface TestimonialItem { name: string; content?: string; video_url?: string; show_on_homepage?: boolean; }
 export interface TestimonialsContent { title?: string; subtitle?: string; items: TestimonialItem[]; }
-export interface GalleryMediaItem { url: string; type: 'image' | 'video'; caption?: string; }
+export interface GalleryMediaItem { url: string; type: 'image' | 'video'; caption?: string; show_on_homepage?: boolean; }
 export interface GalleryContent { title?: string; items: GalleryMediaItem[]; }
 export interface GalleryImageItem { image_url: string; caption?: string; }
-export interface ServiceItem { title: string; description?: string; icon?: string; image_url?: string; }
+export interface ServiceItem { title: string; description?: string; icon?: string; image_url?: string; show_on_homepage?: boolean; }
 export interface ServicesContent { title?: string; subtitle?: string; items: ServiceItem[]; }
-export interface EquipmentItem { name: string; description?: string; image_url?: string; }
+export interface EquipmentItem { name: string; description?: string; image_url?: string; show_on_homepage?: boolean; }
 export interface EquipmentContent { title?: string; subtitle?: string; items: EquipmentItem[]; }
-export interface ReviewItem { name: string; rating: number; text?: string; }
+export interface ReviewItem { name: string; rating: number; text?: string; image_url?: string; }
 export interface ReviewsContent { title?: string; subtitle?: string; items: ReviewItem[]; }
-export interface BranchItem { name: string; location?: string; contact?: string; }
+export interface BranchItem { name: string; location?: string; contact?: string; image_url?: string; show_on_homepage?: boolean; }
 export interface BranchesContent { title?: string; subtitle?: string; items: BranchItem[]; }
 export interface OrbitIconItem { url: string; label: string; }
 export interface OrbitContent { person_url: string; icons: OrbitIconItem[]; }
 export interface NavbarContent { logo_url?: string; brand_name?: string; cta_text?: string; cta_link?: string; show_dashboard_link?: boolean; }
 export interface LoaderContent { enabled?: boolean; text?: string; icon_url?: string; duration?: number; }
+export interface StatItem { icon_url?: string; value: string; label: string; }
+export interface StatsContent { title?: string; items: StatItem[]; }
+export interface FooterSocialContent {
+  instagram_url?: string; whatsapp_url?: string; facebook_url?: string; youtube_url?: string;
+  instagram_enabled?: boolean; whatsapp_enabled?: boolean; facebook_enabled?: boolean; youtube_enabled?: boolean;
+}
+export interface SupplementItem { title: string; description?: string; image_url?: string; external_link?: string; }
+export interface SupplementsContent { title?: string; subtitle?: string; items: SupplementItem[]; }
+export interface ProductItem { title: string; description?: string; image_url?: string; buy_link?: string; coupon_code?: string; }
+export interface ProductsContent {
+  title?: string;
+  subtitle?: string;
+  cta_text?: string;
+  coupon_highlight?: string;
+  banner_images?: string[];
+  items: ProductItem[];
+}
+export interface AchievementItem { title: string; description?: string; image_url?: string; }
+export interface AchievementsContent { title?: string; subtitle?: string; items: AchievementItem[]; }
 
-export type SectionKey = 'hero' | 'pricing' | 'trainers' | 'testimonials' | 'gallery' | 'services' | 'equipment' | 'reviews' | 'branches' | 'orbit' | 'navbar' | 'loader';
+export type SectionKey = 'hero' | 'pricing' | 'trainers' | 'testimonials' | 'gallery' | 'services' | 'equipment' | 'reviews' | 'branches' | 'orbit' | 'navbar' | 'loader' | 'stats' | 'footer_social' | 'supplements' | 'achievements' | 'products';
 
 export interface WebsiteContentRow {
   id: string; user_id: string; section_key: SectionKey; is_enabled: boolean;
@@ -56,9 +75,22 @@ export const SECTION_DEFAULTS: Record<SectionKey, { label: string; defaultConten
   orbit: { label: 'Orbit Animation', defaultContent: { person_url: '', icons: [{ url: '', label: 'Strength Training' }, { url: '', label: 'Meditation' }, { url: '', label: 'Dance Fitness' }, { url: '', label: 'Nutrition' }, { url: '', label: 'Cardio Health' }] } as OrbitContent },
   navbar: { label: 'Navbar', defaultContent: { logo_url: '', brand_name: '', cta_text: 'Join Now', cta_link: 'lead-form', show_dashboard_link: true } as NavbarContent },
   loader: { label: 'Page Loader', defaultContent: { enabled: true, text: '', icon_url: '', duration: 3 } as LoaderContent },
+  stats: { label: 'Stats', defaultContent: { title: '', items: [
+    { icon_url: '', value: '500+', label: 'Happy Members' },
+    { icon_url: '', value: '200+', label: 'Transformations' },
+    { icon_url: '', value: '5+', label: 'Years Experience' },
+    { icon_url: '', value: '4.8', label: 'Google Rating' },
+  ] } as StatsContent },
+  footer_social: { label: 'Footer Social', defaultContent: {
+    instagram_url: '', whatsapp_url: '', facebook_url: '', youtube_url: '',
+    instagram_enabled: true, whatsapp_enabled: true, facebook_enabled: true, youtube_enabled: true,
+  } as FooterSocialContent },
+  supplements: { label: 'Supplements', defaultContent: { title: 'Recommended Supplements', subtitle: 'Fuel your gains with our top picks.', items: [] } as SupplementsContent },
+  achievements: { label: 'Achievements', defaultContent: { title: 'Achievements & Certifications', subtitle: 'Our credentials speak for themselves.', items: [] } as AchievementsContent },
+  products: { label: 'Products / Shop', defaultContent: { title: 'Shop Fitness Essentials', subtitle: 'Premium supplements & gear.', cta_text: 'Explore Products', coupon_highlight: 'Use code GYM10 for 10% off', banner_images: [], items: [] } as ProductsContent },
 };
 
-export const ALL_SECTION_KEYS: SectionKey[] = ['hero', 'pricing', 'services', 'equipment', 'trainers', 'testimonials', 'reviews', 'gallery', 'branches', 'orbit', 'navbar', 'loader'];
+export const ALL_SECTION_KEYS: SectionKey[] = ['hero', 'pricing', 'services', 'equipment', 'trainers', 'testimonials', 'reviews', 'gallery', 'branches', 'orbit', 'navbar', 'loader', 'stats', 'footer_social', 'supplements', 'achievements', 'products'];
 
 export function useWebsiteContent() {
   const { toast } = useToast();

@@ -19,7 +19,7 @@ export function StatCard({ title, value, change, changeType, icon: Icon }: StatC
   return (
     <Card className="animate-fade-in">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-3xl font-bold font-display">{value}</p>

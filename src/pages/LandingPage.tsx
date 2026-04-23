@@ -10,14 +10,23 @@ import { useToast } from '@/hooks/use-toast';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import {
   Dumbbell, Send, ChevronRight, Users, Award, Calendar, Star, ArrowRight, Play, Phone, User, Target,
-  MapPin, Mail, Clock,
+  MapPin, Mail, Clock, Image as ImageIcon,
 } from 'lucide-react';
-import type { HeroContent, SocialProofConfig, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, ServicesContent, EquipmentContent, ReviewsContent, BranchesContent, OrbitContent, NavbarContent, LoaderContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
+import type { HeroContent, SocialProofConfig, PricingContent, TrainersContent, TestimonialsContent, GalleryContent, GalleryMediaItem, ServicesContent, EquipmentContent, ReviewsContent, BranchesContent, OrbitContent, NavbarContent, LoaderContent, StatsContent, FooterSocialContent, SupplementsContent, AchievementsContent, ProductsContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 import { VideoEmbed } from '@/components/VideoEmbed';
 import OrbitAnimation from '@/components/OrbitAnimation';
 import { Lightbox } from '@/components/Lightbox';
 import { PageLoader } from '@/components/PageLoader';
 import { PublicNavbar } from '@/components/PublicNavbar';
+import { PremiumCard, SectionHeader } from '@/components/PremiumCard';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { ReviewsCarousel } from '@/components/landing/ReviewsCarousel';
+import { BranchesSection } from '@/components/landing/BranchesSection';
+import { SupplementsSection } from '@/components/landing/SupplementsSection';
+import { AchievementsSection } from '@/components/landing/AchievementsSection';
+import { ServicesSection } from '@/components/landing/ServicesSection';
+import { FooterSocial } from '@/components/landing/FooterSocial';
+import { ProductsBanner } from '@/components/landing/ProductsBanner';
 import * as ds from '@/services/dataService';
 
 function getYouTubeId(url: string): string | null {
@@ -70,6 +79,24 @@ function AnimatedSection({ children, className = '', delay = 0, variant = 'fade-
   );
 }
 
+function SlideCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { margin: '-60px', amount: 0.2 });
+  const fromLeft = index % 2 === 0;
+  const xOffset = fromLeft ? -30 : 30;
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: xOffset }}
+      animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: xOffset }}
+      transition={{ duration: 0.65, delay: (index % 3) * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function ParallaxSection({ children, className = '', speed = 0.15 }: { children: React.ReactNode; className?: string; speed?: number }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
@@ -88,6 +115,16 @@ export default function LandingPage() {
   const [leadGoal, setLeadGoal] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Apply public theme class so the gradient binds to html/body/#root
+  useEffect(() => {
+    document.documentElement.classList.add('theme-public');
+    document.body.classList.add('theme-public');
+    return () => {
+      document.documentElement.classList.remove('theme-public');
+      document.body.classList.remove('theme-public');
+    };
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ['public-landing'],
     queryFn: async () => {
@@ -97,9 +134,18 @@ export default function LandingPage() {
       ]);
       const rows = content as WebsiteContentRow[];
       const getSection = (key: string) => rows.find(r => r.section_key === key);
+      const sortedPlans = plans.sort((a, b) => a.price - b.price);
+      // Pick up to 3 plans for homepage: prioritize show_on_homepage, then is_highlighted, then fill
+      const homepagePlans = (() => {
+        const marked = sortedPlans.filter(p => (p as any).show_on_homepage);
+        const highlighted = sortedPlans.filter(p => p.is_highlighted && !marked.includes(p));
+        const rest = sortedPlans.filter(p => !marked.includes(p) && !highlighted.includes(p));
+        return [...marked, ...highlighted, ...rest].slice(0, 3);
+      })();
       return {
         sections: rows,
-        plans: plans.sort((a, b) => a.price - b.price),
+        plans: sortedPlans,
+        homepagePlans,
         hero: getSection('hero'),
         pricing: getSection('pricing'),
         trainers: getSection('trainers'),
@@ -112,6 +158,11 @@ export default function LandingPage() {
         orbit: getSection('orbit'),
         navbar: getSection('navbar'),
         loader: getSection('loader'),
+        stats: getSection('stats'),
+        footer_social: getSection('footer_social'),
+        supplements: getSection('supplements'),
+        achievements: getSection('achievements'),
+        products: getSection('products'),
       };
     },
   });
@@ -133,6 +184,17 @@ export default function LandingPage() {
   const orbitEnabled = data?.orbit?.is_enabled !== false;
   const navbarContent = (data?.navbar?.content ?? {}) as NavbarContent;
   const loaderContent = (data?.loader?.content ?? {}) as LoaderContent;
+  const statsContent = (data?.stats?.content ?? { items: [
+    { icon_url: '', value: '500+', label: 'Happy Members' },
+    { icon_url: '', value: '200+', label: 'Transformations' },
+    { icon_url: '', value: '5+', label: 'Years Experience' },
+    { icon_url: '', value: '4.8', label: 'Google Rating' },
+  ] }) as StatsContent;
+  const statsEnabled = data?.stats?.is_enabled !== false;
+  const footerSocialContent = (data?.footer_social?.content ?? { instagram_url: '', whatsapp_url: '', facebook_url: '', youtube_url: '', instagram_enabled: true, whatsapp_enabled: true, facebook_enabled: true, youtube_enabled: true }) as FooterSocialContent;
+  const supplementsContent = (data?.supplements?.content ?? { title: 'Recommended Supplements', subtitle: '', items: [] }) as SupplementsContent;
+  const achievementsContent = (data?.achievements?.content ?? { title: 'Achievements & Certifications', subtitle: '', items: [] }) as AchievementsContent;
+  const productsContent = (data?.products?.content ?? { title: 'Shop Fitness Essentials', subtitle: '', items: [], banner_images: [] }) as ProductsContent;
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -161,7 +223,15 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen text-ws-text overflow-x-hidden scroll-smooth bg-website-bg">
+    <div
+      id="theme-root"
+      className="min-h-screen overflow-x-hidden scroll-smooth"
+      style={{
+        background: 'var(--bg-gradient)',
+        color: 'var(--text-heading)',
+        minHeight: '100vh',
+      }}
+    >
       <PageLoader
         brandName={brandName}
         brandLogo={brandLogo}
@@ -300,197 +370,234 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-website-bg to-transparent" />
       </section>
 
-      {/* ─── SOCIAL PROOF ─── */}
-      <section className="relative -mt-1 border-y border-ws-border-dim bg-ws-social-proof">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { icon: Users, value: '500+', label: 'Active Members' },
-              { icon: Award, value: '200+', label: 'Transformations' },
-              { icon: Calendar, value: '10+', label: 'Years Experience' },
-              { icon: Star, value: '4.9★', label: 'Google Rating' },
-            ].map((stat, i) => (
-              <AnimatedSection key={stat.label} delay={i * 0.1} className="text-center space-y-3">
-                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mx-auto">
-                  <stat.icon className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-4xl font-bold font-display">{stat.value}</p>
-                <p className="text-sm text-ws-text-dim font-medium uppercase tracking-wider">{stat.label}</p>
-              </AnimatedSection>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ─── STATS / SOCIAL PROOF ─── */}
+   {statsEnabled && (statsContent.items?.length ?? 0) > 0 && (
+  <section
+    className="relative -mt-1 overflow-hidden border-y"
+    style={{
+      background: 'var(--bg-secondary)',
+      borderColor: 'var(--card-border)',
+    }}
+  >
+
+    {/* soft accent glow background (uses theme accent) */}
+    <div className="absolute inset-0 pointer-events-none opacity-60">
+      <div
+        className="absolute top-0 left-1/3 w-80 h-80 blur-3xl rounded-full"
+        style={{ background: 'hsl(var(--accent) / 0.18)' }}
+      />
+      <div
+        className="absolute bottom-0 right-1/3 w-80 h-80 blur-3xl rounded-full"
+        style={{ background: 'hsl(var(--highlight) / 0.18)' }}
+      />
+    </div>
+
+    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-8">
+        {statsContent.items.map((stat, i) => (
+          <motion.div
+            key={stat.label + i}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.6, delay: i * 0.1 }}
+            whileHover={{ y: -6 }}
+            className="group relative text-center rounded-2xl backdrop-blur-xl border p-6 md:p-8 shadow-md hover:shadow-2xl transition-all duration-500"
+            style={{
+              background: 'var(--card-bg)',
+              borderColor: 'var(--card-border)',
+            }}
+          >
+
+            {/* glow hover border (theme accent) */}
+            <div
+              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"
+              style={{
+                background:
+                  'linear-gradient(to right, hsl(var(--accent) / 0.20), hsl(var(--highlight) / 0.20))',
+              }}
+            />
+
+            {/* ICON */}
+            <div
+              className="relative inline-flex items-center justify-center h-14 w-14 rounded-xl mx-auto mb-4 shadow-inner group-hover:scale-110 transition"
+              style={{
+                background:
+                  'linear-gradient(135deg, hsl(var(--accent) / 0.18), hsl(var(--highlight) / 0.18))',
+              }}
+            >
+              {stat.icon_url ? (
+                <img
+                  src={stat.icon_url}
+                  alt={stat.label}
+                  className="h-7 w-7 object-contain"
+                  loading="lazy"
+                />
+              ) : (
+                (() => {
+                  const label = stat.label.toLowerCase();
+                  const cls = 'h-6 w-6 transition';
+                  const style = { color: 'hsl(var(--accent))' } as React.CSSProperties;
+                  if (label.includes('member')) return <Users className={cls} style={style} />;
+                  if (label.includes('transform')) return <Award className={cls} style={style} />;
+                  if (label.includes('experience') || label.includes('year'))
+                    return <Calendar className={cls} style={style} />;
+                  if (label.includes('rating') || label.includes('star'))
+                    return <Star className={cls} style={{ ...style, fill: 'hsl(var(--accent))' }} />;
+                  return <Award className={cls} style={style} />;
+                })()
+              )}
+            </div>
+
+            {/* VALUE — uses accent color for emphasis */}
+            <p
+              className="text-3xl sm:text-4xl font-bold"
+              style={{ color: 'hsl(var(--accent))' }}
+            >
+              {stat.value}
+            </p>
+
+            {/* LABEL — themed description color */}
+            <p
+              className="text-xs sm:text-sm font-medium uppercase tracking-wider mt-2"
+              style={{ color: 'var(--text-description)' }}
+            >
+              {stat.label}
+            </p>
+
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
 
       {/* ─── SERVICES ─── */}
-      {data?.services && (servicesContent.items?.length ?? 0) > 0 && (
-        <section id="services" className="py-28 px-4 sm:px-6 lg:px-8 relative">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
-          </div>
-          <div className="max-w-7xl mx-auto relative z-10">
-            <AnimatedSection className="text-center mb-16" variant="blur">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">What We Offer</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{servicesContent.title || 'Our Services'}</h2>
-              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{servicesContent.subtitle || 'Explore our range of fitness programs.'}</p>
-            </AnimatedSection>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {servicesContent.items.map((s, i) => (
-                <AnimatedSection key={i} delay={i * 0.08}>
-                  <div className="group rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
-                    {s.image_url ? (
-                      <div className="relative aspect-[16/10] overflow-hidden">
-                        <img src={s.image_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-ws-card via-transparent to-transparent opacity-60" />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center pt-8 pb-2">
-                        <span className="text-5xl">{s.icon || '💪'}</span>
-                      </div>
-                    )}
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="font-display font-bold text-lg mb-2">{s.title}</h3>
-                      {s.description && <p className="text-sm text-ws-text-subtle leading-relaxed flex-1">{s.description}</p>}
-                    </div>
-                  </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {data?.services && (servicesContent.items?.length ?? 0) > 0 && (() => {
+        const items = servicesContent.items;
+        const marked = items.filter(i => (i as any).show_on_homepage);
+        const rest = items.filter(i => !marked.includes(i));
+        const homepageItems = [...marked, ...rest].slice(0, 6);
+        return (
+          <ServicesSection
+            content={{ ...servicesContent, items: homepageItems }}
+            showViewAll={items.length > 6}
+          />
+        );
+      })()}
 
       {/* ─── EQUIPMENT ─── */}
-      {data?.equipment && (equipmentContent.items?.length ?? 0) > 0 && (
-        <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
-          <div className="max-w-7xl mx-auto">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Facility</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{equipmentContent.title || 'World-Class Equipment'}</h2>
-              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{equipmentContent.subtitle || 'Train with the best machines and gear.'}</p>
-            </AnimatedSection>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {equipmentContent.items.map((eq, i) => (
-                <AnimatedSection key={i} delay={i * 0.08}>
-                  <div className="group rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
-                    {eq.image_url ? (
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <img src={eq.image_url} alt={eq.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-ws-card via-transparent to-transparent opacity-60" />
-                      </div>
-                    ) : (
-                      <div className="aspect-[4/3] bg-ws-border-dim flex items-center justify-center">
-                        <Dumbbell className="h-16 w-16 text-ws-text-icon" />
-                      </div>
-                    )}
-                    <div className="p-6">
-                      <h3 className="font-display font-bold text-lg mb-2">{eq.name}</h3>
-                      {eq.description && <p className="text-sm text-ws-text-subtle leading-relaxed">{eq.description}</p>}
-                    </div>
-                  </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {data?.pricing && (data?.plans?.length ?? 0) > 0 && (
-        <section id="pricing" className="py-28 px-4 sm:px-6 lg:px-8 relative">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
-          </div>
-          <div className="max-w-7xl mx-auto relative z-10">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Pricing</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{pricingContent.title || 'Choose Your Plan'}</h2>
-              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{pricingContent.subtitle || 'Flexible plans designed to fit your fitness journey.'}</p>
-              {pricingContent.cta_note && <p className="mt-3 text-primary/80 font-semibold text-sm">{pricingContent.cta_note}</p>}
-            </AnimatedSection>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {data!.plans.map((plan: any, i: number) => {
-                const isPopular = i === Math.floor((data!.plans.length - 1) / 2);
-                return (
-                  <AnimatedSection key={plan.id} delay={i * 0.12}>
-                    <div className={`relative rounded-2xl p-8 text-center space-y-6 transition-all duration-300 hover:-translate-y-2 ${isPopular ? 'bg-gradient-to-b from-primary/15 to-ws-card border-2 border-primary/50 shadow-2xl shadow-primary/10' : 'bg-ws-card border border-ws-border hover:border-ws-border-light'}`}>
-                      {isPopular && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-gradient-to-r from-primary to-highlight text-primary-foreground text-xs font-bold rounded-full uppercase tracking-wider shadow-lg">Most Popular</div>
-                      )}
-                      <h3 className="font-display font-semibold text-xl">{plan.name}</h3>
-                      <div>
-                        <span className="text-5xl font-bold font-display">₹{plan.price}</span>
-                        <span className="text-ws-text-dim ml-1 text-sm">/ {plan.duration_days} days</span>
-                      </div>
-                      <ul className="text-left space-y-3 text-sm text-ws-text-muted">
-                        <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Full gym access</li>
-                        <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Expert guidance</li>
-                        <li className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /> Diet consultation</li>
-                      </ul>
-                      <Button className={`w-full h-12 rounded-xl font-bold transition-all duration-200 ${isPopular ? 'shadow-lg shadow-primary/25' : 'bg-ws-border text-ws-text hover:bg-ws-border-light'}`} onClick={() => scrollTo('lead-form')}>
-                        Get Started <ChevronRight className="ml-1 h-4 w-4" />
+      {data?.equipment && (equipmentContent.items?.length ?? 0) > 0 && (() => {
+        const items = equipmentContent.items;
+        const marked = items.filter(i => (i as any).show_on_homepage);
+        const rest = items.filter(i => !marked.includes(i));
+        const homepageItems = [...marked, ...rest].slice(0, 6);
+        const showViewAll = items.length > 6;
+        return (
+          <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+            <div className="max-w-7xl mx-auto">
+              <SectionHeader tag="Our Facility" title={equipmentContent.title || 'World-Class Equipment'} subtitle={equipmentContent.subtitle} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {homepageItems.map((eq, i) => (
+                  <PremiumCard
+                    key={i}
+                    index={i}
+                    imageUrl={eq.image_url}
+                    title={eq.name}
+                    description={eq.description}
+                    fallbackType="equipment"
+                    aspectRatio="aspect-[4/3]"
+                  />
+                ))}
+              </div>
+              {showViewAll && (
+                <div className="text-center mt-12">
+                  <Link to="/equipment">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                      <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                        View All Equipment <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
-                    </div>
-                  </AnimatedSection>
-                );
-              })}
+                    </motion.div>
+                  </Link>
+                </div>
+              )}
             </div>
-          </div>
-        </section>
+          </section>
+        );
+      })()}
+
+      {data?.pricing && (data?.homepagePlans?.length ?? 0) > 0 && (
+        <PricingSection
+          plans={data!.homepagePlans}
+          content={pricingContent}
+          onCtaClick={() => scrollTo('lead-form')}
+          showViewAll={(data?.plans?.length ?? 0) > 3}
+        />
       )}
 
       {/* ─── TRAINERS ─── */}
-      {data?.trainers && (trainersContent.items?.length ?? 0) > 0 && (
-        <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
-          <div className="max-w-7xl mx-auto">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Expert Coaching</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{trainersContent.title || 'Meet Our Trainers'}</h2>
-              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{trainersContent.subtitle || 'Certified professionals dedicated to your transformation.'}</p>
-            </AnimatedSection>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {trainersContent.items.map((t, i) => (
-                <AnimatedSection key={i} delay={i * 0.1}>
-                  <div className="group rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/40 transition-all duration-500 hover:-translate-y-1">
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      {t.image_url ? (
-                        <img src={t.image_url} alt={t.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full bg-ws-border-dim flex items-center justify-center">
-                          <User className="h-20 w-20 text-ws-text-icon" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-ws-darker via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                        <h3 className="font-display font-bold text-xl">{t.name}</h3>
+      {data?.trainers && (trainersContent.items?.length ?? 0) > 0 && (() => {
+        const items = trainersContent.items;
+        const marked = items.filter(i => (i as any).show_on_homepage);
+        const rest = items.filter(i => !marked.includes(i));
+        const homepageItems = [...marked, ...rest].slice(0, 6);
+        const showViewAll = items.length > 6;
+        return (
+          <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+            <div className="max-w-7xl mx-auto">
+              <SectionHeader tag="Expert Coaching" title={trainersContent.title || 'Meet Our Trainers'} subtitle={trainersContent.subtitle} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {homepageItems.map((t, i) => (
+                  <PremiumCard
+                    key={i}
+                    index={i}
+                    imageUrl={t.image_url}
+                    fallbackType="trainer"
+                    aspectRatio="aspect-[4/5]"
+                    imageOverlay={
+                      <div>
+                        <h3 className="font-display font-bold text-xl text-white">{t.name}</h3>
                         {t.specialization && <p className="text-primary font-semibold text-sm mt-1">{t.specialization}</p>}
                       </div>
-                    </div>
-                  </div>
-                </AnimatedSection>
-              ))}
+                    }
+                  />
+                ))}
+              </div>
+              {showViewAll && (
+                <div className="text-center mt-12">
+                  <Link to="/trainers">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                      <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                        View All Trainers <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </div>
+              )}
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        );
+      })()}
 
-      {/* ─── TESTIMONIALS ─── */}
+      {/* ─── TESTIMONIALS (Text + Video) ─── */}
       {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (() => {
-        const textItems = testimonialsContent.items.filter(t => !t.video_url);
-        const videoItems = testimonialsContent.items.filter(t => !!t.video_url);
+        const allItems = testimonialsContent.items;
+        const marked = allItems.filter(i => (i as any).show_on_homepage);
+        const rest = allItems.filter(i => !marked.includes(i));
+        const homepageItems = [...marked, ...rest].slice(0, 6);
+        const showViewAll = allItems.length > 6;
+        const textItems = homepageItems.filter(t => !t.video_url);
+        const videoItems = homepageItems.filter(t => !!t.video_url);
         return (
           <>
             {textItems.length > 0 && (
               <section id="testimonials" className="py-28 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
-                  <AnimatedSection className="text-center mb-16">
-                    <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Success Stories</p>
-                    <h2 className="text-4xl sm:text-5xl font-bold font-display">{testimonialsContent.title || 'What Our Members Say'}</h2>
-                    <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{testimonialsContent.subtitle || 'Real results from real people.'}</p>
-                  </AnimatedSection>
+                  <SectionHeader tag="Success Stories" title={testimonialsContent.title || 'What Our Members Say'} subtitle={testimonialsContent.subtitle} />
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {textItems.map((t, i) => (
-                      <AnimatedSection key={i} delay={i * 0.1}>
-                        <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-5 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
+                      <SlideCard key={i} index={i}>
+                        <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 h-full flex flex-col">
                           <div className="flex gap-1">
                             {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-primary text-primary" />)}
                           </div>
@@ -502,30 +609,38 @@ export default function LandingPage() {
                             <p className="font-display font-semibold">{t.name}</p>
                           </div>
                         </div>
-                      </AnimatedSection>
+                      </SlideCard>
                     ))}
                   </div>
+                  {showViewAll && (
+                    <div className="text-center mt-12">
+                      <Link to="/testimonials">
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                          <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                            View All Testimonials <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </motion.div>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </section>
             )}
             {videoItems.length > 0 && (
               <section id="video-testimonials" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
                 <div className="max-w-7xl mx-auto">
-                  <AnimatedSection className="text-center mb-16">
-                    <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Video Stories</p>
-                    <h2 className="text-4xl sm:text-5xl font-bold font-display">Hear From Our Members</h2>
-                  </AnimatedSection>
-                  <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+                  <SectionHeader tag="Video Stories" title="Hear From Our Members" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {videoItems.map((t, i) => (
-                      <AnimatedSection key={i} delay={i * 0.1} className="min-w-[320px] max-w-[400px] snap-center flex-shrink-0">
-                        <div className="rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/30 transition-colors duration-300">
+                      <SlideCard key={i} index={i}>
+                        <div className="rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500">
                           <VideoEmbed url={t.video_url!} />
                           <div className="p-5 space-y-2">
                             <p className="font-display font-semibold">{t.name}</p>
                             {t.content && <p className="text-sm text-ws-text-muted">{t.content}</p>}
                           </div>
                         </div>
-                      </AnimatedSection>
+                      </SlideCard>
                     ))}
                   </div>
                 </div>
@@ -536,116 +651,83 @@ export default function LandingPage() {
       })()}
 
       {/* ─── GALLERY ─── */}
-      {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (
-        <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
-          <div className="max-w-7xl mx-auto">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Our Space</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{galleryContent.title || 'Gallery'}</h2>
-            </AnimatedSection>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {galleryContent.items.slice(0, 6).map((g, i) => {
-                const url = (g as any).url || (g as any).image_url || '';
-                const type = (g as any).type || 'image';
-                return (
-                  <AnimatedSection key={i} delay={i * 0.05}>
-                    <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-square">
-                      {type === 'video' ? (
-                        <div className="w-full h-full bg-ws-border-dim flex items-center justify-center">
-                          <Play className="h-12 w-12 text-primary/50" />
-                        </div>
-                      ) : (
-                        <img src={url} alt={g.caption || 'Gallery'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300 flex items-end">
-                        {g.caption && <p className="p-4 text-sm font-medium opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">{g.caption}</p>}
-                      </div>
-                    </div>
-                  </AnimatedSection>
-                );
-              })}
-            </div>
-            {galleryContent.items.length > 6 && (
-              <div className="text-center mt-10">
-                <Link to="/gallery">
-                  <Button variant="outline" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border">
-                    View Full Gallery <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+      {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (() => {
+        const items = galleryContent.items;
+        const marked = items.filter(i => (i as any).show_on_homepage);
+        const rest = items.filter(i => !marked.includes(i));
+        const homepageItems = [...marked, ...rest].slice(0, 6);
+        return (
+          <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+            <div className="max-w-7xl mx-auto">
+              <SectionHeader tag="Our Space" title={galleryContent.title || 'Gallery'} />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {homepageItems.map((g, i) => {
+                  const url = (g as any).url || (g as any).image_url || '';
+                  const type = (g as any).type || 'image';
+                  return (
+                    <PremiumCard
+                      key={i}
+                      index={i}
+                      imageUrl={type === 'image' ? url : undefined}
+                      fallbackType={type === 'video' ? 'video' : 'gallery'}
+                      aspectRatio="aspect-square"
+                      imageGradient={false}
+                      overlay={type === 'video' ? <Play className="h-12 w-12 text-primary/60" /> : undefined}
+                    >
+                      {g.caption && <p className="text-xs text-ws-text-subtle truncate">{g.caption}</p>}
+                    </PremiumCard>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        </section>
-      )}
+              {items.length > 6 && (
+                <div className="text-center mt-10">
+                  <Link to="/gallery">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                      <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                        View Full Gallery <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ─── GOOGLE REVIEWS ─── */}
       {data?.reviews && (reviewsContent.items?.length ?? 0) > 0 && (
-        <section id="reviews" className="py-28 px-4 sm:px-6 lg:px-8 relative">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute bottom-0 left-1/4 w-[600px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
-          </div>
-          <div className="max-w-7xl mx-auto relative z-10">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Trusted By Many</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{reviewsContent.title || 'Google Reviews'}</h2>
-              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{reviewsContent.subtitle || 'See what our members say about us.'}</p>
-            </AnimatedSection>
-            <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:grid lg:grid-cols-3 lg:overflow-visible lg:mx-0 lg:px-0">
-              {reviewsContent.items.map((r, i) => (
-                <AnimatedSection key={i} delay={i * 0.08} className="min-w-[300px] snap-center flex-shrink-0 lg:min-w-0">
-                  <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-4 hover:border-primary/30 transition-colors duration-300 h-full flex flex-col">
-                    <div className="flex gap-1">
-                      {[...Array(5)].map((_, j) => (
-                        <Star key={j} className={`h-5 w-5 ${j < r.rating ? 'fill-yellow-400 text-yellow-400' : 'fill-ws-text-icon text-ws-text-icon'}`} />
-                      ))}
-                    </div>
-                    {r.text && <p className="text-ws-text-label leading-relaxed flex-1 text-sm">"{r.text}"</p>}
-                    <div className="flex items-center gap-3 pt-4 border-t border-ws-border">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/20 to-primary/20 flex items-center justify-center text-sm font-bold text-primary">
-                        {r.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-display font-semibold text-sm">{r.name}</p>
-                        <p className="text-xs text-ws-text-dimmer">Google Review</p>
-                      </div>
-                    </div>
-                  </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ReviewsCarousel reviews={reviewsContent.items} content={reviewsContent} />
       )}
 
       {/* ─── BRANCHES ─── */}
-      {data?.branches && (branchesContent.items?.length ?? 0) > 0 && (
-        <section id="branches" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
-          <div className="max-w-7xl mx-auto">
-            <AnimatedSection className="text-center mb-16">
-              <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Locations</p>
-              <h2 className="text-4xl sm:text-5xl font-bold font-display">{branchesContent.title || 'Our Branches'}</h2>
-              <p className="mt-5 text-ws-text-subtle max-w-xl mx-auto text-lg">{branchesContent.subtitle || 'Find a location near you.'}</p>
-            </AnimatedSection>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {branchesContent.items.map((b, i) => (
-                <AnimatedSection key={i} delay={i * 0.08}>
-                  <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-4 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
-                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10">
-                      <MapPin className="h-6 w-6 text-primary" />
-                    </div>
-                    <h3 className="font-display font-bold text-xl">{b.name}</h3>
-                    {b.location && <p className="text-sm text-ws-text-subtle leading-relaxed">{b.location}</p>}
-                    {b.contact && (
-                      <p className="text-sm text-ws-text-muted flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-primary shrink-0" /> {b.contact}
-                      </p>
-                    )}
-                  </div>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </section>
+      {data?.branches && (branchesContent.items?.length ?? 0) > 0 && (() => {
+        const items = branchesContent.items;
+        const marked = items.filter(i => (i as any).show_on_homepage);
+        const rest = items.filter(i => !marked.includes(i));
+        const homepageItems = [...marked, ...rest].slice(0, 6);
+        return (
+          <BranchesSection
+            branches={homepageItems}
+            content={branchesContent}
+            totalCount={items.length}
+          />
+        );
+      })()}
+
+      {/* ─── SUPPLEMENTS ─── */}
+      {data?.supplements && (supplementsContent.items?.length ?? 0) > 0 && (
+        <SupplementsSection content={supplementsContent} />
+      )}
+
+      {/* ─── PRODUCTS BANNER ─── */}
+      {data?.products && data.products.is_enabled !== false && (
+        <ProductsBanner content={productsContent} />
+      )}
+
+      {/* ─── ACHIEVEMENTS ─── */}
+      {data?.achievements && (achievementsContent.items?.length ?? 0) > 0 && (
+        <AchievementsSection content={achievementsContent} />
       )}
 
       {/* ─── CTA BLOCK ─── */}
@@ -748,6 +830,7 @@ export default function LandingPage() {
           </div>
           <div className="mt-12 pt-8 border-t border-ws-border-dim flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-ws-text-micro">© {new Date().getFullYear()} {brandName}. All rights reserved.</p>
+            <FooterSocial content={footerSocialContent} />
             <Link to="/app/dashboard" className="text-xs text-ws-text-micro hover:text-primary transition-colors">
               Go to Dashboard
             </Link>

@@ -79,7 +79,7 @@ export function PublicNavbar({ config, brandName = 'GymOS', brandLogo, navLinks,
             <button
               key={link.id}
               onClick={() => handleNav(link.id)}
-              className="text-ws-text-muted hover:text-ws-text transition-colors duration-200 relative group"
+              className="text-ws-text hover:text-ws-text transition-colors duration-200 relative group"
               style={{
                 animation: mounted ? `nav-item-enter 0.4s cubic-bezier(0.22,1,0.36,1) ${0.1 + i * 0.06}s both` : undefined,
               }}
@@ -107,7 +107,7 @@ export function PublicNavbar({ config, brandName = 'GymOS', brandLogo, navLinks,
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-10 px-4 text-ws-text-muted hover:text-ws-text hover:bg-ws-border-dim rounded-xl transition-all duration-200"
+                className="h-10 px-4 text-ws-text hover:text-ws-text hover:bg-ws-border-dim rounded-xl transition-all duration-200"
               >
                 Dashboard
               </Button>

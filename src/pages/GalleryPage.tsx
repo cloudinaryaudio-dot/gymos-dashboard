@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { db as supabase } from '@/integrations/supabase/db';
-import { Link } from 'react-router-dom';
 import { Lightbox } from '@/components/Lightbox';
-import { VideoEmbed } from '@/components/VideoEmbed';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Image, Film, LayoutGrid } from 'lucide-react';
 import { motion } from 'framer-motion';
+import * as ds from '@/services/dataService';
 import type { GalleryContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 
 type FilterType = 'all' | 'image' | 'video';
@@ -23,17 +21,11 @@ export default function GalleryPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['public-gallery'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('website_content' as any)
-        .select('*')
-        .eq('section_key', 'gallery')
-        .eq('is_enabled', true)
-        .limit(1);
-      if (error) throw error;
-      const row = (data ?? [])[0] as WebsiteContentRow | undefined;
+      const content = await ds.getPublicWebsiteContent();
+      const row = (content as WebsiteContentRow[]).find(r => r.section_key === 'gallery');
       if (!row) return [];
-      const content = row.content as GalleryContent;
-      return (content.items ?? []).map(item => {
+      const c = row.content as GalleryContent;
+      return (c.items ?? []).map(item => {
         // Support legacy format (image_url field)
         const url = (item as any).url || (item as any).image_url || '';
         const type = (item as any).type || (isVideoUrl(url) ? 'video' : 'image');
@@ -49,9 +41,10 @@ export default function GalleryPage() {
     <div className="min-h-screen bg-[hsl(220,25%,4%)] text-[hsl(220,10%,92%)]">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-[hsl(220,10%,50%)] hover:text-primary transition-colors mb-8">
-          <ArrowLeft className="h-4 w-4" /> Back to Home
-        </Link>
+        <button onClick={() => { window.location.href = '/#gallery'; }} className="inline-flex items-center gap-2 text-sm text-[hsl(220,10%,50%)] hover:text-primary transition-colors mb-8">
+          <ArrowLeft className="h-4 w-4" /> Back to Gallery
+        </button>
+        
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold font-display mb-4">Gallery</h1>

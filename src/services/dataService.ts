@@ -17,7 +17,7 @@ export async function getPlans(): Promise<PlanRow[]> {
   return [...db().plans].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
-export async function createPlan(p: { name: string; price: number; duration_days: number }): Promise<PlanRow> {
+export async function createPlan(p: { name: string; price: number; duration_days: number; category?: string; benefits?: string[]; is_highlighted?: boolean; show_on_homepage?: boolean }): Promise<PlanRow> {
   await delay();
   const row: PlanRow = { id: genId(), user_id: 'demo-user', ...p, created_at: new Date().toISOString() };
   const d = db();
@@ -26,7 +26,7 @@ export async function createPlan(p: { name: string; price: number; duration_days
   return row;
 }
 
-export async function updatePlan(id: string, p: { name: string; price: number; duration_days: number }): Promise<PlanRow> {
+export async function updatePlan(id: string, p: { name: string; price: number; duration_days: number; category?: string; benefits?: string[]; is_highlighted?: boolean; show_on_homepage?: boolean }): Promise<PlanRow> {
   await delay();
   const d = db();
   const idx = d.plans.findIndex(x => x.id === id);
@@ -388,4 +388,174 @@ export async function getRevenueChart() {
 export async function hasAnyData(): Promise<boolean> {
   await delay();
   return db().plans.length > 0;
+}
+
+// ─── Analytics (time-range based) ───
+export type AnalyticsRange = { from: string; to: string }; // YYYY-MM-DD inclusive
+
+export interface AnalyticsResult {
+  kpis: {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    newMembers: number;
+    membersLeft: number;
+    activeMembers: number;
+    pendingPayments: number;
+    pendingAmount: number;
+    newLeads: number;
+    convertedLeads: number;
+  };
+  series: { label: string; revenue: number; expenses: number; newMembers: number }[];
+  planDistribution: { name: string; value: number }[];
+  expenseBreakdown: { name: string; value: number }[];
+  members: { id: string; name: string; phone: string; plan: string; start_date: string; expiry_date: string; status: string }[];
+  payments: { id: string; member_name: string; amount: number; payment_date: string; method: string; status: string }[];
+  leads: { id: string; name: string; phone: string; goal: string; status: string; created_at: string }[];
+  topDay?: { label: string; revenue: number };
+}
+
+function bucketLabelsForRange(from: Date, to: Date, granularity: 'day' | 'month') {
+  const labels: { label: string; key: string; start: Date; end: Date }[] = [];
+  if (granularity === 'day') {
+    const cur = new Date(from);
+    while (cur <= to) {
+      const start = new Date(cur);
+      const end = new Date(cur); end.setHours(23, 59, 59, 999);
+      labels.push({
+        label: start.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+        key: start.toISOString().slice(0, 10),
+        start, end,
+      });
+      cur.setDate(cur.getDate() + 1);
+    }
+  } else {
+    const cur = new Date(from.getFullYear(), from.getMonth(), 1);
+    while (cur <= to) {
+      const start = new Date(cur);
+      const end = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59, 999);
+      labels.push({
+        label: start.toLocaleDateString('en-US', { month: 'short' }),
+        key: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`,
+        start, end,
+      });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+  }
+  return labels;
+}
+
+export async function getAnalytics(range: AnalyticsRange, granularity: 'day' | 'month' = 'day'): Promise<AnalyticsResult> {
+  await delay();
+  const d = db();
+  const from = range.from;
+  const to = range.to;
+  const fromDate = new Date(`${from}T00:00:00`);
+  const toDate = new Date(`${to}T23:59:59`);
+
+  const inRange = (dateStr: string) => dateStr >= from && dateStr <= to;
+  const inRangeIso = (iso: string) => {
+    const day = iso.slice(0, 10);
+    return day >= from && day <= to;
+  };
+
+  const paid = d.payments.filter(p => p.status === 'paid' && inRange(p.payment_date));
+  const totalRevenue = paid.reduce((s, p) => s + p.amount, 0);
+
+  const exp = d.expenses.filter(e => inRange(e.expense_date));
+  const totalExpenses = exp.reduce((s, e) => s + e.amount, 0);
+
+  const newMembersList = d.members.filter(m => inRangeIso(m.created_at));
+  const newMembers = newMembersList.length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const membersLeft = d.members.filter(m => inRange(m.expiry_date) && m.expiry_date < today).length;
+  const activeMembers = d.members.filter(m => m.expiry_date >= today).length;
+
+  const pendingList = d.payments.filter(p => (p.status === 'pending' || p.status === 'overdue') && inRange(p.payment_date));
+  const pendingPayments = pendingList.length;
+  const pendingAmount = pendingList.reduce((s, p) => s + p.amount, 0);
+
+  const leadsInRange = d.leads.filter(l => inRangeIso(l.created_at));
+  const newLeads = leadsInRange.length;
+  const convertedLeads = leadsInRange.filter(l => l.status === 'joined').length;
+
+  const buckets = bucketLabelsForRange(fromDate, toDate, granularity);
+  const series = buckets.map(b => {
+    const bs = b.start.toISOString().slice(0, 10);
+    const be = b.end.toISOString().slice(0, 10);
+    const bRevenue = d.payments
+      .filter(p => p.status === 'paid' && p.payment_date >= bs && p.payment_date <= be)
+      .reduce((s, p) => s + p.amount, 0);
+    const bExpenses = d.expenses
+      .filter(e => e.expense_date >= bs && e.expense_date <= be)
+      .reduce((s, e) => s + e.amount, 0);
+    const bNew = d.members.filter(m => {
+      const day = m.created_at.slice(0, 10);
+      return day >= bs && day <= be;
+    }).length;
+    return { label: b.label, revenue: bRevenue, expenses: bExpenses, newMembers: bNew };
+  });
+
+  const topDay = series.length ? series.reduce((best, cur) => cur.revenue > best.revenue ? cur : best, series[0]) : undefined;
+
+  const planCount: Record<string, number> = {};
+  newMembersList.forEach(m => {
+    const plan = d.plans.find(p => p.id === m.plan_id);
+    const key = plan?.name ?? 'Unknown';
+    planCount[key] = (planCount[key] ?? 0) + 1;
+  });
+  const planDistribution = Object.entries(planCount).map(([name, value]) => ({ name, value }));
+
+  const catCount: Record<string, number> = {};
+  exp.forEach(e => {
+    const key = e.category ?? 'Other';
+    catCount[key] = (catCount[key] ?? 0) + e.amount;
+  });
+  const expenseBreakdown = Object.entries(catCount).map(([name, value]) => ({ name, value }));
+
+  const members = newMembersList.map(m => {
+    const plan = d.plans.find(p => p.id === m.plan_id);
+    return {
+      id: m.id, name: m.name, phone: m.phone, plan: plan?.name ?? '—',
+      start_date: m.start_date, expiry_date: m.expiry_date,
+      status: m.expiry_date < today ? 'expired' : 'active',
+    };
+  });
+
+  const paymentsTable = d.payments
+    .filter(p => inRange(p.payment_date))
+    .sort((a, b) => b.payment_date.localeCompare(a.payment_date))
+    .map(p => {
+      const member = d.members.find(m => m.id === p.member_id);
+      return {
+        id: p.id, member_name: member?.name ?? 'Unknown',
+        amount: p.amount, payment_date: p.payment_date,
+        method: p.method, status: p.status,
+      };
+    });
+
+  const leadsTable = leadsInRange
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map(l => ({
+      id: l.id, name: l.name, phone: l.phone,
+      goal: l.fitness_goal ?? '—', status: l.status,
+      created_at: l.created_at,
+    }));
+
+  return {
+    kpis: {
+      totalRevenue, totalExpenses, netProfit: totalRevenue - totalExpenses,
+      newMembers, membersLeft, activeMembers,
+      pendingPayments, pendingAmount,
+      newLeads, convertedLeads,
+    },
+    series,
+    planDistribution,
+    expenseBreakdown,
+    members,
+    payments: paymentsTable,
+    leads: leadsTable,
+    topDay: topDay ? { label: topDay.label, revenue: topDay.revenue } : undefined,
+  };
 }

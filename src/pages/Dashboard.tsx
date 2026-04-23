@@ -1,130 +1,105 @@
-import { useState } from 'react';
-import { DollarSign, Users, Clock, TrendingUp, AlertCircle, Receipt, UserPlus, CalendarDays, Zap, CreditCard, Target, UserCheck, Percent, ShieldAlert, Database, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
-import { StatCard } from '@/components/dashboard/StatCard';
-import { RevenueChart } from '@/components/dashboard/RevenueChart';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { SetupBanner } from '@/components/SetupBanner';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { seedDemoData, resetDemoData, clearLocalData } from '@/data/mockDb';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { Database, RotateCcw, Trash2, Phone, Tag, Calendar as CalIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { seedDemoData, resetDemoData, clearLocalData } from '@/data/mockDb';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+import { SetupBanner } from '@/components/SetupBanner';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { AnalyticsKpis } from '@/components/dashboard/AnalyticsKpis';
+import { AnalyticsCharts } from '@/components/dashboard/AnalyticsCharts';
+import { AnalyticsDataTable, type Column } from '@/components/dashboard/AnalyticsDataTable';
+import {
+  TodayPicker, WeekPicker, MonthPicker, YearPicker,
+  rangeForToday, rangeForWeek, rangeForMonth, rangeForYear,
+} from '@/components/dashboard/DateRangePickers';
+
+type TabId = 'today' | 'weekly' | 'monthly' | 'yearly';
+
 export default function Dashboard() {
-  const { data: stats, isLoading } = useDashboardStats();
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const handleSeed = () => {
-    seedDemoData();
-    qc.invalidateQueries();
-    toast({ title: '✅ Demo data loaded!' });
-  };
+  const [tab, setTab] = useState<TabId>('today');
+  const now = new Date();
+  const [day, setDay] = useState<Date>(now);
+  const [week, setWeek] = useState<Date>(now);
+  const [month, setMonth] = useState<number>(now.getMonth());
+  const [year, setYear] = useState<number>(now.getFullYear());
+  const [yearOnly, setYearOnly] = useState<number>(now.getFullYear());
 
-  const handleReset = () => {
+  const { range, granularity } = useMemo(() => {
+    if (tab === 'today') return { range: rangeForToday(day), granularity: 'day' as const };
+    if (tab === 'weekly') return { range: rangeForWeek(week), granularity: 'day' as const };
+    if (tab === 'monthly') return { range: rangeForMonth(month, year), granularity: 'day' as const };
+    return { range: rangeForYear(yearOnly), granularity: 'month' as const };
+  }, [tab, day, week, month, year, yearOnly]);
+
+  const { data, isLoading } = useAnalytics(range.from, range.to, granularity);
+
+  const handleSeed = async () => {
     resetDemoData();
-    qc.invalidateQueries();
+    seedDemoData();
+    await qc.resetQueries();
+    toast({ title: '✅ Demo data loaded successfully!' });
+  };
+  const handleReset = async () => {
+    resetDemoData();
+    await qc.resetQueries();
     toast({ title: '🗑️ All data cleared!' });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const s = stats ?? {
-    monthlyRevenue: 0, totalExpenses: 0, profit: 0,
-    activeMembers: 0, expiringMemberships: 0, expiredMemberships: 0, pendingPayments: 0,
-    newLeads: 0, totalLeads: 0, convertedLeads: 0, conversionRate: 0,
-    recentPayments: [],
-    todayNewMembers: 0, todayPayments: 0, todayPaymentsAmount: 0, todayLeads: 0, monthNewMembers: 0,
-    revenueAtRisk: 0,
-    overdueCount: 0, totalPendingAmount: 0,
-  };
-
-  const statCards = [
+  // Table column defs
+  const memberCols: Column<NonNullable<typeof data>['members'][number]>[] = [
+    { key: 'name', header: 'Member', render: r => <span className="font-medium">{r.name}</span> },
+    { key: 'phone', header: 'Phone', render: r => <span className="text-muted-foreground">{r.phone}</span> },
+    { key: 'plan', header: 'Plan' },
+    { key: 'start_date', header: 'Joined', render: r => format(new Date(r.start_date), 'dd MMM yyyy') },
     {
-      title: 'Monthly Revenue',
-      value: `₹${s.monthlyRevenue.toLocaleString()}`,
-      change: 'This month (paid)',
-      changeType: 'positive' as const,
-      icon: DollarSign,
-    },
-    {
-      title: 'Active Members',
-      value: s.activeMembers.toString(),
-      change: `${s.expiringMemberships} expiring in 3 days`,
-      changeType: s.expiringMemberships > 0 ? 'negative' as const : 'positive' as const,
-      icon: Users,
-    },
-    {
-      title: 'Expiring Soon',
-      value: s.expiringMemberships.toString(),
-      change: 'Next 7 days',
-      changeType: 'negative' as const,
-      icon: Clock,
-    },
-    {
-      title: 'Pending Payments',
-      value: s.pendingPayments.toString(),
-      change: s.totalPendingAmount > 0 ? `₹${s.totalPendingAmount.toLocaleString()} pending` : 'All clear!',
-      changeType: s.pendingPayments > 0 ? 'negative' as const : 'positive' as const,
-      icon: AlertCircle,
-    },
-    {
-      title: 'Overdue Payments',
-      value: s.overdueCount.toString(),
-      change: s.overdueCount > 0 ? 'Collect now' : 'None overdue',
-      changeType: s.overdueCount > 0 ? 'negative' as const : 'positive' as const,
-      icon: Clock,
-    },
-    {
-      title: 'New Leads',
-      value: s.newLeads.toString(),
-      change: s.newLeads > 0 ? 'Awaiting contact' : 'No new leads',
-      changeType: s.newLeads > 0 ? 'positive' as const : 'neutral' as const,
-      icon: UserPlus,
-    },
-    {
-      title: 'Revenue at Risk',
-      value: `₹${s.revenueAtRisk.toLocaleString()}`,
-      change: `${s.expiringMemberships + s.expiredMemberships} members need renewal`,
-      changeType: s.revenueAtRisk > 0 ? 'negative' as const : 'positive' as const,
-      icon: ShieldAlert,
-    },
-    {
-      title: 'Converted Leads',
-      value: s.convertedLeads.toString(),
-      change: `${s.conversionRate}% conversion rate`,
-      changeType: s.conversionRate > 0 ? 'positive' as const : 'neutral' as const,
-      icon: UserCheck,
+      key: 'status', header: 'Status',
+      render: r => <Badge variant={r.status === 'active' ? 'default' : 'destructive'}>{r.status}</Badge>,
     },
   ];
-
-  const todayItems = [
-    { label: 'New Members', value: s.todayNewMembers, icon: UserPlus, color: 'text-primary' },
-    { label: 'Payments', value: s.todayPayments, sub: s.todayPaymentsAmount > 0 ? `₹${s.todayPaymentsAmount.toLocaleString()}` : null, icon: CreditCard, color: 'text-chart-2' },
-    { label: 'New Leads', value: s.todayLeads, icon: Target, color: 'text-chart-4' },
+  const paymentCols: Column<NonNullable<typeof data>['payments'][number]>[] = [
+    { key: 'member_name', header: 'Member', render: r => <span className="font-medium">{r.member_name}</span> },
+    { key: 'amount', header: 'Amount', render: r => <span className="font-mono">₹{r.amount.toLocaleString()}</span>, sortValue: r => r.amount },
+    { key: 'method', header: 'Method', render: r => <span className="capitalize">{r.method.replace('_', ' ')}</span> },
+    { key: 'payment_date', header: 'Date', render: r => format(new Date(r.payment_date), 'dd MMM yyyy') },
+    {
+      key: 'status', header: 'Status',
+      render: r => {
+        const variant = r.status === 'paid' ? 'default' : r.status === 'overdue' ? 'destructive' : 'secondary';
+        return <Badge variant={variant}>{r.status}</Badge>;
+      },
+    },
+  ];
+  const leadCols: Column<NonNullable<typeof data>['leads'][number]>[] = [
+    { key: 'name', header: 'Lead', render: r => <span className="font-medium">{r.name}</span> },
+    { key: 'phone', header: 'Phone', render: r => <span className="inline-flex items-center gap-1 text-muted-foreground"><Phone className="h-3 w-3" />{r.phone}</span> },
+    { key: 'goal', header: 'Goal', render: r => <span className="inline-flex items-center gap-1"><Tag className="h-3 w-3 text-muted-foreground" />{r.goal}</span> },
+    { key: 'status', header: 'Status', render: r => <Badge variant={r.status === 'joined' ? 'default' : 'secondary'} className="capitalize">{r.status.replace('_', ' ')}</Badge> },
+    { key: 'created_at', header: 'Date', render: r => <span className="inline-flex items-center gap-1 text-muted-foreground"><CalIcon className="h-3 w-3" />{format(new Date(r.created_at), 'dd MMM')}</span> },
   ];
 
   return (
     <div className="space-y-6">
       <SetupBanner />
+
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-display">Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {format(new Date(), 'EEEE, dd MMMM yyyy')}
-          </p>
+          <h1 className="text-2xl font-bold font-display">Analytics Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="outline">
@@ -181,115 +156,70 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Today's Summary */}
-      <div className="rounded-xl border bg-card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Zap className="h-4 w-4 text-primary" />
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <TabsList className="bg-muted">
+            <TabsTrigger value="today">Today</TabsTrigger>
+            <TabsTrigger value="weekly">Weekly</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly</TabsTrigger>
+          </TabsList>
+          <div>
+            {tab === 'today' && <TodayPicker date={day} onChange={setDay} />}
+            {tab === 'weekly' && <WeekPicker weekStart={week} onChange={setWeek} />}
+            {tab === 'monthly' && <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />}
+            {tab === 'yearly' && <YearPicker year={yearOnly} onChange={setYearOnly} />}
           </div>
-          <h2 className="font-display font-semibold text-lg">Today's Summary</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {todayItems.map((item) => (
-            <div key={item.label} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-              <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
-                <item.icon className={`h-5 w-5 ${item.color}`} />
+
+        {isLoading || !data ? (
+          <div className="flex items-center justify-center min-h-[40vh]">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : (
+          <>
+            <TabsContent value="today" className="space-y-6 mt-0">
+              <AnalyticsKpis kpis={data.kpis} />
+              <AnalyticsCharts data={data} variant="today" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <AnalyticsDataTable title="New Members" rows={data.members} columns={memberCols} pageSize={6} />
+                <AnalyticsDataTable title="Payments" rows={data.payments} columns={paymentCols} pageSize={6} />
               </div>
-              <div>
-                <p className="text-2xl font-bold font-display">{item.value}</p>
-                <p className="text-xs text-muted-foreground">{item.label}</p>
-                {item.sub && <p className="text-xs font-medium text-primary mt-0.5">{item.sub}</p>}
+              <AnalyticsDataTable title="Leads" rows={data.leads} columns={leadCols} pageSize={6} />
+            </TabsContent>
+
+            <TabsContent value="weekly" className="space-y-6 mt-0">
+              <AnalyticsKpis kpis={data.kpis} />
+              <AnalyticsCharts data={data} variant="weekly" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <AnalyticsDataTable title="New Members" rows={data.members} columns={memberCols} pageSize={8} />
+                <AnalyticsDataTable title="Payments" rows={data.payments} columns={paymentCols} pageSize={8} />
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+              <AnalyticsDataTable title="Leads" rows={data.leads} columns={leadCols} pageSize={8} />
+            </TabsContent>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {statCards.map((stat, i) => (
-          <div key={stat.title} style={{ animationDelay: `${i * 80}ms` }}>
-            <StatCard {...stat} />
-          </div>
-        ))}
-      </div>
+            <TabsContent value="monthly" className="space-y-6 mt-0">
+              <AnalyticsKpis kpis={data.kpis} />
+              <AnalyticsCharts data={data} variant="monthly" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <AnalyticsDataTable title="New Members" rows={data.members} columns={memberCols} pageSize={10} />
+                <AnalyticsDataTable title="Payments" rows={data.payments} columns={paymentCols} pageSize={10} />
+              </div>
+              <AnalyticsDataTable title="Leads" rows={data.leads} columns={leadCols} pageSize={10} />
+            </TabsContent>
 
-      {/* Revenue Chart */}
-      <div className="rounded-xl border bg-card p-6">
-        <h3 className="font-display font-semibold mb-4">Revenue — Last 6 Months</h3>
-        <RevenueChart />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border bg-card p-6 min-h-[280px]">
-          <h3 className="font-display font-semibold mb-4">Monthly Summary</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-              <span className="text-sm text-muted-foreground">Revenue</span>
-              <span className="font-semibold text-primary">₹{s.monthlyRevenue.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-              <span className="text-sm text-muted-foreground">Expenses</span>
-              <span className="font-semibold text-destructive">₹{s.totalExpenses.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-              <span className="text-sm text-muted-foreground">New Joins</span>
-              <span className="font-semibold">{s.monthNewMembers}</span>
-            </div>
-            <div className="border-t pt-3 flex justify-between items-center p-3 rounded-lg bg-primary/5">
-              <span className="text-sm font-medium">Net Profit</span>
-              <span className={`font-bold text-lg ${s.profit >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                ₹{s.profit.toLocaleString()}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Expiring Soon */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-display font-semibold">Expiring Soon</h3>
-          </div>
-          <div className="flex flex-col items-center justify-center h-[200px]">
-            <p className={`text-5xl font-bold font-display ${s.expiringMemberships > 0 ? 'text-destructive' : 'text-primary'}`}>
-              {s.expiringMemberships}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">memberships in next 7 days</p>
-            {s.expiringMemberships > 0 && (
-              <p className="text-xs text-destructive mt-1 font-medium">Follow up to retain</p>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Payments */}
-        <div className="rounded-xl border bg-card p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-display font-semibold">Recent Payments</h3>
-          </div>
-          {s.recentPayments.length > 0 ? (
-            <div className="space-y-3">
-              {s.recentPayments.map((p, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                    <span className="text-sm">{p.member_name}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-medium">₹{p.amount.toLocaleString()}</span>
-                    <p className="text-xs text-muted-foreground">{format(new Date(p.date), 'dd MMM')}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-              <CreditCard className="h-10 w-10 mb-3 opacity-40" />
-              <p className="text-sm">No payments recorded yet</p>
-            </div>
-          )}
-        </div>
-      </div>
+            <TabsContent value="yearly" className="space-y-6 mt-0">
+              <AnalyticsKpis kpis={data.kpis} />
+              <AnalyticsCharts data={data} variant="yearly" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <AnalyticsDataTable title="New Members" rows={data.members} columns={memberCols} pageSize={10} />
+                <AnalyticsDataTable title="Payments" rows={data.payments} columns={paymentCols} pageSize={10} />
+              </div>
+              <AnalyticsDataTable title="Leads" rows={data.leads} columns={leadCols} pageSize={10} />
+            </TabsContent>
+          </>
+        )}
+      </Tabs>
     </div>
   );
 }
