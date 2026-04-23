@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, CheckCircle, CreditCard, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, CreditCard, AlertTriangle, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 const methods = [
   { value: 'cash', label: 'Cash' },
@@ -141,12 +142,18 @@ export default function PaymentsPage() {
             <h1 className="text-2xl font-bold font-display">Payments</h1>
             <p className="text-muted-foreground text-sm mt-1">Track all payment transactions</p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button disabled={!members || members.length === 0}>
-                <Plus className="h-4 w-4 mr-2" />Add Payment
+          <div className="flex items-center gap-2">
+            <Link to="/app/payments/dashboard">
+              <Button variant="outline">
+                <BarChart3 className="h-4 w-4 mr-2" />Payments Dashboard
               </Button>
-            </DialogTrigger>
+            </Link>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button disabled={!members || members.length === 0}>
+                  <Plus className="h-4 w-4 mr-2" />Add Payment
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
