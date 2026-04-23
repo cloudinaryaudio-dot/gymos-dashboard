@@ -209,6 +209,7 @@ export default function PaymentsPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Summary Cards */}
