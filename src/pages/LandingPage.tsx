@@ -604,85 +604,35 @@ export default function LandingPage() {
         );
       })()}
 
-      {/* ─── TESTIMONIALS (Text + Video) ─── */}
+      {/* ─── VIDEO TESTIMONIALS (bg primary) — only 3 video shorts on landing ─── */}
       {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (() => {
         const allItems = testimonialsContent.items;
-        const marked = allItems.filter(i => (i as any).show_on_homepage);
-        const rest = allItems.filter(i => !marked.includes(i));
-        const homepageItems = [...marked, ...rest].slice(0, 6);
-        const showViewAll = allItems.length > 6;
-        const textItems = homepageItems.filter(t => !t.video_url);
-        const videoItems = homepageItems.filter(t => !!t.video_url);
+        const videoItems = allItems.filter(t => !!t.video_url);
+        const marked = videoItems.filter(i => (i as any).show_on_homepage);
+        const rest = videoItems.filter(i => !marked.includes(i));
+        const homepageVideos = [...marked, ...rest].slice(0, 3);
+        // Show "View All" if there's any extra content (more videos OR text reviews exist)
+        const showViewAll = videoItems.length > 3 || allItems.some(t => !t.video_url);
+        if (homepageVideos.length === 0) return null;
         return (
-          <>
-            {textItems.length > 0 && (
-              <section id="testimonials" className="py-28 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
-                  <SectionHeader tag="Success Stories" title={testimonialsContent.title || 'What Our Members Say'} subtitle={testimonialsContent.subtitle} />
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {textItems.map((t, i) => (
-                      <SlideCard key={i} index={i}>
-                        <div className="rounded-2xl bg-ws-card border border-ws-border p-8 space-y-5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 h-full flex flex-col">
-                          <div className="flex gap-1">
-                            {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-primary text-primary" />)}
-                          </div>
-                          {t.content && <p className="text-ws-text-label leading-relaxed flex-1">"{t.content}"</p>}
-                          <div className="flex items-center gap-3 pt-4 border-t border-ws-border">
-                            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                              <User className="h-5 w-5 text-primary" />
-                            </div>
-                            <p className="font-display font-semibold">{t.name}</p>
-                          </div>
-                        </div>
-                      </SlideCard>
-                    ))}
-                  </div>
-                  {showViewAll && (
-                    <div className="text-center mt-12">
-                      <Link to="/testimonials">
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-                          <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
-                            View All Testimonials <ArrowRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-            {videoItems.length > 0 && (
-              <section id="video-testimonials" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
-                <div className="max-w-7xl mx-auto">
-                  <SectionHeader tag="Video Stories" title="Hear From Our Members" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {videoItems.map((t, i) => (
-                      <SlideCard key={i} index={i}>
-                        <div className="rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500">
-                          <VideoEmbed url={t.video_url!} />
-                          <div className="p-5 space-y-2">
-                            <p className="font-display font-semibold">{t.name}</p>
-                            {t.content && <p className="text-sm text-ws-text-muted">{t.content}</p>}
-                          </div>
-                        </div>
-                      </SlideCard>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
-          </>
+          <VideoTestimonialsSection
+            items={homepageVideos}
+            title={testimonialsContent.title || 'What Our Members Say'}
+            subtitle={testimonialsContent.subtitle}
+            showViewAll={showViewAll}
+            bg="primary"
+          />
         );
       })()}
 
-      {/* ─── GALLERY ─── */}
+      {/* ─── GALLERY (bg secondary) ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (() => {
         const items = galleryContent.items;
         const marked = items.filter(i => (i as any).show_on_homepage);
         const rest = items.filter(i => !marked.includes(i));
         const homepageItems = [...marked, ...rest].slice(0, 6);
         return (
-          <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+          <section id="gallery" className="py-28 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg-secondary)' }}>
             <div className="max-w-7xl mx-auto">
               <SectionHeader tag="Our Space" title={galleryContent.title || 'Gallery'} />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -708,7 +658,7 @@ export default function LandingPage() {
                 <div className="text-center mt-10">
                   <Link to="/gallery">
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-                      <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                      <Button size="lg" className="rounded-xl h-12 px-8 font-semibold shadow-lg shadow-primary/20" style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }}>
                         View Full Gallery <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </motion.div>
@@ -720,40 +670,43 @@ export default function LandingPage() {
         );
       })()}
 
-      {/* ─── GOOGLE REVIEWS ─── */}
+      {/* ─── GOOGLE REVIEWS (bg primary) ─── */}
       {data?.reviews && (reviewsContent.items?.length ?? 0) > 0 && (
-        <ReviewsCarousel reviews={reviewsContent.items} content={reviewsContent} />
+        <div style={{ background: 'var(--bg-primary)' }}>
+          <ReviewsCarousel reviews={reviewsContent.items} content={reviewsContent} />
+        </div>
       )}
 
-      {/* ─── BRANCHES ─── */}
+      {/* ─── BRANCHES AUTO CAROUSEL (bg secondary) ─── */}
       {data?.branches && (branchesContent.items?.length ?? 0) > 0 && (() => {
         const items = branchesContent.items;
         const marked = items.filter(i => (i as any).show_on_homepage);
         const rest = items.filter(i => !marked.includes(i));
         const homepageItems = [...marked, ...rest].slice(0, 6);
         return (
-          <BranchesSection
+          <BranchesCarousel
             branches={homepageItems}
             content={branchesContent}
             totalCount={items.length}
+            bg="secondary"
           />
         );
       })()}
 
-      {/* ─── SUPPLEMENTS ─── */}
-      {data?.supplements && (supplementsContent.items?.length ?? 0) > 0 && (
-        <SupplementsSection content={supplementsContent} />
-      )}
-
-      {/* ─── PRODUCTS BANNER ─── */}
+      {/* ─── PRODUCTS BANNER (bg primary) ─── */}
       {data?.products && data.products.is_enabled !== false && (
-        <ProductsBanner content={productsContent} />
+        <div style={{ background: 'var(--bg-primary)' }}>
+          <ProductsBanner content={productsContent} />
+        </div>
       )}
 
-      {/* ─── ACHIEVEMENTS ─── */}
+      {/* ─── ACHIEVEMENTS (bg secondary) ─── */}
       {data?.achievements && (achievementsContent.items?.length ?? 0) > 0 && (
-        <AchievementsSection content={achievementsContent} />
+        <div style={{ background: 'var(--bg-secondary)' }}>
+          <AchievementsSection content={achievementsContent} />
+        </div>
       )}
+
 
       {/* ─── CTA BLOCK ─── */}
       <section className="py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
