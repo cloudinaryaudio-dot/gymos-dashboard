@@ -241,10 +241,10 @@ export function ReviewsCarousel({ reviews, content, gymName, logoUrl }: ReviewsC
           </motion.aside>
 
           {/* RIGHT: scrollable cards */}
-          <div className="relative">
+          <div className="relative flex flex-col gap-4">
             {/* Controls */}
             {reviews.length > 2 && (
-              <div className="hidden md:flex absolute -top-14 right-0 gap-2 z-10">
+              <div className="hidden md:flex justify-end gap-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -279,13 +279,11 @@ export function ReviewsCarousel({ reviews, content, gymName, logoUrl }: ReviewsC
               ref={scrollRef}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
-              className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0"
+              className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 items-stretch"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {reviews.map((r, i) => (
-                <div key={i} data-review-card className="flex">
-                  <ReviewCard review={r} index={i} />
-                </div>
+                <ReviewCard key={i} review={r} index={i} />
               ))}
             </div>
           </div>
