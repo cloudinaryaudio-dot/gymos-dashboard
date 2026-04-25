@@ -7,10 +7,12 @@ import { BrandingProvider } from "./components/BrandingProvider";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import MembersPage from "./pages/MembersPage";
+import MembersDashboardPage from "./pages/MembersDashboardPage";
 import PlansPage from "./pages/PlansPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import PaymentsDashboardPage from "./pages/PaymentsDashboardPage";
 import ExpensesPage from "./pages/ExpensesPage";
+import ExpensesDashboardPage from "./pages/ExpensesDashboardPage";
 import LeadsPage from "./pages/LeadsPage";
 import LeadsDashboardPage from "./pages/LeadsDashboardPage";
 import WebsiteBuilderPage from "./pages/WebsiteBuilderPage";
@@ -27,6 +29,9 @@ import PublicTrainersPage from "./pages/PublicTrainersPage";
 import PublicEquipmentPage from "./pages/PublicEquipmentPage";
 import PublicTestimonialsPage from "./pages/PublicTestimonialsPage";
 import PublicProductsPage from "./pages/PublicProductsPage";
+import OwnerSummaryPage from "./pages/OwnerSummaryPage";
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
+import InvoiceSettingsPage from "./pages/InvoiceSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +41,10 @@ function AppLayout() {
       <Routes>
         <Route index element={<PlaceholderPage />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="owner-summary" element={<OwnerSummaryPage />} />
+        <Route path="analytics" element={<AnalyticsDashboardPage />} />
         <Route path="members" element={<MembersPage />} />
+        <Route path="members/dashboard" element={<MembersDashboardPage />} />
         <Route path="members/:memberId" element={<MemberProfilePage />} />
         <Route path="plans" element={<PlansPage />} />
         <Route path="payments" element={<PaymentsPage />} />
@@ -44,9 +52,11 @@ function AppLayout() {
         <Route path="leads" element={<LeadsPage />} />
         <Route path="leads/dashboard" element={<LeadsDashboardPage />} />
         <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses/dashboard" element={<ExpensesDashboardPage />} />
         <Route path="website" element={<WebsiteBuilderPage />} />
         <Route path="contact" element={<ContactSettingsPage />} />
         <Route path="settings" element={<BrandingSettingsPage />} />
+        <Route path="settings/invoice" element={<InvoiceSettingsPage />} />
       </Routes>
     </DashboardLayout>
   );

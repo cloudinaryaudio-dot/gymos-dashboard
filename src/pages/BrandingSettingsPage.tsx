@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useGymSettings } from '@/hooks/useGymSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Save, Dumbbell, Eye, Palette, Check } from 'lucide-react';
+import { Save, Eye, Palette, Check, RefreshCw } from 'lucide-react';
 
 
 
@@ -353,71 +353,135 @@ if (!resolved.button_color) {
           </Button>
         </div>
 
-        {/* Live Preview */}
-        <Card className="sticky top-6 self-start">
-          <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="h-4 w-4" /> Live Preview</CardTitle></CardHeader>
-          <CardContent>
-            <div className="rounded-xl overflow-hidden border border-border" style={{ background: hslToCss(primaryColor) }}>
-              {/* Preview Navbar */}
-              <div className="px-4 py-3 flex items-center justify-between" style={{ background: hslToCss(cardColor || secondaryColor), borderBottom: `1px solid hsl(${primaryColor.split(' ')[0]} 20% 20%)` }}>
-                <div className="flex items-center gap-2">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" className="h-7 w-7 rounded object-cover" />
-                  ) : (
-                    <div className="h-7 w-7 rounded flex items-center justify-center" style={{ background: hslToCss(buttonColor || accentColor) }}>
-                      <Dumbbell className="h-3.5 w-3.5 text-white" />
-                    </div>
-                  )}
-                  <span className="text-sm font-bold text-white">{gymName || 'My Gym'}</span>
-                </div>
-                <div className="h-6 px-3 rounded text-[10px] font-medium flex items-center text-white" style={{ background: hslToCss(buttonColor || accentColor) }}>
-                  Join Now
-                </div>
-              </div>
-              {/* Preview Hero */}
-              <div className="px-6 py-10 text-center relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10" style={{ background: `radial-gradient(circle at 50% 0%, ${hslToCss(accentColor)}, transparent 70%)` }} />
-                <div className="relative z-10">
-                  <h3
-  className="text-lg font-bold mb-2"
-  style={{ color: hslToCss(headingColor) }}
->
-  Transform Your Body
-</h3>
-
-<p
-  className="text-xs mb-4"
-  style={{ color: hslToCss(descriptionColor) }}
->
-  Build discipline. Get results.
-</p>
-                  <div className="flex justify-center gap-2">
-                    <div className="h-7 px-4 rounded text-[10px] font-medium flex items-center text-white" style={{ background: hslToCss(buttonColor || accentColor) }}>
-                      Start Trial
-                    </div>
-                    <div className="h-7 px-4 rounded text-[10px] font-medium flex items-center border border-white/15 text-white">
-                      View Plans
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Preview Cards */}
-              <div className="px-4 pb-4 grid grid-cols-3 gap-2">
-                {['Basic', 'Standard', 'Premium'].map((plan, i) => (
-                  <div key={plan} className="rounded-lg p-3 text-center" style={{ background: hslToCss(cardColor || secondaryColor) }}>
-                    <p className="text-[10px] text-white/50">{plan}</p>
-                    <p className="text-sm font-bold text-white">₹{[999, 1999, 4999][i]}</p>
-                    <div className="mt-2 h-5 rounded text-[8px] font-medium flex items-center justify-center text-white"
-                      style={{ background: i === 1 ? hslToCss(accentColor) : `hsl(${primaryColor.split(' ')[0]} 20% 18%)` }}>
-                      {i === 1 ? 'Popular' : 'Select'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Live Preview — full landing page in iframe with real-time theme sync */}
+        <LivePreview
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          accentColor={accentColor}
+          highlightColor={highlightColor}
+          cardColor={cardColor}
+          headingColor={headingColor}
+          descriptionColor={descriptionColor}
+          buttonColor={buttonColor}
+        />
       </div>
     </div>
+  );
+}
+
+/* ── Live Preview component ──
+   Renders the public landing page inside an iframe so the owner sees the
+   full website (navbar, hero, all sections, footer) updating in real time
+   as they change colors. Theme is pushed via postMessage so changes apply
+   without saving or reloading. */
+interface LivePreviewProps {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  highlightColor: string;
+  cardColor: string;
+  headingColor: string;
+  descriptionColor: string;
+  buttonColor: string;
+}
+
+function LivePreview(props: LivePreviewProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [ready, setReady] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Build the CSS variables payload from current form state.
+  const vars = useMemo(() => {
+    const p = props.primaryColor;
+    const s = props.secondaryColor;
+    const a = props.accentColor;
+    const h = props.highlightColor;
+    const c = props.cardColor;
+    const head = props.headingColor;
+    const desc = props.descriptionColor;
+    const btn = props.buttonColor || a;
+    const hue = (p || '0').split(' ')[0];
+    return {
+      '--primary': btn,
+      '--ring': btn,
+      '--accent': btn,
+      '--sidebar-primary': a,
+      '--sidebar-ring': a,
+      '--chart-1': a,
+      '--highlight': h,
+      '--website-bg': p,
+      '--website-bg-secondary': s,
+      '--ws-card': c || `${hue} 25% 7%`,
+      '--card': c || `${hue} 25% 7%`,
+      '--foreground': head,
+      '--ws-text': head,
+      '--card-foreground': head,
+      '--muted-foreground': desc,
+      '--ws-text-muted': desc,
+      '--ws-text-label': desc,
+      '--bg-gradient': `linear-gradient(to bottom, hsl(${p}), hsl(${s}))`,
+      '--bg-primary': `hsl(${p})`,
+      '--bg-secondary': `hsl(${s})`,
+      '--card-bg': `hsl(${c || `${hue} 25% 7%`})`,
+      '--card-border': `hsl(${hue} 20% 18%)`,
+      '--color-accent': `hsl(${a})`,
+      '--button-bg': `hsl(${btn})`,
+      '--button-hover': `hsl(${h})`,
+      '--button-text': '#FFFFFF',
+      '--text-heading': `hsl(${head})`,
+      '--text-description': `hsl(${desc})`,
+      '--navbar-bg': `hsl(${p})`,
+      '--footer-bg': `hsl(${s})`,
+    } as Record<string, string>;
+  }, [props]);
+
+  // Listen for the iframe ready handshake.
+  useEffect(() => {
+    function onMsg(e: MessageEvent) {
+      if (e.data?.type === 'gymos-preview-ready') setReady(true);
+    }
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [reloadKey]);
+
+  // Push vars whenever they change (and once iframe is ready).
+  useEffect(() => {
+    if (!ready) return;
+    const w = iframeRef.current?.contentWindow;
+    if (!w) return;
+    w.postMessage({ type: 'gymos-theme-preview', vars }, '*');
+  }, [ready, vars]);
+
+  return (
+    <Card className="sticky top-6 self-start">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Eye className="h-4 w-4" /> Live Preview
+        </CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => { setReady(false); setReloadKey(k => k + 1); }}
+          title="Reload preview"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-xl overflow-hidden border border-border bg-muted">
+          <iframe
+            key={reloadKey}
+            ref={iframeRef}
+            src="/"
+            title="Landing page preview"
+            className="w-full"
+            style={{ height: '700px', border: 0, display: 'block' }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Showing the full landing page. Color changes apply instantly — click Save to persist.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

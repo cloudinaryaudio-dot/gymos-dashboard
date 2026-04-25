@@ -125,6 +125,26 @@ export default function LandingPage() {
     };
   }, []);
 
+  // Live preview support: when rendered inside an iframe (Settings page),
+  // listen for { type: 'gymos-theme-preview', vars: {...} } messages and
+  // apply the CSS variables in real time so the owner sees changes instantly
+  // without saving.
+  useEffect(() => {
+    if (window.parent === window) return; // not in iframe
+    function onMsg(e: MessageEvent) {
+      const data = e.data;
+      if (!data || data.type !== 'gymos-theme-preview' || !data.vars) return;
+      const root = document.documentElement;
+      Object.entries(data.vars as Record<string, string>).forEach(([k, v]) => {
+        root.style.setProperty(k, v);
+      });
+    }
+    window.addEventListener('message', onMsg);
+    // Tell parent we're ready to receive a snapshot
+    try { window.parent.postMessage({ type: 'gymos-preview-ready' }, '*'); } catch {}
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ['public-landing'],
     queryFn: async () => {

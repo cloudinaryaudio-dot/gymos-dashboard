@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, Member } from '@/hooks/useMembers';
 import { usePlans } from '@/hooks/usePlans';
@@ -13,10 +13,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, Zap, MessageCircle, RefreshCw, Bell, CreditCard } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Zap, MessageCircle, RefreshCw, Bell, CreditCard, Search, BarChart3, ArrowUpDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { addDays, format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
+
+type SortKey = 'name' | 'start_date' | 'expiry_date' | 'plan' | 'status';
+type SortDir = 'asc' | 'desc';
+const PAGE_SIZE = 15;
+
+function useDebounced<T>(value: T, delay = 300): T {
+  const [v, setV] = useState(value);
+  useEffect(() => { const id = setTimeout(() => setV(value), delay); return () => clearTimeout(id); }, [value, delay]);
+  return v;
+}
 
 function getExpiryInfo(expiryDate: string) {
   const today = new Date();
@@ -184,6 +194,7 @@ export default function MembersPage() {
   const deleteMember = useDeleteMember();
   const createPayment = useCreatePayment();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | undefined>();
@@ -192,7 +203,107 @@ export default function MembersPage() {
   const [collectAmount, setCollectAmount] = useState('');
   const [collectMethod, setCollectMethod] = useState('cash');
 
-  
+  // ─── URL-driven state ───
+  const statusFilter = (searchParams.get('status') ?? 'all') as 'all' | 'active' | 'expired' | 'overdue';
+  const planFilter = searchParams.get('plan') ?? 'all';
+  const expiryFilter = (searchParams.get('expiry') ?? 'all') as 'all' | '7days' | '30days';
+  const sortKey = (searchParams.get('sort') ?? 'expiry_date') as SortKey;
+  const sortDir = (searchParams.get('dir') ?? 'asc') as SortDir;
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
+  const urlSearch = searchParams.get('q') ?? '';
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebounced(searchInput, 250);
+
+  useEffect(() => {
+    if (debouncedSearch === urlSearch) return;
+    const next = new URLSearchParams(searchParams);
+    if (debouncedSearch) next.set('q', debouncedSearch); else next.delete('q');
+    next.delete('page');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  const updateParam = (key: string, value: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (value == null || value === '' || value === 'all') next.delete(key); else next.set(key, value);
+    if (key !== 'page') next.delete('page');
+    setSearchParams(next, { replace: true });
+  };
+
+  const planCategories = useMemo(() => {
+    const set = new Set<string>();
+    plans?.forEach(p => { if (p.category) set.add(p.category); });
+    return Array.from(set).sort();
+  }, [plans]);
+
+  const processed = useMemo(() => {
+    if (!members) return [] as Member[];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().slice(0, 10);
+    const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+    const in7Str = in7.toISOString().slice(0, 10);
+    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+    const in30Str = in30.toISOString().slice(0, 10);
+    const q = debouncedSearch.trim().toLowerCase();
+
+    let list = members.filter(m => {
+      if (statusFilter === 'active' && m.expiry_date < todayStr) return false;
+      if (statusFilter === 'expired' && m.expiry_date >= todayStr) return false;
+      if (statusFilter === 'overdue') {
+        if (getPaymentStatus(m, payments ?? []) !== 'overdue') return false;
+      }
+      if (planFilter !== 'all') {
+        const planCat = plans?.find(p => p.id === m.plan_id)?.category ?? '';
+        if (planCat.toLowerCase() !== planFilter.toLowerCase()) return false;
+      }
+      if (expiryFilter === '7days' && !(m.expiry_date >= todayStr && m.expiry_date <= in7Str)) return false;
+      if (expiryFilter === '30days' && !(m.expiry_date >= todayStr && m.expiry_date <= in30Str)) return false;
+      if (q) {
+        const planName = m.plans?.name?.toLowerCase() ?? '';
+        if (!m.name.toLowerCase().includes(q) && !m.phone.toLowerCase().includes(q) && !planName.includes(q)) return false;
+      }
+      return true;
+    });
+
+    list = [...list].sort((a, b) => {
+      let av: string | number = '';
+      let bv: string | number = '';
+      switch (sortKey) {
+        case 'name': av = a.name.toLowerCase(); bv = b.name.toLowerCase(); break;
+        case 'start_date': av = a.start_date; bv = b.start_date; break;
+        case 'expiry_date': av = a.expiry_date; bv = b.expiry_date; break;
+        case 'plan': av = a.plans?.name?.toLowerCase() ?? ''; bv = b.plans?.name?.toLowerCase() ?? ''; break;
+        case 'status':
+          av = a.expiry_date < todayStr ? 1 : 0;
+          bv = b.expiry_date < todayStr ? 1 : 0;
+          break;
+      }
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [members, payments, plans, statusFilter, planFilter, expiryFilter, sortKey, sortDir, debouncedSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(processed.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedMembers = processed.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const toggleSort = (key: SortKey) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('sort', key);
+    next.set('dir', sortKey === key ? (sortDir === 'asc' ? 'desc' : 'asc') : 'asc');
+    next.delete('page');
+    setSearchParams(next, { replace: true });
+  };
+
+  const hasActiveFilters = statusFilter !== 'all' || planFilter !== 'all' || expiryFilter !== 'all' || debouncedSearch.length > 0;
+  const clearAllFilters = () => {
+    setSearchInput('');
+    setSearchParams(new URLSearchParams(), { replace: true });
+  };
+
 
   const handleSubmit = async (data: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
     try {
@@ -254,7 +365,10 @@ export default function MembersPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => navigate('/app/members/dashboard')}>
+            <BarChart3 className="h-4 w-4 mr-2" /> Members Dashboard
+          </Button>
           {/* Quick Add */}
           <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
             <DialogTrigger asChild>
@@ -302,6 +416,60 @@ export default function MembersPage() {
         </div>
       </div>
 
+      {/* Controls: search + filters */}
+      <Card>
+        <CardContent className="p-4 flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              placeholder="Search by name, phone, or plan…"
+              className="pl-9"
+            />
+          </div>
+
+          <Select value={statusFilter} onValueChange={(v) => updateParam('status', v)}>
+            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={planFilter} onValueChange={(v) => updateParam('plan', v)}>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Plan category" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All plans</SelectItem>
+              {planCategories.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={expiryFilter} onValueChange={(v) => updateParam('expiry', v)}>
+            <SelectTrigger className="w-[170px]"><SelectValue placeholder="Expiry" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any expiry</SelectItem>
+              <SelectItem value="7days">Expiring in 7 days</SelectItem>
+              <SelectItem value="30days">Expiring in 30 days</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+              <X className="h-4 w-4 mr-1" /> Clear
+            </Button>
+          )}
+
+          <div className="ml-auto text-xs text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{processed.length}</span> of {members?.length ?? 0}
+          </div>
+        </CardContent>
+      </Card>
+
       {(!plans || plans.length === 0) && !isLoading && (
         <Card>
           <CardContent className="p-6 text-center">
@@ -323,24 +491,26 @@ export default function MembersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead><button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('name')}>Name <ArrowUpDown className="h-3 w-3 opacity-50" /></button></TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead><button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('plan')}>Plan <ArrowUpDown className="h-3 w-3 opacity-50" /></button></TableHead>
+                  <TableHead><button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('status')}>Status <ArrowUpDown className="h-3 w-3 opacity-50" /></button></TableHead>
                   <TableHead>Payment</TableHead>
-                  <TableHead>Expiry Date</TableHead>
+                  <TableHead><button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('expiry_date')}>Expiry Date <ArrowUpDown className="h-3 w-3 opacity-50" /></button></TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {[...members]
-                  .sort((a, b) => {
-                    const pa = getPaymentStatus(a, payments ?? []);
-                    const pb = getPaymentStatus(b, payments ?? []);
-                    const order = { overdue: 0, pending: 1, paid: 2 };
-                    return order[pa] - order[pb];
-                  })
-                  .map(member => {
+                {pagedMembers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-12">
+                      No members match your filters.
+                      {hasActiveFilters && (
+                        <Button variant="link" size="sm" onClick={clearAllFilters} className="ml-1">Clear filters</Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ) : pagedMembers.map(member => {
                   const expiry = getExpiryInfo(member.expiry_date);
                   const payStatus = getPaymentStatus(member, payments ?? []);
                   return (
@@ -448,7 +618,43 @@ export default function MembersPage() {
                 })}
               </TableBody>
             </Table>
-          ) : (
+          ) : null}
+          {members && members.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t">
+              <span className="text-xs text-muted-foreground">
+                Page {safePage} of {totalPages} · {processed.length} result{processed.length === 1 ? '' : 's'}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={() => updateParam('page', String(Math.max(1, safePage - 1)))} disabled={safePage === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(n => Math.abs(n - safePage) <= 2 || n === 1 || n === totalPages)
+                  .reduce<(number | 'gap')[]>((acc, n, idx, arr) => {
+                    if (idx > 0 && n - (arr[idx - 1] as number) > 1) acc.push('gap');
+                    acc.push(n);
+                    return acc;
+                  }, [])
+                  .map((n, idx) => n === 'gap'
+                    ? <span key={`gap-${idx}`} className="px-2 text-muted-foreground">…</span>
+                    : (
+                      <Button
+                        key={n}
+                        variant={n === safePage ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => updateParam('page', String(n))}
+                      >
+                        {n}
+                      </Button>
+                    ))}
+                <Button variant="outline" size="sm" onClick={() => updateParam('page', String(Math.min(totalPages, safePage + 1)))} disabled={safePage === totalPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          {(!members || members.length === 0) && !isLoading && (
             <div className="flex flex-col items-center justify-center p-16 text-center">
               <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-primary" />

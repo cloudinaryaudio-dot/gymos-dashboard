@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useGymSettings } from '@/hooks/useGymSettings';
 
 function hexToHSL(hex: string): string | null {
@@ -21,7 +22,6 @@ function hexToHSL(hex: string): string | null {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-/** Accept either an HSL triple ("220 25% 8%") or a hex (#0F172A) and return HSL triple. */
 function toHsl(value?: string | null): string | null {
   if (!value) return null;
   const v = value.trim();
@@ -34,14 +34,9 @@ function deriveShades(primaryHex: string, secondaryHex: string) {
   const p = hexToHSL(primaryHex);
   const s = hexToHSL(secondaryHex);
   if (!p || !s) return null;
-
-  // Parse HSL components from primary
-  const [pH, pS, pL] = p.split(' ').map((v, i) => i === 0 ? parseInt(v) : parseInt(v));
-
-  // Generate derived shades based on primary hue/sat
+  const [pH, pS] = p.split(' ').map((v, i) => i === 0 ? parseInt(v) : parseInt(v));
   const hue = pH;
-  const sat = Math.min(pS, 25); // Keep saturation subtle for backgrounds
-
+  const sat = Math.min(pS, 25);
   return {
     '--website-bg': p,
     '--website-bg-secondary': s,
@@ -56,44 +51,67 @@ function deriveShades(primaryHex: string, secondaryHex: string) {
   };
 }
 
+// Routes that should receive the dynamic theme. Everything else (notably /app/*)
+// uses the default design system from index.css.
+const PUBLIC_PATHS = ['/', '/gallery', '/plans', '/branches', '/services', '/trainers', '/equipment', '/testimonials', '/products'];
+
+function isPublicPath(pathname: string): boolean {
+  if (pathname.startsWith('/app')) return false;
+  return PUBLIC_PATHS.some(p => p === pathname || (p !== '/' && pathname.startsWith(p)));
+}
+
+const ALL_VARS = [
+  '--primary', '--ring', '--sidebar-primary', '--sidebar-ring', '--chart-1', '--accent', '--highlight',
+  '--website-bg', '--website-bg-secondary',
+  '--ws-card', '--ws-card-alt', '--ws-darker', '--ws-border', '--ws-border-light', '--ws-border-dim',
+  '--ws-social-proof', '--ws-input',
+  '--bg-gradient', '--card', '--foreground', '--card-foreground',
+  '--ws-text', '--muted-foreground', '--ws-text-muted', '--ws-text-label',
+  '--bg-primary', '--bg-secondary', '--card-bg', '--card-border', '--color-accent',
+  '--button-bg', '--button-hover', '--button-text', '--text-heading', '--text-description',
+  '--navbar-bg', '--footer-bg',
+];
+
+function clearVars(root: HTMLElement) {
+  ALL_VARS.forEach(v => root.style.removeProperty(v));
+  root.removeAttribute('data-theme-mode');
+}
+
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const { resolved, isLoading } = useGymSettings();
+  const location = useLocation();
+  const onPublic = isPublicPath(location.pathname);
 
   useEffect(() => {
-    if (isLoading) return;
     const root = document.documentElement;
 
-    // Primary/secondary are now background tones; accent is the brand color
+    // On dashboard (and any non-public route): strip all theme vars so the
+    // default design system from index.css takes over. This guarantees the
+    // dashboard never picks up the gym's brand colors.
+    if (!onPublic) {
+      clearVars(root);
+      return;
+    }
+
+    if (isLoading) return;
+
     root.style.setProperty('--primary', resolved.accent_color);
     root.style.setProperty('--ring', resolved.accent_color);
     root.style.setProperty('--sidebar-primary', resolved.accent_color);
     root.style.setProperty('--sidebar-ring', resolved.accent_color);
     root.style.setProperty('--chart-1', resolved.accent_color);
     root.style.setProperty('--accent', resolved.accent_color);
-
-    // Expose highlight for gradient usage
     root.style.setProperty('--highlight', resolved.highlight_color);
 
-    // ── Detect light vs dark theme based on primary bg lightness ──
-    // resolved.primary_color is an HSL triple like "220 25% 6%"
     const lightnessStr = resolved.primary_color.split(' ')[2] ?? '0%';
     const lightness = parseFloat(lightnessStr);
-    if (Number.isFinite(lightness) && lightness > 60) {
-      root.setAttribute('data-theme-mode', 'light');
-    } else {
-      root.setAttribute('data-theme-mode', 'dark');
-    }
+    root.setAttribute('data-theme-mode', Number.isFinite(lightness) && lightness > 60 ? 'light' : 'dark');
 
-    // Derive all website shades from primary/secondary
     const shades = deriveShades(resolved.primary_color, resolved.secondary_color);
     if (shades) {
-      Object.entries(shades).forEach(([key, value]) => {
-        root.style.setProperty(key, value);
-      });
+      Object.entries(shades).forEach(([key, value]) => root.style.setProperty(key, value));
     }
 
-    // ── Full design-token system ──────────────────────────────────────
-    // Background gradient (primary -> secondary)
     const primaryHsl = resolved.primary_color;
     const secondaryHsl = resolved.secondary_color;
     root.style.setProperty(
@@ -101,7 +119,6 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       `linear-gradient(to bottom, hsl(${primaryHsl}), hsl(${secondaryHsl}))`,
     );
 
-    // Optional admin overrides (each falls back to a sensible derived value)
     const cardOverride = toHsl(resolved.card_color);
     if (cardOverride) {
       root.style.setProperty('--card', cardOverride);
@@ -124,15 +141,11 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
 
     const buttonOverride = toHsl(resolved.button_color);
     if (buttonOverride) {
-      // Button color overrides primary (which drives all primary buttons)
       root.style.setProperty('--primary', buttonOverride);
       root.style.setProperty('--ring', buttonOverride);
       root.style.setProperty('--accent', buttonOverride);
     }
 
-    // ── Alias tokens (--bg-primary, --card-bg, --button-bg ...) ──
-    // Always recompute from the *currently* resolved tokens so any change
-    // flows through to components that use these aliases directly.
     const finalCard = cardOverride ?? `${resolved.primary_color.split(' ')[0]} ${Math.min(parseInt(resolved.primary_color.split(' ')[1]) || 25, 25)}% 7%`;
     const finalHeading = headingOverride ?? '220 10% 92%';
     const finalDesc = descOverride ?? '220 10% 55%';
@@ -152,18 +165,10 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--footer-bg', `hsl(${resolved.secondary_color})`);
 
     return () => {
-      ['--primary', '--ring', '--sidebar-primary', '--sidebar-ring', '--chart-1', '--accent', '--highlight',
-       '--website-bg', '--website-bg-secondary',
-       '--ws-card', '--ws-card-alt', '--ws-darker', '--ws-border', '--ws-border-light', '--ws-border-dim',
-       '--ws-social-proof', '--ws-input',
-       '--bg-gradient', '--card', '--foreground', '--card-foreground',
-       '--ws-text', '--muted-foreground', '--ws-text-muted', '--ws-text-label',
-       '--bg-primary', '--bg-secondary', '--card-bg', '--card-border', '--color-accent',
-       '--button-bg', '--button-hover', '--button-text', '--text-heading', '--text-description',
-       '--navbar-bg', '--footer-bg',
-      ].forEach(v => root.style.removeProperty(v));
+      // Clear when leaving public page or before re-applying
+      clearVars(root);
     };
-  }, [resolved, isLoading]);
+  }, [resolved, isLoading, onPublic]);
 
   return <>{children}</>;
 }
