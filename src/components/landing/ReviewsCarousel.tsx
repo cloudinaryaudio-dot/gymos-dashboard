@@ -176,14 +176,14 @@ export function ReviewsCarousel({ reviews, content, gymName, logoUrl }: ReviewsC
           subtitle={content.subtitle || 'See what our members say about us.'}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-10 items-start mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8 lg:gap-12 items-start mt-2">
           {/* LEFT: Summary block */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="rounded-2xl p-6 text-center flex flex-col items-center gap-3 mx-auto w-full max-w-sm lg:sticky lg:top-24"
+            className="rounded-2xl p-6 text-center flex flex-col items-center gap-3 mx-auto w-full max-w-xs lg:mx-0 lg:-mt-2 lg:self-start"
             style={{
               background: 'var(--card-bg, hsl(var(--card)))',
               border: '1px solid hsl(var(--border) / 0.6)',
