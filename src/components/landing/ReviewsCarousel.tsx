@@ -46,7 +46,8 @@ function ReviewCard({ review, index }: { review: ReviewItem; index: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.55, delay: (index % 4) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      className="snap-start flex-shrink-0 w-[85%] sm:w-[320px] md:w-[300px] lg:w-[300px]"
+      data-review-card
+      className="snap-start flex-shrink-0 w-[85%] sm:w-[320px] md:w-[300px] lg:w-[300px] flex"
     >
       <div
         className="group relative h-full rounded-2xl p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
