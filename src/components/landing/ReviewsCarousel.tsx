@@ -46,7 +46,8 @@ function ReviewCard({ review, index }: { review: ReviewItem; index: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.55, delay: (index % 4) * 0.07, ease: [0.22, 1, 0.36, 1] }}
-      className="snap-start flex-shrink-0 w-[85%] sm:w-[320px] md:w-[300px] lg:w-[300px]"
+      data-review-card
+      className="snap-start flex-shrink-0 w-[85%] sm:w-[320px] md:w-[300px] lg:w-[300px] flex"
     >
       <div
         className="group relative h-full rounded-2xl p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
@@ -176,14 +177,14 @@ export function ReviewsCarousel({ reviews, content, gymName, logoUrl }: ReviewsC
           subtitle={content.subtitle || 'See what our members say about us.'}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-10 items-start mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8 lg:gap-12 items-start mt-2">
           {/* LEFT: Summary block */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="rounded-2xl p-6 text-center flex flex-col items-center gap-3 mx-auto w-full max-w-sm lg:sticky lg:top-24"
+            className="rounded-2xl p-6 text-center flex flex-col items-center gap-3 mx-auto w-full max-w-xs lg:mx-0 lg:-mt-2 lg:self-start"
             style={{
               background: 'var(--card-bg, hsl(var(--card)))',
               border: '1px solid hsl(var(--border) / 0.6)',
@@ -241,10 +242,10 @@ export function ReviewsCarousel({ reviews, content, gymName, logoUrl }: ReviewsC
           </motion.aside>
 
           {/* RIGHT: scrollable cards */}
-          <div className="relative">
+          <div className="relative flex flex-col gap-4">
             {/* Controls */}
             {reviews.length > 2 && (
-              <div className="hidden md:flex absolute -top-14 right-0 gap-2 z-10">
+              <div className="hidden md:flex justify-end gap-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -279,13 +280,11 @@ export function ReviewsCarousel({ reviews, content, gymName, logoUrl }: ReviewsC
               ref={scrollRef}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
-              className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0"
+              className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 items-stretch"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {reviews.map((r, i) => (
-                <div key={i} data-review-card className="flex">
-                  <ReviewCard review={r} index={i} />
-                </div>
+                <ReviewCard key={i} review={r} index={i} />
               ))}
             </div>
           </div>
