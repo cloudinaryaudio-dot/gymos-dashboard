@@ -29,6 +29,7 @@ import PublicTrainersPage from "./pages/PublicTrainersPage";
 import PublicEquipmentPage from "./pages/PublicEquipmentPage";
 import PublicTestimonialsPage from "./pages/PublicTestimonialsPage";
 import PublicProductsPage from "./pages/PublicProductsPage";
+import PublicProductDetailPage from "./pages/PublicProductDetailPage";
 import OwnerSummaryPage from "./pages/OwnerSummaryPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import InvoiceSettingsPage from "./pages/InvoiceSettingsPage";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/equipment" element={<PublicEquipmentPage />} />
             <Route path="/testimonials" element={<PublicTestimonialsPage />} />
             <Route path="/products" element={<PublicProductsPage />} />
+            <Route path="/products/:id" element={<PublicProductDetailPage />} />
             <Route path="/app/*" element={<AppLayout />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

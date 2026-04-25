@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
-import { ArrowLeft, ShoppingBag, ExternalLink, Copy, Check, Tag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, ExternalLink, Copy, Check, Tag, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import * as ds from '@/services/dataService';
@@ -55,7 +56,7 @@ export default function PublicProductsPage() {
           <p className="text-center text-ws-text-muted py-20">No products yet.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map((it, i) => <ProductCard key={i} item={it} index={i} />)}
+            {items.map((it, i) => <ProductCard key={i} item={it} index={i} productId={i} />)}
           </div>
         )}
       </div>
@@ -63,7 +64,7 @@ export default function PublicProductsPage() {
   );
 }
 
-function ProductCard({ item, index }: { item: ProductItem; index: number }) {
+function ProductCard({ item, index, productId }: { item: ProductItem; index: number; productId: number }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
   const [copied, setCopied] = useState(false);
@@ -110,15 +111,27 @@ function ProductCard({ item, index }: { item: ProductItem; index: number }) {
           </button>
         )}
 
-        {item.buy_link && (
-          <Button
-            size="sm"
-            className="w-full rounded-xl font-semibold shadow-md shadow-primary/20"
-            onClick={() => window.open(item.buy_link, '_blank', 'noopener')}
-          >
-            Buy Now <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        )}
+        <div className="flex flex-col gap-2 mt-1">
+          <Link to={`/products/${productId}`}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full rounded-xl font-semibold border-ws-border-light hover:bg-ws-border"
+            >
+              View Details <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </Link>
+          {item.buy_link && (
+            <Button
+              size="sm"
+              className="w-full rounded-xl font-semibold shadow-md shadow-primary/20"
+              style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }}
+              onClick={() => window.open(item.buy_link, '_blank', 'noopener')}
+            >
+              Buy Now <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
