@@ -212,7 +212,7 @@ export default function LandingPage() {
   ] }) as StatsContent;
   const statsEnabled = data?.stats?.is_enabled !== false;
   const footerSocialContent = (data?.footer_social?.content ?? { instagram_url: '', whatsapp_url: '', facebook_url: '', youtube_url: '', instagram_enabled: true, whatsapp_enabled: true, facebook_enabled: true, youtube_enabled: true }) as FooterSocialContent;
-  const supplementsContent = (data?.supplements?.content ?? { title: 'Recommended Supplements', subtitle: '', items: [] }) as SupplementsContent;
+  // Supplements section removed from landing page (still available via Products module)
   const achievementsContent = (data?.achievements?.content ?? { title: 'Achievements & Certifications', subtitle: '', items: [] }) as AchievementsContent;
   const productsContent = (data?.products?.content ?? { title: 'Shop Fitness Essentials', subtitle: '', items: [], banner_images: [] }) as ProductsContent;
 
