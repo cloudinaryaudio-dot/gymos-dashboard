@@ -492,21 +492,23 @@ export default function LandingPage() {
   </section>
 )}
 
-      {/* ─── SERVICES ─── */}
+      {/* ─── SERVICES (bg primary) ─── */}
       {data?.services && (servicesContent.items?.length ?? 0) > 0 && (() => {
         const items = servicesContent.items;
         const marked = items.filter(i => (i as any).show_on_homepage);
         const rest = items.filter(i => !marked.includes(i));
         const homepageItems = [...marked, ...rest].slice(0, 6);
         return (
-          <ServicesSection
-            content={{ ...servicesContent, items: homepageItems }}
-            showViewAll={items.length > 6}
-          />
+          <div style={{ background: 'var(--bg-primary)' }}>
+            <ServicesSection
+              content={{ ...servicesContent, items: homepageItems }}
+              showViewAll={items.length > 6}
+            />
+          </div>
         );
       })()}
 
-      {/* ─── EQUIPMENT ─── */}
+      {/* ─── EQUIPMENT (bg secondary) ─── */}
       {data?.equipment && (equipmentContent.items?.length ?? 0) > 0 && (() => {
         const items = equipmentContent.items;
         const marked = items.filter(i => (i as any).show_on_homepage);
@@ -514,7 +516,7 @@ export default function LandingPage() {
         const homepageItems = [...marked, ...rest].slice(0, 6);
         const showViewAll = items.length > 6;
         return (
-          <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+          <section id="equipment" className="py-28 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg-secondary)' }}>
             <div className="max-w-7xl mx-auto">
               <SectionHeader tag="Our Facility" title={equipmentContent.title || 'World-Class Equipment'} subtitle={equipmentContent.subtitle} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -534,7 +536,7 @@ export default function LandingPage() {
                 <div className="text-center mt-12">
                   <Link to="/equipment">
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-                      <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                      <Button size="lg" className="rounded-xl h-12 px-8 font-semibold shadow-lg shadow-primary/20" style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }}>
                         View All Equipment <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </motion.div>
@@ -546,16 +548,19 @@ export default function LandingPage() {
         );
       })()}
 
+      {/* ─── PRICING (bg primary) ─── */}
       {data?.pricing && (data?.homepagePlans?.length ?? 0) > 0 && (
-        <PricingSection
-          plans={data!.homepagePlans}
-          content={pricingContent}
-          onCtaClick={() => scrollTo('lead-form')}
-          showViewAll={(data?.plans?.length ?? 0) > 3}
-        />
+        <div style={{ background: 'var(--bg-primary)' }}>
+          <PricingSection
+            plans={data!.homepagePlans}
+            content={pricingContent}
+            onCtaClick={() => scrollTo('lead-form')}
+            showViewAll={(data?.plans?.length ?? 0) > 3}
+          />
+        </div>
       )}
 
-      {/* ─── TRAINERS ─── */}
+      {/* ─── TRAINERS (bg secondary) ─── */}
       {data?.trainers && (trainersContent.items?.length ?? 0) > 0 && (() => {
         const items = trainersContent.items;
         const marked = items.filter(i => (i as any).show_on_homepage);
@@ -563,7 +568,7 @@ export default function LandingPage() {
         const homepageItems = [...marked, ...rest].slice(0, 6);
         const showViewAll = items.length > 6;
         return (
-          <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+          <section id="trainers" className="py-28 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg-secondary)' }}>
             <div className="max-w-7xl mx-auto">
               <SectionHeader tag="Expert Coaching" title={trainersContent.title || 'Meet Our Trainers'} subtitle={trainersContent.subtitle} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -587,7 +592,7 @@ export default function LandingPage() {
                 <div className="text-center mt-12">
                   <Link to="/trainers">
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-                      <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                      <Button size="lg" className="rounded-xl h-12 px-8 font-semibold shadow-lg shadow-primary/20" style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }}>
                         View All Trainers <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </motion.div>
