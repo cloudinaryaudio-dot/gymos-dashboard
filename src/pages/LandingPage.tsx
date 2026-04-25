@@ -708,14 +708,14 @@ export default function LandingPage() {
       )}
 
 
-      {/* ─── CTA BLOCK ─── */}
-      <section className="py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* ─── CTA BLOCK (bg primary) ─── */}
+      <section className="py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-primary/8 rounded-full blur-[150px]" />
         </div>
         <AnimatedSection variant="scale">
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-ws-card to-ws-card-alt border border-primary/20 p-14 sm:p-20">
+            <div className="rounded-3xl border border-primary/20 p-14 sm:p-20" style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.15), var(--card-bg))' }}>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display leading-tight">
                 Start Your Fitness Journey{' '}<span className="bg-gradient-to-r from-primary to-highlight bg-clip-text text-transparent">Today</span>
               </h2>
@@ -737,8 +737,8 @@ export default function LandingPage() {
         </AnimatedSection>
       </section>
 
-      {/* ─── LEAD FORM ─── */}
-      <section id="lead-form" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
+      {/* ─── LEAD FORM (bg secondary) ─── */}
+      <section id="lead-form" className="py-28 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg-secondary)' }}>
         <div className="max-w-lg mx-auto">
           <AnimatedSection className="text-center mb-10">
             <p className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4">Get Started</p>
