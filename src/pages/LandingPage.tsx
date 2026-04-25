@@ -673,7 +673,7 @@ export default function LandingPage() {
       {/* ─── GOOGLE REVIEWS (bg primary) ─── */}
       {data?.reviews && (reviewsContent.items?.length ?? 0) > 0 && (
         <div style={{ background: 'var(--bg-primary)' }}>
-          <ReviewsCarousel reviews={reviewsContent.items} content={reviewsContent} />
+          <ReviewsCarousel reviews={reviewsContent.items} content={reviewsContent} gymName={settings?.gym_name} logoUrl={settings?.logo_url ?? null} />
         </div>
       )}
 
