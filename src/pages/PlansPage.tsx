@@ -156,17 +156,22 @@ export default function PlansPage() {
           <h1 className="text-2xl font-bold font-display">Plans</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your membership plans</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
-            </DialogHeader>
-            <PlanForm plan={editingPlan} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/app/plans/dashboard')}>
+            <BarChart3 className="h-4 w-4 mr-2" /> Plans Dashboard
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
+              </DialogHeader>
+              <PlanForm plan={editingPlan} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
