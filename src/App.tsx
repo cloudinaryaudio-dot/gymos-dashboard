@@ -48,6 +48,7 @@ function AppLayout() {
         <Route path="members/dashboard" element={<MembersDashboardPage />} />
         <Route path="members/:memberId" element={<MemberProfilePage />} />
         <Route path="plans" element={<PlansPage />} />
+        <Route path="plans/dashboard" element={<PlansDashboardPage />} />
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="payments/dashboard" element={<PaymentsDashboardPage />} />
         <Route path="leads" element={<LeadsPage />} />
