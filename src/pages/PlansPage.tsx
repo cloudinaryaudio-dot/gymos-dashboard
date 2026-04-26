@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Package, Crown, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Crown, X, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['general', 'Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'Male', 'Female', 'Couple'];
 
