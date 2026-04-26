@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Pagination,
   PaginationContent,
@@ -31,11 +32,13 @@ import {
 } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, CheckCircle, CreditCard, BarChart3 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
 const PAGE_SIZE = 15;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+type TimeMode = 'all' | 'month' | 'year';
 
 type ConfirmAction =
   | { type: 'mark-paid'; payment: Payment }
@@ -90,9 +93,36 @@ export default function PaymentsPage() {
     }
   };
 
-  const paidPayments = payments?.filter(p => p.status === 'paid') ?? [];
-  const pendingPayments = payments?.filter(p => p.status === 'pending') ?? [];
-  const overduePayments = payments?.filter(p => p.status === 'overdue') ?? [];
+  // Time filter
+  const today = new Date();
+  const [timeMode, setTimeMode] = useState<TimeMode>('all');
+  const [filterMonth, setFilterMonth] = useState<number>(today.getMonth());
+  const [filterYear, setFilterYear] = useState<number>(today.getFullYear());
+
+  const filteredPayments = useMemo(() => {
+    if (!payments) return [];
+    if (timeMode === 'all') return payments;
+    if (timeMode === 'month') {
+      const f = startOfMonth(new Date(filterYear, filterMonth, 1));
+      const t = endOfMonth(f);
+      return payments.filter(p => {
+        const d = new Date(p.payment_date);
+        return d >= f && d <= t;
+      });
+    }
+    const f = startOfYear(new Date(filterYear, 0, 1));
+    const t = endOfYear(f);
+    return payments.filter(p => {
+      const d = new Date(p.payment_date);
+      return d >= f && d <= t;
+    });
+  }, [payments, timeMode, filterMonth, filterYear]);
+
+  const paidPayments = filteredPayments.filter(p => p.status === 'paid');
+  const pendingPayments = filteredPayments.filter(p => p.status === 'pending');
+  const overduePayments = filteredPayments.filter(p => p.status === 'overdue');
+
+  const yearOptions = Array.from({ length: 6 }, (_, i) => today.getFullYear() - i);
 
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [pages, setPages] = useState<Record<string, number>>({ all: 1, pending: 1, overdue: 1, paid: 1 });
@@ -341,9 +371,40 @@ export default function PaymentsPage() {
 
 
 
+        {/* Time toggle */}
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border bg-card">
+          <ToggleGroup type="single" value={timeMode} onValueChange={(v) => v && setTimeMode(v as TimeMode)}>
+            <ToggleGroupItem value="all">All Time</ToggleGroupItem>
+            <ToggleGroupItem value="month">Month</ToggleGroupItem>
+            <ToggleGroupItem value="year">Year</ToggleGroupItem>
+          </ToggleGroup>
+
+          {timeMode === 'month' && (
+            <Select value={String(filterMonth)} onValueChange={(v) => setFilterMonth(Number(v))}>
+              <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
+          {timeMode !== 'all' && (
+            <Select value={String(filterYear)} onValueChange={(v) => setFilterYear(Number(v))}>
+              <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
+          <span className="ml-auto text-xs text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{filteredPayments.length}</span> of {payments?.length ?? 0}
+          </span>
+        </div>
+
         <Tabs defaultValue="all">
           <TabsList>
-            <TabsTrigger value="all">All ({payments?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="all">All ({filteredPayments.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingPayments.length})</TabsTrigger>
             <TabsTrigger value="overdue">Overdue ({overduePayments.length})</TabsTrigger>
             <TabsTrigger value="paid">Paid ({paidPayments.length})</TabsTrigger>
@@ -356,7 +417,7 @@ export default function PaymentsPage() {
                 </div>
               ) : (
                 <>
-                  <TabsContent value="all" className="m-0"><PaymentTable data={payments} showMarkPaid pageKey="all" /></TabsContent>
+                  <TabsContent value="all" className="m-0"><PaymentTable data={filteredPayments} showMarkPaid pageKey="all" /></TabsContent>
                   <TabsContent value="pending" className="m-0"><PaymentTable data={pendingPayments} showMarkPaid pageKey="pending" /></TabsContent>
                   <TabsContent value="overdue" className="m-0"><PaymentTable data={overduePayments} showMarkPaid pageKey="overdue" /></TabsContent>
                   <TabsContent value="paid" className="m-0"><PaymentTable data={paidPayments} pageKey="paid" /></TabsContent>

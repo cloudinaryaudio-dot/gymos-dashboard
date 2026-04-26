@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   IndianRupee, Receipt, TrendingUp, TrendingDown, Users, UserPlus, Target,
   AlertTriangle, ArrowRight, Wallet, Activity, Sparkles, CalendarClock,
@@ -17,7 +18,7 @@ import {
 
 type RangeKey = 'today' | 'week' | 'month' | 'year';
 
-function getRange(key: RangeKey): { from: string; to: string; prevFrom: string; prevTo: string; granularity: 'day' | 'month' } {
+function getRange(key: RangeKey, selectedYear?: number): { from: string; to: string; prevFrom: string; prevTo: string; granularity: 'day' | 'month' } {
   const today = new Date();
   const ymd = (d: Date) => d.toISOString().slice(0, 10);
   const cloneAdd = (d: Date, days: number) => { const x = new Date(d); x.setDate(x.getDate() + days); return x; };
@@ -39,11 +40,14 @@ function getRange(key: RangeKey): { from: string; to: string; prevFrom: string; 
     const prevEnd = new Date(today.getFullYear(), today.getMonth(), 0);
     return { from: ymd(start), to: ymd(today), prevFrom: ymd(prevStart), prevTo: ymd(prevEnd), granularity: 'day' };
   }
-  // year
-  const start = new Date(today.getFullYear(), 0, 1);
-  const prevStart = new Date(today.getFullYear() - 1, 0, 1);
-  const prevEnd = new Date(today.getFullYear() - 1, 11, 31);
-  return { from: ymd(start), to: ymd(today), prevFrom: ymd(prevStart), prevTo: ymd(prevEnd), granularity: 'month' };
+  // year — supports selected year
+  const y = selectedYear ?? today.getFullYear();
+  const isCurrent = y === today.getFullYear();
+  const start = new Date(y, 0, 1);
+  const end = isCurrent ? today : new Date(y, 11, 31);
+  const prevStart = new Date(y - 1, 0, 1);
+  const prevEnd = new Date(y - 1, 11, 31);
+  return { from: ymd(start), to: ymd(end), prevFrom: ymd(prevStart), prevTo: ymd(prevEnd), granularity: 'month' };
 }
 
 function pctChange(curr: number, prev: number): number | null {
@@ -97,14 +101,17 @@ function KpiCard({
 export default function OwnerSummaryPage() {
   const navigate = useNavigate();
   const [rangeKey, setRangeKey] = useState<RangeKey>('month');
-  const range = useMemo(() => getRange(rangeKey), [rangeKey]);
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i);
+  const range = useMemo(() => getRange(rangeKey, selectedYear), [rangeKey, selectedYear]);
 
   const { data: curr, isLoading } = useQuery({
-    queryKey: ['owner-summary', 'curr', rangeKey],
+    queryKey: ['owner-summary', 'curr', rangeKey, selectedYear],
     queryFn: () => ds.getAnalytics({ from: range.from, to: range.to }, range.granularity),
   });
   const { data: prev } = useQuery({
-    queryKey: ['owner-summary', 'prev', rangeKey],
+    queryKey: ['owner-summary', 'prev', rangeKey, selectedYear],
     queryFn: () => ds.getAnalytics({ from: range.prevFrom, to: range.prevTo }, range.granularity),
   });
   const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: ds.getMembers });
@@ -167,14 +174,24 @@ export default function OwnerSummaryPage() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Your complete business command center</p>
         </div>
-        <Tabs value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
-          <TabsList>
-            <TabsTrigger value="today">Today</TabsTrigger>
-            <TabsTrigger value="week">Weekly</TabsTrigger>
-            <TabsTrigger value="month">Monthly</TabsTrigger>
-            <TabsTrigger value="year">Yearly</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Tabs value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
+            <TabsList>
+              <TabsTrigger value="today">Today</TabsTrigger>
+              <TabsTrigger value="week">Weekly</TabsTrigger>
+              <TabsTrigger value="month">Monthly</TabsTrigger>
+              <TabsTrigger value="year">Yearly</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {rangeKey === 'year' && (
+            <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+              <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {isLoading || !k ? (

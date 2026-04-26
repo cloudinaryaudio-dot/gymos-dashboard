@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, Member } from '@/hooks/useMembers';
 import { usePlans } from '@/hooks/usePlans';
-import { usePayments, useCreatePayment } from '@/hooks/usePayments';
+import { usePayments } from '@/hooks/usePayments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,8 @@ import { Plus, Pencil, Trash2, Users, Zap, MessageCircle, RefreshCw, Bell, Credi
 import { addDays, format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
+import { AddPaymentDialog } from '@/components/AddPaymentDialog';
+import { ReminderDialog, whatsappDirect } from '@/components/ReminderDialog';
 
 type SortKey = 'name' | 'start_date' | 'expiry_date' | 'plan' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -40,13 +42,8 @@ function getExpiryInfo(expiryDate: string) {
   return { label: 'Active', variant: 'active' as const, daysLeft };
 }
 
-function getWhatsAppUrl(phone: string, name: string) {
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
-  const fullPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
-  const message = encodeURIComponent(
-    `Hi ${name}, your gym membership is expiring soon. Please renew.`
-  );
-  return `https://wa.me/${fullPhone}?text=${message}`;
+function getWhatsAppDirect(phone: string) {
+  return whatsappDirect(phone);
 }
 
 function MemberForm({ member, plans, onSubmit, onCancel }: {
@@ -192,16 +189,14 @@ export default function MembersPage() {
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
-  const createPayment = useCreatePayment();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | undefined>();
   const [renewMember, setRenewMember] = useState<Member | undefined>();
-  const [collectPaymentMember, setCollectPaymentMember] = useState<Member | undefined>();
-  const [collectAmount, setCollectAmount] = useState('');
-  const [collectMethod, setCollectMethod] = useState('cash');
+  const [paymentMember, setPaymentMember] = useState<Member | undefined>();
+  const [reminderMember, setReminderMember] = useState<Member | undefined>();
 
   // ─── URL-driven state ───
   const statusFilter = (searchParams.get('status') ?? 'all') as 'all' | 'active' | 'expired' | 'overdue';
@@ -558,16 +553,14 @@ export default function MembersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                          {(payStatus === 'pending' || payStatus === 'overdue') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Collect Payment"
-                              onClick={() => { setCollectPaymentMember(member); setCollectAmount(''); }}
-                            >
-                              <CreditCard className="h-4 w-4 text-orange-500" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Add Payment"
+                            onClick={() => setPaymentMember(member)}
+                          >
+                            <CreditCard className={cn('h-4 w-4', (payStatus === 'pending' || payStatus === 'overdue') ? 'text-orange-500' : 'text-primary')} />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -583,7 +576,7 @@ export default function MembersPage() {
                             asChild
                           >
                             <a
-                              href={getWhatsAppUrl(member.phone, member.name)}
+                              href={getWhatsAppDirect(member.phone)}
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Contact on WhatsApp"
@@ -591,16 +584,14 @@ export default function MembersPage() {
                               <MessageCircle className="h-4 w-4" />
                             </a>
                           </Button>
-                          {(expiry.variant === 'expiring' || expiry.variant === 'expired') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Send Reminder (coming soon)"
-                              onClick={() => toast({ title: '📩 Reminder', description: `Reminder feature for ${member.name} coming soon!` })}
-                            >
-                              <Bell className="h-4 w-4 text-yellow-600" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Send Reminder"
+                            onClick={() => setReminderMember(member)}
+                          >
+                            <Bell className="h-4 w-4 text-yellow-600" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -685,56 +676,24 @@ export default function MembersPage() {
         />
       )}
 
-      {/* Collect Payment Dialog */}
-      <Dialog open={!!collectPaymentMember} onOpenChange={(open) => { if (!open) setCollectPaymentMember(undefined); }}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Collect Payment — {collectPaymentMember?.name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            if (!collectPaymentMember || !collectAmount) return;
-            try {
-              await createPayment.mutateAsync({
-                member_id: collectPaymentMember.id,
-                amount: parseFloat(collectAmount),
-                payment_date: format(new Date(), 'yyyy-MM-dd'),
-                method: collectMethod,
-                status: 'paid',
-              });
-              toast({ title: '✅ Payment collected!', description: `₹${collectAmount} from ${collectPaymentMember.name}` });
-              setCollectPaymentMember(undefined);
-            } catch (err: any) {
-              toast({ title: 'Error', description: err.message, variant: 'destructive' });
-            }
-          }} className="space-y-4">
-            <div className="p-3 rounded-lg bg-muted text-sm">
-              <p><span className="text-muted-foreground">Plan:</span> {collectPaymentMember?.plans?.name ?? '—'}</p>
-              <p><span className="text-muted-foreground">Phone:</span> {collectPaymentMember?.phone}</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Amount (₹)</Label>
-              <Input type="number" value={collectAmount} onChange={e => setCollectAmount(e.target.value)} required min="1" autoFocus />
-            </div>
-            <div className="space-y-2">
-              <Label>Method</Label>
-              <Select value={collectMethod} onValueChange={setCollectMethod}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="upi">UPI</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={() => setCollectPaymentMember(undefined)}>Cancel</Button>
-              <Button type="submit">Collect Payment</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Add Payment Dialog */}
+      <AddPaymentDialog
+        open={!!paymentMember}
+        onOpenChange={(open) => { if (!open) setPaymentMember(undefined); }}
+        member={paymentMember ?? null}
+      />
+
+      {/* Reminder Dialog */}
+      <ReminderDialog
+        open={!!reminderMember}
+        onOpenChange={(open) => { if (!open) setReminderMember(undefined); }}
+        target={reminderMember ? {
+          id: reminderMember.id,
+          name: reminderMember.name,
+          phone: reminderMember.phone,
+          due_date: reminderMember.expiry_date,
+        } : null}
+      />
     </div>
   );
 }
