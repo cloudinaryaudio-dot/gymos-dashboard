@@ -369,14 +369,14 @@ export default function AnalyticsDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-base">Revenue Trend (last 12 months)</CardTitle>
+                <CardTitle className="text-base">Revenue Trend ({rangeLabel})</CardTitle>
               </CardHeader>
               <CardContent className="h-[300px]">
-                {(!revenueChart || revenueChart.length === 0) ? (
-                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
+                {(!revenueChartFiltered || revenueChartFiltered.length === 0 || revenueChartFiltered.every(p => p.revenue === 0)) ? (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No revenue in this period</div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueChart} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                    <AreaChart data={revenueChartFiltered} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
