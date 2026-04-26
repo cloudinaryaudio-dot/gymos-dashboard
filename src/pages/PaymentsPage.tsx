@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Pagination,
   PaginationContent,
@@ -31,11 +32,13 @@ import {
 } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, CheckCircle, CreditCard, BarChart3 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
 const PAGE_SIZE = 15;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+type TimeMode = 'all' | 'month' | 'year';
 
 type ConfirmAction =
   | { type: 'mark-paid'; payment: Payment }
