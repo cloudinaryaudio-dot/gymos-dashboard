@@ -269,6 +269,25 @@ export default function MemberProfilePage() {
           plans={plans}
         />
       )}
+
+      {/* Add Payment Dialog */}
+      <AddPaymentDialog
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        member={member}
+      />
+
+      {/* Reminder Dialog */}
+      <ReminderDialog
+        open={reminderOpen}
+        onOpenChange={setReminderOpen}
+        target={{
+          id: member.id,
+          name: member.name,
+          phone: member.phone,
+          due_date: member.expiry_date,
+        }}
+      />
     </div>
   );
 }
