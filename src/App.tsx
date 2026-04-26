@@ -9,6 +9,7 @@ import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import MembersPage from "./pages/MembersPage";
 import MembersDashboardPage from "./pages/MembersDashboardPage";
 import PlansPage from "./pages/PlansPage";
+import PlansDashboardPage from "./pages/PlansDashboardPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import PaymentsDashboardPage from "./pages/PaymentsDashboardPage";
 import ExpensesPage from "./pages/ExpensesPage";
