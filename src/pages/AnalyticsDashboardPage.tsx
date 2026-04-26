@@ -502,57 +502,104 @@ export default function AnalyticsDashboardPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Filters</CardTitle>
+                <CardTitle className="text-base">Time Filter</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3" /> Date Range
-                </label>
-                <Select value={dateRange} onValueChange={setDateRange}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">Last 7 days</SelectItem>
-                    <SelectItem value="30">Last 30 days</SelectItem>
-                    <SelectItem value="90">Last 90 days</SelectItem>
-                    <SelectItem value="365">Last year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">View</label>
-                <Tabs value={granularity} onValueChange={(v) => setGranularity(v as any)}>
-                  <TabsList className="grid grid-cols-2 w-full">
+                <label className="text-xs font-medium text-muted-foreground">Range</label>
+                <Tabs value={rangeMode} onValueChange={(v) => setRangeMode(v as RangeMode)}>
+                  <TabsList className="grid grid-cols-4 w-full">
+                    <TabsTrigger value="day">Day</TabsTrigger>
+                    <TabsTrigger value="week">Week</TabsTrigger>
                     <TabsTrigger value="month">Month</TabsTrigger>
                     <TabsTrigger value="year">Year</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Plan</label>
-                <Select value={planFilter} onValueChange={setPlanFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Plans</SelectItem>
-                    {plans.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              {(rangeMode === 'day' || rangeMode === 'week') && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3 w-3" /> {rangeMode === 'day' ? 'Select Date' : 'Week ending'}
+                  </label>
+                  <Input
+                    type="date"
+                    value={anchorDate.toISOString().slice(0, 10)}
+                    onChange={(e) => setAnchorDate(new Date(e.target.value))}
+                  />
+                </div>
+              )}
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Payment Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
+              {rangeMode === 'month' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Month</label>
+                    <Select
+                      value={String(anchorDate.getMonth())}
+                      onValueChange={(v) => {
+                        const d = new Date(anchorDate);
+                        d.setMonth(parseInt(v));
+                        setAnchorDate(d);
+                      }}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <SelectItem key={i} value={String(i)}>
+                            {new Date(2000, i, 1).toLocaleString('en', { month: 'long' })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Year</label>
+                    <Select
+                      value={String(anchorDate.getFullYear())}
+                      onValueChange={(v) => {
+                        const d = new Date(anchorDate);
+                        d.setFullYear(parseInt(v));
+                        setAnchorDate(d);
+                      }}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 6 }, (_, i) => {
+                          const y = new Date().getFullYear() - i;
+                          return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {rangeMode === 'year' && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Year</label>
+                  <Select
+                    value={String(anchorDate.getFullYear())}
+                    onValueChange={(v) => {
+                      const d = new Date(anchorDate);
+                      d.setFullYear(parseInt(v));
+                      setAnchorDate(d);
+                    }}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 6 }, (_, i) => {
+                        const y = new Date().getFullYear() - i;
+                        return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="rounded-lg bg-muted/40 p-3 text-xs">
+                <p className="text-muted-foreground">Showing data for</p>
+                <p className="font-semibold mt-0.5">{rangeLabel}</p>
               </div>
             </CardContent>
           </Card>
