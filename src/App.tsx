@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BrandingProvider } from "./components/BrandingProvider";
 import LandingPage from "./pages/LandingPage";
-import Dashboard from "./pages/Dashboard";
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import MembersPage from "./pages/MembersPage";
 import MembersDashboardPage from "./pages/MembersDashboardPage";
 import PlansPage from "./pages/PlansPage";
@@ -31,7 +31,6 @@ import PublicTestimonialsPage from "./pages/PublicTestimonialsPage";
 import PublicProductsPage from "./pages/PublicProductsPage";
 import PublicProductDetailPage from "./pages/PublicProductDetailPage";
 import OwnerSummaryPage from "./pages/OwnerSummaryPage";
-import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import InvoiceSettingsPage from "./pages/InvoiceSettingsPage";
 
 const queryClient = new QueryClient();
@@ -41,7 +40,7 @@ function AppLayout() {
     <DashboardLayout>
       <Routes>
         <Route index element={<PlaceholderPage />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="dashboard" element={<AnalyticsDashboardPage />} />
         <Route path="owner-summary" element={<OwnerSummaryPage />} />
         <Route path="analytics" element={<AnalyticsDashboardPage />} />
         <Route path="members" element={<MembersPage />} />
