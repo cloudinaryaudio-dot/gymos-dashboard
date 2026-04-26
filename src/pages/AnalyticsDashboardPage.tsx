@@ -115,8 +115,6 @@ export default function AnalyticsDashboardPage() {
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
   const { leads = [] } = useLeads();
-  const { data: plans = [] } = usePlans();
-  const { data: revenueChart = [] } = useRevenueChart();
 
   const [tab, setTab] = useState('overview');
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
