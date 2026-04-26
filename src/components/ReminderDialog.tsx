@@ -51,9 +51,9 @@ export const REMINDER_TEMPLATES: { id: string; label: string; body: string }[] =
 
 function fillTemplate(body: string, t: ReminderTarget) {
   return body
-    .replaceAll('${member_name}', t.name || 'Member')
-    .replaceAll('${amount}', t.amount != null ? String(t.amount) : '—')
-    .replaceAll('${due_date}', t.due_date ? format(new Date(t.due_date), 'dd MMM yyyy') : 'soon');
+    .replace(/\$\{member_name\}/g, t.name || 'Member')
+    .replace(/\$\{amount\}/g, t.amount != null ? String(t.amount) : '—')
+    .replace(/\$\{due_date\}/g, t.due_date ? format(new Date(t.due_date), 'dd MMM yyyy') : 'soon');
 }
 
 function whatsappUrl(phone: string, message?: string) {
