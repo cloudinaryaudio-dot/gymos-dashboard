@@ -119,49 +119,52 @@ export default function AnalyticsDashboardPage() {
   const { data: revenueChart = [] } = useRevenueChart();
 
   const [tab, setTab] = useState('overview');
-  const [dateRange, setDateRange] = useState('30');
-  const [granularity, setGranularity] = useState<'month' | 'year'>('month');
-  const [planFilter, setPlanFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [rangeMode, setRangeMode] = useState<RangeMode>('month');
+  const [anchorDate, setAnchorDate] = useState<Date>(new Date());
+
+  const { from, to, label: rangeLabel } = useMemo(() => getRange(rangeMode, anchorDate), [rangeMode, anchorDate]);
+  const prev = useMemo(() => getPrevRange(rangeMode, anchorDate), [rangeMode, anchorDate]);
+
+  const inRange = (dateStr: string, f: Date, t: Date) => {
+    const d = new Date(dateStr);
+    return d >= f && d <= t;
+  };
+
+  // Filter datasets by selected date range
+  const filtered = useMemo(() => {
+    const fPayments = payments.filter(p => inRange(p.payment_date, from, to));
+    const fExpenses = expenses.filter(e => inRange(e.expense_date, from, to));
+    const fLeads = leads.filter(l => inRange(l.created_at, from, to));
+    const fMembersNew = members.filter(m => inRange(m.created_at, from, to));
+    return { fPayments, fExpenses, fLeads, fMembersNew };
+  }, [payments, expenses, leads, members, from, to]);
 
   const stats = useMemo(() => {
-    const now = new Date();
-    const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    const paid = payments.filter(p => p.status === 'paid');
-    const pending = payments.filter(p => p.status === 'pending');
-    const overdue = payments.filter(p => p.status === 'overdue');
-
-    const revThisMonth = paid.filter(p => new Date(p.payment_date) >= startThisMonth).reduce((s, p) => s + Number(p.amount), 0);
-    const revLastMonth = paid.filter(p => {
-      const d = new Date(p.payment_date);
-      return d >= startLastMonth && d <= endLastMonth;
-    }).reduce((s, p) => s + Number(p.amount), 0);
-    const revGrowth = revLastMonth > 0 ? ((revThisMonth - revLastMonth) / revLastMonth) * 100 : 0;
+    const paid = filtered.fPayments.filter(p => p.status === 'paid');
+    const pending = filtered.fPayments.filter(p => p.status === 'pending');
+    const overdue = filtered.fPayments.filter(p => p.status === 'overdue');
 
     const totalRevenue = paid.reduce((s, p) => s + Number(p.amount), 0);
+
+    // Previous-period revenue for change %
+    const revPrev = payments
+      .filter(p => p.status === 'paid' && inRange(p.payment_date, prev.from, prev.to))
+      .reduce((s, p) => s + Number(p.amount), 0);
+    const revGrowth = revPrev > 0 ? ((totalRevenue - revPrev) / revPrev) * 100 : 0;
+
     const activeMembers = members.filter(m => m.status === 'active').length;
     const totalMembers = members.length;
 
-    const newMembersThis = members.filter(m => new Date(m.created_at) >= startThisMonth).length;
-    const newMembersLast = members.filter(m => {
-      const d = new Date(m.created_at);
-      return d >= startLastMonth && d <= endLastMonth;
-    }).length;
-    const memberGrowth = newMembersLast > 0 ? ((newMembersThis - newMembersLast) / newMembersLast) * 100 : 0;
+    const newMembersThis = filtered.fMembersNew.length;
+    const newMembersPrev = members.filter(m => inRange(m.created_at, prev.from, prev.to)).length;
+    const memberGrowth = newMembersPrev > 0 ? ((newMembersThis - newMembersPrev) / newMembersPrev) * 100 : 0;
 
-    const joined = leads.filter(l => l.status === 'joined').length;
-    const conversionRate = leads.length > 0 ? (joined / leads.length) * 100 : 0;
-    const leadsThis = leads.filter(l => new Date(l.created_at) >= startThisMonth);
-    const leadsLast = leads.filter(l => {
-      const d = new Date(l.created_at);
-      return d >= startLastMonth && d <= endLastMonth;
-    });
-    const convThis = leadsThis.length > 0 ? (leadsThis.filter(l => l.status === 'joined').length / leadsThis.length) * 100 : 0;
-    const convLast = leadsLast.length > 0 ? (leadsLast.filter(l => l.status === 'joined').length / leadsLast.length) * 100 : 0;
-    const convChange = convLast > 0 ? convThis - convLast : 0;
+    const leadsThis = filtered.fLeads;
+    const joined = leadsThis.filter(l => l.status === 'joined').length;
+    const conversionRate = leadsThis.length > 0 ? (joined / leadsThis.length) * 100 : 0;
+    const leadsPrev = leads.filter(l => inRange(l.created_at, prev.from, prev.to));
+    const convPrev = leadsPrev.length > 0 ? (leadsPrev.filter(l => l.status === 'joined').length / leadsPrev.length) * 100 : 0;
+    const convChange = convPrev > 0 ? conversionRate - convPrev : 0;
 
     const arpu = activeMembers > 0 ? totalRevenue / activeMembers : 0;
 
@@ -171,35 +174,96 @@ export default function AnalyticsDashboardPage() {
       overdueAmount: overdue.reduce((s, p) => s + Number(p.amount), 0),
       pendingCount: pending.length, overdueCount: overdue.length,
       conversionRate, convChange, memberGrowth, revGrowth, arpu,
-      revThisMonth, revLastMonth,
+      revThisMonth: totalRevenue, revLastMonth: revPrev,
+      newMembersThis,
       paymentDist: [
         { name: 'Paid', value: paid.length },
         { name: 'Pending', value: pending.length },
         { name: 'Overdue', value: overdue.length },
       ],
     };
-  }, [members, payments, leads]);
+  }, [filtered, members, payments, leads, prev]);
 
   const expenseByCategory = useMemo(() => {
     const map = new Map<string, number>();
-    expenses.forEach(e => {
+    filtered.fExpenses.forEach(e => {
       const cat = e.category || 'Other';
       map.set(cat, (map.get(cat) || 0) + Number(e.amount));
     });
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [expenses]);
+  }, [filtered]);
 
+  // Member growth chart — buckets adapt to range mode
   const memberGrowthChart = useMemo(() => {
-    const months: { month: string; members: number }[] = [];
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      const count = members.filter(m => new Date(m.created_at) <= end).length;
-      months.push({ month: d.toLocaleString('en', { month: 'short' }), members: count });
+    const points: { month: string; members: number }[] = [];
+    if (rangeMode === 'day' || rangeMode === 'week') {
+      const days = rangeMode === 'day' ? 1 : 7;
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(to);
+        d.setDate(d.getDate() - i);
+        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        const count = members.filter(m => new Date(m.created_at) <= end).length;
+        points.push({ month: d.toLocaleDateString('en', { day: '2-digit', month: 'short' }), members: count });
+      }
+    } else if (rangeMode === 'month') {
+      const daysInMonth = to.getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const end = new Date(from.getFullYear(), from.getMonth(), day, 23, 59, 59, 999);
+        const count = members.filter(m => new Date(m.created_at) <= end).length;
+        points.push({ month: String(day), members: count });
+      }
+    } else {
+      // year — 12 months
+      for (let m = 0; m < 12; m++) {
+        const end = new Date(from.getFullYear(), m + 1, 0, 23, 59, 59, 999);
+        const count = members.filter(m2 => new Date(m2.created_at) <= end).length;
+        points.push({ month: new Date(from.getFullYear(), m, 1).toLocaleString('en', { month: 'short' }), members: count });
+      }
     }
-    return months;
-  }, [members]);
+    return points;
+  }, [members, rangeMode, from, to]);
+
+  // Revenue chart aligned to range
+  const revenueChartFiltered = useMemo(() => {
+    const paid = filtered.fPayments.filter(p => p.status === 'paid');
+    if (rangeMode === 'day') {
+      // Hourly buckets aren't meaningful with daily date data — show single bucket
+      const total = paid.reduce((s, p) => s + Number(p.amount), 0);
+      return [{ month: rangeLabel, revenue: total }];
+    }
+    if (rangeMode === 'week') {
+      const points: { month: string; revenue: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(to);
+        d.setDate(d.getDate() - i);
+        const dayKey = d.toISOString().slice(0, 10);
+        const total = paid.filter(p => new Date(p.payment_date).toISOString().slice(0, 10) === dayKey).reduce((s, p) => s + Number(p.amount), 0);
+        points.push({ month: d.toLocaleDateString('en', { day: '2-digit', month: 'short' }), revenue: total });
+      }
+      return points;
+    }
+    if (rangeMode === 'month') {
+      const daysInMonth = to.getDate();
+      const points: { month: string; revenue: number }[] = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayDate = new Date(from.getFullYear(), from.getMonth(), day);
+        const dayKey = dayDate.toISOString().slice(0, 10);
+        const total = paid.filter(p => new Date(p.payment_date).toISOString().slice(0, 10) === dayKey).reduce((s, p) => s + Number(p.amount), 0);
+        points.push({ month: String(day), revenue: total });
+      }
+      return points;
+    }
+    // year
+    const points: { month: string; revenue: number }[] = [];
+    for (let m = 0; m < 12; m++) {
+      const total = paid.filter(p => {
+        const d = new Date(p.payment_date);
+        return d.getFullYear() === from.getFullYear() && d.getMonth() === m;
+      }).reduce((s, p) => s + Number(p.amount), 0);
+      points.push({ month: new Date(from.getFullYear(), m, 1).toLocaleString('en', { month: 'short' }), revenue: total });
+    }
+    return points;
+  }, [filtered, rangeMode, from, to, rangeLabel]);
 
   // ────── AI INSIGHTS (rule-based) ──────
   const insights = useMemo(() => {
