@@ -93,9 +93,36 @@ export default function PaymentsPage() {
     }
   };
 
-  const paidPayments = payments?.filter(p => p.status === 'paid') ?? [];
-  const pendingPayments = payments?.filter(p => p.status === 'pending') ?? [];
-  const overduePayments = payments?.filter(p => p.status === 'overdue') ?? [];
+  // Time filter
+  const today = new Date();
+  const [timeMode, setTimeMode] = useState<TimeMode>('all');
+  const [filterMonth, setFilterMonth] = useState<number>(today.getMonth());
+  const [filterYear, setFilterYear] = useState<number>(today.getFullYear());
+
+  const filteredPayments = useMemo(() => {
+    if (!payments) return [];
+    if (timeMode === 'all') return payments;
+    if (timeMode === 'month') {
+      const f = startOfMonth(new Date(filterYear, filterMonth, 1));
+      const t = endOfMonth(f);
+      return payments.filter(p => {
+        const d = new Date(p.payment_date);
+        return d >= f && d <= t;
+      });
+    }
+    const f = startOfYear(new Date(filterYear, 0, 1));
+    const t = endOfYear(f);
+    return payments.filter(p => {
+      const d = new Date(p.payment_date);
+      return d >= f && d <= t;
+    });
+  }, [payments, timeMode, filterMonth, filterYear]);
+
+  const paidPayments = filteredPayments.filter(p => p.status === 'paid');
+  const pendingPayments = filteredPayments.filter(p => p.status === 'pending');
+  const overduePayments = filteredPayments.filter(p => p.status === 'overdue');
+
+  const yearOptions = Array.from({ length: 6 }, (_, i) => today.getFullYear() - i);
 
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [pages, setPages] = useState<Record<string, number>>({ all: 1, pending: 1, overdue: 1, paid: 1 });
