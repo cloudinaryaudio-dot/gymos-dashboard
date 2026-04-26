@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember, Member } from '@/hooks/useMembers';
 import { usePlans } from '@/hooks/usePlans';
-import { usePayments, useCreatePayment } from '@/hooks/usePayments';
+import { usePayments } from '@/hooks/usePayments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,8 @@ import { Plus, Pencil, Trash2, Users, Zap, MessageCircle, RefreshCw, Bell, Credi
 import { addDays, format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
+import { AddPaymentDialog } from '@/components/AddPaymentDialog';
+import { ReminderDialog, whatsappDirect } from '@/components/ReminderDialog';
 
 type SortKey = 'name' | 'start_date' | 'expiry_date' | 'plan' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -40,13 +42,8 @@ function getExpiryInfo(expiryDate: string) {
   return { label: 'Active', variant: 'active' as const, daysLeft };
 }
 
-function getWhatsAppUrl(phone: string, name: string) {
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
-  const fullPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
-  const message = encodeURIComponent(
-    `Hi ${name}, your gym membership is expiring soon. Please renew.`
-  );
-  return `https://wa.me/${fullPhone}?text=${message}`;
+function getWhatsAppDirect(phone: string) {
+  return whatsappDirect(phone);
 }
 
 function MemberForm({ member, plans, onSubmit, onCancel }: {
@@ -192,16 +189,14 @@ export default function MembersPage() {
   const createMember = useCreateMember();
   const updateMember = useUpdateMember();
   const deleteMember = useDeleteMember();
-  const createPayment = useCreatePayment();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | undefined>();
   const [renewMember, setRenewMember] = useState<Member | undefined>();
-  const [collectPaymentMember, setCollectPaymentMember] = useState<Member | undefined>();
-  const [collectAmount, setCollectAmount] = useState('');
-  const [collectMethod, setCollectMethod] = useState('cash');
+  const [paymentMember, setPaymentMember] = useState<Member | undefined>();
+  const [reminderMember, setReminderMember] = useState<Member | undefined>();
 
   // ─── URL-driven state ───
   const statusFilter = (searchParams.get('status') ?? 'all') as 'all' | 'active' | 'expired' | 'overdue';
