@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,50 @@ import {
   ResponsiveContainer, LineChart, Line, AreaChart, Area,
   PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
+
+type RangeMode = 'day' | 'week' | 'month' | 'year';
+
+function getRange(mode: RangeMode, anchor: Date): { from: Date; to: Date; label: string } {
+  const d = new Date(anchor);
+  if (mode === 'day') {
+    const from = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+    const to = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    return { from, to, label: from.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) };
+  }
+  if (mode === 'week') {
+    // Week = 7 days ending on anchor (inclusive)
+    const to = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 6, 0, 0, 0);
+    return { from, to, label: `${from.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – ${to.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` };
+  }
+  if (mode === 'month') {
+    const from = new Date(d.getFullYear(), d.getMonth(), 1);
+    const to = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { from, to, label: from.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) };
+  }
+  // year
+  const from = new Date(d.getFullYear(), 0, 1);
+  const to = new Date(d.getFullYear(), 11, 31, 23, 59, 59, 999);
+  return { from, to, label: String(d.getFullYear()) };
+}
+
+function getPrevRange(mode: RangeMode, anchor: Date): { from: Date; to: Date } {
+  const d = new Date(anchor);
+  if (mode === 'day') {
+    const prev = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    return getRange('day', prev);
+  }
+  if (mode === 'week') {
+    const prev = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7);
+    return getRange('week', prev);
+  }
+  if (mode === 'month') {
+    const prev = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    return getRange('month', prev);
+  }
+  const prev = new Date(d.getFullYear() - 1, 0, 1);
+  return getRange('year', prev);
+}
 
 const inr = (n: number) => `₹${(n || 0).toLocaleString('en-IN')}`;
 
