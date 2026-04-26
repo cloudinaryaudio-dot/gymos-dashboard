@@ -553,16 +553,14 @@ export default function MembersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                          {(payStatus === 'pending' || payStatus === 'overdue') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Collect Payment"
-                              onClick={() => { setCollectPaymentMember(member); setCollectAmount(''); }}
-                            >
-                              <CreditCard className="h-4 w-4 text-orange-500" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Add Payment"
+                            onClick={() => setPaymentMember(member)}
+                          >
+                            <CreditCard className={cn('h-4 w-4', (payStatus === 'pending' || payStatus === 'overdue') ? 'text-orange-500' : 'text-primary')} />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -578,7 +576,7 @@ export default function MembersPage() {
                             asChild
                           >
                             <a
-                              href={getWhatsAppUrl(member.phone, member.name)}
+                              href={getWhatsAppDirect(member.phone)}
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Contact on WhatsApp"
@@ -586,16 +584,14 @@ export default function MembersPage() {
                               <MessageCircle className="h-4 w-4" />
                             </a>
                           </Button>
-                          {(expiry.variant === 'expiring' || expiry.variant === 'expired') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Send Reminder (coming soon)"
-                              onClick={() => toast({ title: '📩 Reminder', description: `Reminder feature for ${member.name} coming soon!` })}
-                            >
-                              <Bell className="h-4 w-4 text-yellow-600" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Send Reminder"
+                            onClick={() => setReminderMember(member)}
+                          >
+                            <Bell className="h-4 w-4 text-yellow-600" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
