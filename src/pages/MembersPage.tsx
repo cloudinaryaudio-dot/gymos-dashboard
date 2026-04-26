@@ -676,56 +676,24 @@ export default function MembersPage() {
         />
       )}
 
-      {/* Collect Payment Dialog */}
-      <Dialog open={!!collectPaymentMember} onOpenChange={(open) => { if (!open) setCollectPaymentMember(undefined); }}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Collect Payment — {collectPaymentMember?.name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            if (!collectPaymentMember || !collectAmount) return;
-            try {
-              await createPayment.mutateAsync({
-                member_id: collectPaymentMember.id,
-                amount: parseFloat(collectAmount),
-                payment_date: format(new Date(), 'yyyy-MM-dd'),
-                method: collectMethod,
-                status: 'paid',
-              });
-              toast({ title: '✅ Payment collected!', description: `₹${collectAmount} from ${collectPaymentMember.name}` });
-              setCollectPaymentMember(undefined);
-            } catch (err: any) {
-              toast({ title: 'Error', description: err.message, variant: 'destructive' });
-            }
-          }} className="space-y-4">
-            <div className="p-3 rounded-lg bg-muted text-sm">
-              <p><span className="text-muted-foreground">Plan:</span> {collectPaymentMember?.plans?.name ?? '—'}</p>
-              <p><span className="text-muted-foreground">Phone:</span> {collectPaymentMember?.phone}</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Amount (₹)</Label>
-              <Input type="number" value={collectAmount} onChange={e => setCollectAmount(e.target.value)} required min="1" autoFocus />
-            </div>
-            <div className="space-y-2">
-              <Label>Method</Label>
-              <Select value={collectMethod} onValueChange={setCollectMethod}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="upi">UPI</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={() => setCollectPaymentMember(undefined)}>Cancel</Button>
-              <Button type="submit">Collect Payment</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Add Payment Dialog */}
+      <AddPaymentDialog
+        open={!!paymentMember}
+        onOpenChange={(open) => { if (!open) setPaymentMember(undefined); }}
+        member={paymentMember ?? null}
+      />
+
+      {/* Reminder Dialog */}
+      <ReminderDialog
+        open={!!reminderMember}
+        onOpenChange={(open) => { if (!open) setReminderMember(undefined); }}
+        target={reminderMember ? {
+          id: reminderMember.id,
+          name: reminderMember.name,
+          phone: reminderMember.phone,
+          due_date: reminderMember.expiry_date,
+        } : null}
+      />
     </div>
   );
 }
