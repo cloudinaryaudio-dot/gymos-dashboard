@@ -371,9 +371,40 @@ export default function PaymentsPage() {
 
 
 
+        {/* Time toggle */}
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border bg-card">
+          <ToggleGroup type="single" value={timeMode} onValueChange={(v) => v && setTimeMode(v as TimeMode)}>
+            <ToggleGroupItem value="all">All Time</ToggleGroupItem>
+            <ToggleGroupItem value="month">Month</ToggleGroupItem>
+            <ToggleGroupItem value="year">Year</ToggleGroupItem>
+          </ToggleGroup>
+
+          {timeMode === 'month' && (
+            <Select value={String(filterMonth)} onValueChange={(v) => setFilterMonth(Number(v))}>
+              <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
+          {timeMode !== 'all' && (
+            <Select value={String(filterYear)} onValueChange={(v) => setFilterYear(Number(v))}>
+              <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
+          <span className="ml-auto text-xs text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{filteredPayments.length}</span> of {payments?.length ?? 0}
+          </span>
+        </div>
+
         <Tabs defaultValue="all">
           <TabsList>
-            <TabsTrigger value="all">All ({payments?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="all">All ({filteredPayments.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingPayments.length})</TabsTrigger>
             <TabsTrigger value="overdue">Overdue ({overduePayments.length})</TabsTrigger>
             <TabsTrigger value="paid">Paid ({paidPayments.length})</TabsTrigger>
@@ -386,7 +417,7 @@ export default function PaymentsPage() {
                 </div>
               ) : (
                 <>
-                  <TabsContent value="all" className="m-0"><PaymentTable data={payments} showMarkPaid pageKey="all" /></TabsContent>
+                  <TabsContent value="all" className="m-0"><PaymentTable data={filteredPayments} showMarkPaid pageKey="all" /></TabsContent>
                   <TabsContent value="pending" className="m-0"><PaymentTable data={pendingPayments} showMarkPaid pageKey="pending" /></TabsContent>
                   <TabsContent value="overdue" className="m-0"><PaymentTable data={overduePayments} showMarkPaid pageKey="overdue" /></TabsContent>
                   <TabsContent value="paid" className="m-0"><PaymentTable data={paidPayments} pageKey="paid" /></TabsContent>
