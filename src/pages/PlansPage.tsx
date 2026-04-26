@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Package, Crown, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Crown, X, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['general', 'Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'Male', 'Female', 'Couple'];
 
@@ -119,6 +120,7 @@ export default function PlansPage() {
   const updatePlan = useUpdatePlan();
   const deletePlan = useDeletePlan();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
@@ -154,17 +156,22 @@ export default function PlansPage() {
           <h1 className="text-2xl font-bold font-display">Plans</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your membership plans</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
-            </DialogHeader>
-            <PlanForm plan={editingPlan} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/app/plans/dashboard')}>
+            <BarChart3 className="h-4 w-4 mr-2" /> Plans Dashboard
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
+              </DialogHeader>
+              <PlanForm plan={editingPlan} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
