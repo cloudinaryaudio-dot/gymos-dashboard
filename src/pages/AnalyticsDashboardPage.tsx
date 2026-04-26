@@ -16,8 +16,6 @@ import { useMembers } from '@/hooks/useMembers';
 import { usePayments } from '@/hooks/usePayments';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLeads } from '@/hooks/useLeads';
-import { usePlans } from '@/hooks/usePlans';
-import { useRevenueChart } from '@/hooks/useRevenueChart';
 import {
   ResponsiveContainer, LineChart, Line, AreaChart, Area,
   PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
