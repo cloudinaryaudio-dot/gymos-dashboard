@@ -120,6 +120,7 @@ export default function PlansPage() {
   const updatePlan = useUpdatePlan();
   const deletePlan = useDeletePlan();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
