@@ -12,9 +12,9 @@ const tooltipStyle = {
 
 function ChartCard({ title, children, height = 280 }: { title: string; children: React.ReactNode; height?: number }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <h3 className="font-display font-semibold text-sm mb-4">{title}</h3>
-      <div style={{ width: '100%', height }}>{children}</div>
+    <div className="rounded-xl border bg-card p-3 sm:p-5">
+      <h3 className="font-display font-semibold text-sm mb-3 sm:mb-4">{title}</h3>
+      <div style={{ width: '100%', height, minHeight: 250 }}>{children}</div>
     </div>
   );
 }
