@@ -228,10 +228,10 @@ export default function OwnerSummaryPage() {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
             <Card className="lg:col-span-2">
               <CardHeader><CardTitle className="text-lg">Revenue vs Expenses</CardTitle></CardHeader>
-              <CardContent style={{ height: 300 }}>
+              <CardContent style={{ height: 300 }} className="min-h-[250px] px-2 sm:px-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={(curr?.series ?? []).map(s => ({ ...s, profit: s.revenue - s.expenses }))}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
