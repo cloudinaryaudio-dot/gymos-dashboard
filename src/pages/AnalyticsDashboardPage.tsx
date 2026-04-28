@@ -329,22 +329,18 @@ export default function AnalyticsDashboardPage() {
   const ChartFallback = () => <Skeleton className="h-full w-full rounded-lg" />;
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Top Action Bar — Load Demo Data */}
-      <div className="flex items-center justify-end">
-        <Button size="sm" variant="outline" onClick={handleLoadDemo}>
+    <div className="space-y-4 md:space-y-6 pb-8 px-1 sm:px-0">
+      {/* Header — mobile stacks: Title → Buttons → Filters (Tabs) */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Unified analytics and business intelligence</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={handleLoadDemo} className="w-full lg:w-auto justify-center">
           <Database className="mr-2 h-4 w-4" /> Load Demo Data
         </Button>
-      </div>
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Unified analytics and business intelligence</p>
-        </div>
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="overflow-x-auto max-w-full">
+        <Tabs value={tab} onValueChange={setTab} className="w-full lg:w-auto">
+          <TabsList className="overflow-x-auto max-w-full w-full lg:w-auto justify-start">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="members" onClick={() => navigate('/app/members/dashboard')}>Members</TabsTrigger>
             <TabsTrigger value="payments" onClick={() => navigate('/app/payments/dashboard')}>Payments</TabsTrigger>
@@ -355,7 +351,7 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* Top Time Filter Bar */}
-      <Card className="rounded-2xl sticky top-2 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <Card className="rounded-2xl md:sticky md:top-2 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <CardContent className="p-3 sm:p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-wrap">
           <div className="flex items-center gap-2 shrink-0">
             <Filter className="h-4 w-4 text-primary" />
@@ -433,7 +429,7 @@ export default function AnalyticsDashboardPage() {
         {/* MAIN COLUMN */}
         <div className="space-y-6 min-w-0">
           {/* KPI CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             <KpiCard label="Total Revenue" value={inr(stats.totalRevenue)} change={stats.revGrowth} icon={DollarSign}
               gradient="bg-gradient-to-br from-violet-500 to-purple-600" onClick={() => navigate('/app/payments')} />
             <KpiCard label="Total Members" value={String(stats.totalMembers)} change={stats.memberGrowth} icon={Users}
@@ -453,12 +449,12 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           {/* ROW 1: revenue trend + payment donut */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <Card className="lg:col-span-2 rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Revenue Trend ({rangeLabel})</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[260px] sm:h-[300px] min-h-[250px] px-2 sm:px-6">
                 {(!revenueChartFiltered || revenueChartFiltered.length === 0 || revenueChartFiltered.every(p => p.revenue === 0)) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No revenue in this period</div>
                 ) : (
@@ -481,10 +477,10 @@ export default function AnalyticsDashboardPage() {
               </CardContent>
             </Card>
             <Card className="rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Payment Distribution</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[260px] sm:h-[300px] min-h-[250px] px-2 sm:px-6">
                 {stats.paymentDist.every(p => p.value === 0) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
                 ) : (
@@ -503,12 +499,12 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           {/* ROW 2: members growth + expenses donut */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <Card className="lg:col-span-2 rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Member Growth</CardTitle>
               </CardHeader>
-              <CardContent className="h-[280px]">
+              <CardContent className="h-[260px] sm:h-[280px] min-h-[250px] px-2 sm:px-6">
                 {(!memberGrowthChart || memberGrowthChart.length === 0) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
                 ) : (
@@ -525,10 +521,10 @@ export default function AnalyticsDashboardPage() {
               </CardContent>
             </Card>
             <Card className="rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Expense Categories</CardTitle>
               </CardHeader>
-              <CardContent className="h-[280px]">
+              <CardContent className="h-[260px] sm:h-[280px] min-h-[250px] px-2 sm:px-6">
                 {expenseByCategory.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
                 ) : (

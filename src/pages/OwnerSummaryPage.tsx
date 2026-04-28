@@ -164,19 +164,19 @@ export default function OwnerSummaryPage() {
   if (leads.length >= 5 && convRate < 20) alerts.push({ text: `Low lead conversion rate: ${convRate}%`, action: () => navigate('/app/leads/dashboard') });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4 md:space-y-6 animate-fade-in px-1 sm:px-0">
+      {/* Header — mobile stacks: Title → Tabs → Year */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-display flex items-center gap-2">
-            <Sparkles className="h-7 w-7 text-primary" />
+          <h1 className="text-2xl md:text-3xl font-bold font-display flex items-center gap-2">
+            <Sparkles className="h-6 w-6 md:h-7 md:w-7 text-primary" />
             Owner Summary
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Your complete business command center</p>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Your complete business command center</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <Tabs value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
-            <TabsList>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 sm:flex-wrap">
+          <Tabs value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)} className="w-full sm:w-auto">
+            <TabsList className="grid grid-cols-4 w-full sm:w-auto sm:inline-flex">
               <TabsTrigger value="today">Today</TabsTrigger>
               <TabsTrigger value="week">Weekly</TabsTrigger>
               <TabsTrigger value="month">Monthly</TabsTrigger>
@@ -185,7 +185,7 @@ export default function OwnerSummaryPage() {
           </Tabs>
           {rangeKey === 'year' && (
             <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[110px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
@@ -199,7 +199,7 @@ export default function OwnerSummaryPage() {
       ) : (
         <>
           {/* Top KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             <KpiCard title="Total Revenue" value={`₹${k.totalRevenue.toLocaleString()}`} icon={IndianRupee} tone="success"
               change={pk ? pctChange(k.totalRevenue, pk.totalRevenue) : undefined}
               onClick={() => navigate('/app/payments')} />
@@ -228,10 +228,10 @@ export default function OwnerSummaryPage() {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
             <Card className="lg:col-span-2">
               <CardHeader><CardTitle className="text-lg">Revenue vs Expenses</CardTitle></CardHeader>
-              <CardContent style={{ height: 300 }}>
+              <CardContent style={{ height: 300 }} className="min-h-[250px] px-2 sm:px-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={(curr?.series ?? []).map(s => ({ ...s, profit: s.revenue - s.expenses }))}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -249,7 +249,7 @@ export default function OwnerSummaryPage() {
 
             <Card>
               <CardHeader><CardTitle className="text-lg">Expense Breakdown</CardTitle></CardHeader>
-              <CardContent style={{ height: 300 }}>
+              <CardContent style={{ height: 300 }} className="min-h-[250px] px-2 sm:px-6">
                 {curr && curr.expenseBreakdown.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -267,7 +267,7 @@ export default function OwnerSummaryPage() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
             {/* Cash status */}
             <Card className="cursor-pointer hover:border-primary/50" onClick={() => navigate('/app/payments')}>
               <CardHeader><CardTitle className="text-lg">Cash Status</CardTitle></CardHeader>
@@ -303,7 +303,7 @@ export default function OwnerSummaryPage() {
             {/* Leads funnel */}
             <Card className="cursor-pointer hover:border-primary/50" onClick={() => navigate('/app/leads')}>
               <CardHeader><CardTitle className="text-lg">Leads Performance</CardTitle></CardHeader>
-              <CardContent style={{ height: 200 }}>
+              <CardContent style={{ height: 200 }} className="min-h-[200px] px-2 sm:px-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={[
                     { stage: 'New', value: leadsNew },
@@ -322,7 +322,7 @@ export default function OwnerSummaryPage() {
           </div>
 
           {/* Insights & Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
             <Card>
               <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Quick Insights</CardTitle></CardHeader>
               <CardContent className="space-y-2">
@@ -357,11 +357,11 @@ export default function OwnerSummaryPage() {
             </Card>
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/payments')}>View Payments</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/members')}>View Members</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/leads')}>View Leads</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/expenses')}>View Expenses</Button>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 pt-2">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/payments')}>View Payments</Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/members')}>View Members</Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/leads')}>View Leads</Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/expenses')}>View Expenses</Button>
           </div>
         </>
       )}
