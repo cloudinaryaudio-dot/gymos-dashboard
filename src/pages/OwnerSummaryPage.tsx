@@ -303,7 +303,7 @@ export default function OwnerSummaryPage() {
             {/* Leads funnel */}
             <Card className="cursor-pointer hover:border-primary/50" onClick={() => navigate('/app/leads')}>
               <CardHeader><CardTitle className="text-lg">Leads Performance</CardTitle></CardHeader>
-              <CardContent style={{ height: 200 }}>
+              <CardContent style={{ height: 200 }} className="min-h-[200px] px-2 sm:px-6">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={[
                     { stage: 'New', value: leadsNew },
