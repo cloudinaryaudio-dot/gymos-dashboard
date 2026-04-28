@@ -3,8 +3,12 @@ import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Users, UserCheck, CreditCard, AlertTriangle,
   Target, BarChart3, DollarSign, Sparkles, Calendar, Filter, Activity,
-  ArrowUpRight, ArrowDownRight, Lightbulb, AlertCircle, CheckCircle2,
+  ArrowUpRight, ArrowDownRight, Lightbulb, AlertCircle, CheckCircle2, Database,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { seedDemoData, resetDemoData } from '@/data/mockDb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -109,6 +113,8 @@ function KpiCard({ label, value, change, icon: Icon, gradient, onClick }: KpiCar
 
 export default function AnalyticsDashboardPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const { data: members = [] } = useMembers();
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
@@ -117,6 +123,13 @@ export default function AnalyticsDashboardPage() {
   const [tab, setTab] = useState('overview');
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [anchorDate, setAnchorDate] = useState<Date>(new Date());
+
+  const handleLoadDemo = async () => {
+    resetDemoData();
+    seedDemoData();
+    await qc.resetQueries();
+    toast({ title: '✅ Demo data loaded successfully!' });
+  };
 
   const { from, to, label: rangeLabel } = useMemo(() => getRange(rangeMode, anchorDate), [rangeMode, anchorDate]);
   const prev = useMemo(() => getPrevRange(rangeMode, anchorDate), [rangeMode, anchorDate]);
@@ -317,6 +330,13 @@ export default function AnalyticsDashboardPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      {/* Top Action Bar — Load Demo Data */}
+      <div className="flex items-center justify-end">
+        <Button size="sm" variant="outline" onClick={handleLoadDemo}>
+          <Database className="mr-2 h-4 w-4" /> Load Demo Data
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -333,6 +353,81 @@ export default function AnalyticsDashboardPage() {
           </TabsList>
         </Tabs>
       </div>
+
+      {/* Top Time Filter Bar */}
+      <Card className="rounded-2xl sticky top-2 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <CardContent className="p-3 sm:p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-wrap">
+          <div className="flex items-center gap-2 shrink-0">
+            <Filter className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold">Time Filter</span>
+          </div>
+          <Tabs value={rangeMode} onValueChange={(v) => setRangeMode(v as RangeMode)} className="shrink-0">
+            <TabsList className="grid grid-cols-4 w-full md:w-auto">
+              <TabsTrigger value="day">Day</TabsTrigger>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+              <TabsTrigger value="year">Year</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {(rangeMode === 'day' || rangeMode === 'week') && (
+            <Input
+              type="date"
+              value={anchorDate.toISOString().slice(0, 10)}
+              onChange={(e) => setAnchorDate(new Date(e.target.value))}
+              className="w-full md:w-44"
+            />
+          )}
+
+          {rangeMode === 'month' && (
+            <div className="flex gap-2 w-full md:w-auto">
+              <Select
+                value={String(anchorDate.getMonth())}
+                onValueChange={(v) => { const d = new Date(anchorDate); d.setMonth(parseInt(v)); setAnchorDate(d); }}
+              >
+                <SelectTrigger className="md:w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <SelectItem key={i} value={String(i)}>{new Date(2000, i, 1).toLocaleString('en', { month: 'long' })}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(anchorDate.getFullYear())}
+                onValueChange={(v) => { const d = new Date(anchorDate); d.setFullYear(parseInt(v)); setAnchorDate(d); }}
+              >
+                <SelectTrigger className="md:w-28"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 6 }, (_, i) => {
+                    const y = new Date().getFullYear() - i;
+                    return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {rangeMode === 'year' && (
+            <Select
+              value={String(anchorDate.getFullYear())}
+              onValueChange={(v) => { const d = new Date(anchorDate); d.setFullYear(parseInt(v)); setAnchorDate(d); }}
+            >
+              <SelectTrigger className="w-full md:w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 6 }, (_, i) => {
+                  const y = new Date().getFullYear() - i;
+                  return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+                })}
+              </SelectContent>
+            </Select>
+          )}
+
+          <div className="md:ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" />
+            Showing: <span className="font-semibold text-foreground">{rangeLabel}</span>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
         {/* MAIN COLUMN */}
@@ -488,114 +583,8 @@ export default function AnalyticsDashboardPage() {
           </Card>
         </div>
 
-        {/* RIGHT FILTER PANEL */}
+        {/* RIGHT PANEL */}
         <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-          <Card className="rounded-2xl">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Time Filter</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Range</label>
-                <Tabs value={rangeMode} onValueChange={(v) => setRangeMode(v as RangeMode)}>
-                  <TabsList className="grid grid-cols-4 w-full">
-                    <TabsTrigger value="day">Day</TabsTrigger>
-                    <TabsTrigger value="week">Week</TabsTrigger>
-                    <TabsTrigger value="month">Month</TabsTrigger>
-                    <TabsTrigger value="year">Year</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              {(rangeMode === 'day' || rangeMode === 'week') && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3" /> {rangeMode === 'day' ? 'Select Date' : 'Week ending'}
-                  </label>
-                  <Input
-                    type="date"
-                    value={anchorDate.toISOString().slice(0, 10)}
-                    onChange={(e) => setAnchorDate(new Date(e.target.value))}
-                  />
-                </div>
-              )}
-
-              {rangeMode === 'month' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Month</label>
-                    <Select
-                      value={String(anchorDate.getMonth())}
-                      onValueChange={(v) => {
-                        const d = new Date(anchorDate);
-                        d.setMonth(parseInt(v));
-                        setAnchorDate(d);
-                      }}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 12 }, (_, i) => (
-                          <SelectItem key={i} value={String(i)}>
-                            {new Date(2000, i, 1).toLocaleString('en', { month: 'long' })}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Year</label>
-                    <Select
-                      value={String(anchorDate.getFullYear())}
-                      onValueChange={(v) => {
-                        const d = new Date(anchorDate);
-                        d.setFullYear(parseInt(v));
-                        setAnchorDate(d);
-                      }}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 6 }, (_, i) => {
-                          const y = new Date().getFullYear() - i;
-                          return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {rangeMode === 'year' && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Year</label>
-                  <Select
-                    value={String(anchorDate.getFullYear())}
-                    onValueChange={(v) => {
-                      const d = new Date(anchorDate);
-                      d.setFullYear(parseInt(v));
-                      setAnchorDate(d);
-                    }}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 6 }, (_, i) => {
-                        const y = new Date().getFullYear() - i;
-                        return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="rounded-lg bg-muted/40 p-3 text-xs">
-                <p className="text-muted-foreground">Showing data for</p>
-                <p className="font-semibold mt-0.5">{rangeLabel}</p>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-4 space-y-2">
               <div className="flex items-center gap-2">
