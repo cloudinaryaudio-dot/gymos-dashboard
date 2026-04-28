@@ -330,6 +330,13 @@ export default function AnalyticsDashboardPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      {/* Top Action Bar — Load Demo Data */}
+      <div className="flex items-center justify-end">
+        <Button size="sm" variant="outline" onClick={handleLoadDemo}>
+          <Database className="mr-2 h-4 w-4" /> Load Demo Data
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -346,6 +353,81 @@ export default function AnalyticsDashboardPage() {
           </TabsList>
         </Tabs>
       </div>
+
+      {/* Top Time Filter Bar */}
+      <Card className="rounded-2xl sticky top-2 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <CardContent className="p-3 sm:p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-wrap">
+          <div className="flex items-center gap-2 shrink-0">
+            <Filter className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold">Time Filter</span>
+          </div>
+          <Tabs value={rangeMode} onValueChange={(v) => setRangeMode(v as RangeMode)} className="shrink-0">
+            <TabsList className="grid grid-cols-4 w-full md:w-auto">
+              <TabsTrigger value="day">Day</TabsTrigger>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+              <TabsTrigger value="year">Year</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {(rangeMode === 'day' || rangeMode === 'week') && (
+            <Input
+              type="date"
+              value={anchorDate.toISOString().slice(0, 10)}
+              onChange={(e) => setAnchorDate(new Date(e.target.value))}
+              className="w-full md:w-44"
+            />
+          )}
+
+          {rangeMode === 'month' && (
+            <div className="flex gap-2 w-full md:w-auto">
+              <Select
+                value={String(anchorDate.getMonth())}
+                onValueChange={(v) => { const d = new Date(anchorDate); d.setMonth(parseInt(v)); setAnchorDate(d); }}
+              >
+                <SelectTrigger className="md:w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <SelectItem key={i} value={String(i)}>{new Date(2000, i, 1).toLocaleString('en', { month: 'long' })}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(anchorDate.getFullYear())}
+                onValueChange={(v) => { const d = new Date(anchorDate); d.setFullYear(parseInt(v)); setAnchorDate(d); }}
+              >
+                <SelectTrigger className="md:w-28"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 6 }, (_, i) => {
+                    const y = new Date().getFullYear() - i;
+                    return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {rangeMode === 'year' && (
+            <Select
+              value={String(anchorDate.getFullYear())}
+              onValueChange={(v) => { const d = new Date(anchorDate); d.setFullYear(parseInt(v)); setAnchorDate(d); }}
+            >
+              <SelectTrigger className="w-full md:w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 6 }, (_, i) => {
+                  const y = new Date().getFullYear() - i;
+                  return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+                })}
+              </SelectContent>
+            </Select>
+          )}
+
+          <div className="md:ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" />
+            Showing: <span className="font-semibold text-foreground">{rangeLabel}</span>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
         {/* MAIN COLUMN */}
