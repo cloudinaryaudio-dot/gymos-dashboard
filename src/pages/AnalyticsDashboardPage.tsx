@@ -113,6 +113,8 @@ function KpiCard({ label, value, change, icon: Icon, gradient, onClick }: KpiCar
 
 export default function AnalyticsDashboardPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const { data: members = [] } = useMembers();
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
@@ -121,6 +123,13 @@ export default function AnalyticsDashboardPage() {
   const [tab, setTab] = useState('overview');
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [anchorDate, setAnchorDate] = useState<Date>(new Date());
+
+  const handleLoadDemo = async () => {
+    resetDemoData();
+    seedDemoData();
+    await qc.resetQueries();
+    toast({ title: '✅ Demo data loaded successfully!' });
+  };
 
   const { from, to, label: rangeLabel } = useMemo(() => getRange(rangeMode, anchorDate), [rangeMode, anchorDate]);
   const prev = useMemo(() => getPrevRange(rangeMode, anchorDate), [rangeMode, anchorDate]);
