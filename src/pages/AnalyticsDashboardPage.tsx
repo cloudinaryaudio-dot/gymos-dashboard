@@ -329,22 +329,18 @@ export default function AnalyticsDashboardPage() {
   const ChartFallback = () => <Skeleton className="h-full w-full rounded-lg" />;
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Top Action Bar — Load Demo Data */}
-      <div className="flex items-center justify-end">
-        <Button size="sm" variant="outline" onClick={handleLoadDemo}>
+    <div className="space-y-4 md:space-y-6 pb-8 px-1 sm:px-0">
+      {/* Header — mobile stacks: Title → Buttons → Filters (Tabs) */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Unified analytics and business intelligence</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={handleLoadDemo} className="w-full lg:w-auto justify-center">
           <Database className="mr-2 h-4 w-4" /> Load Demo Data
         </Button>
-      </div>
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Unified analytics and business intelligence</p>
-        </div>
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="overflow-x-auto max-w-full">
+        <Tabs value={tab} onValueChange={setTab} className="w-full lg:w-auto">
+          <TabsList className="overflow-x-auto max-w-full w-full lg:w-auto justify-start">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="members" onClick={() => navigate('/app/members/dashboard')}>Members</TabsTrigger>
             <TabsTrigger value="payments" onClick={() => navigate('/app/payments/dashboard')}>Payments</TabsTrigger>
