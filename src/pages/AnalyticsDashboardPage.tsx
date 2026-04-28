@@ -3,8 +3,12 @@ import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Users, UserCheck, CreditCard, AlertTriangle,
   Target, BarChart3, DollarSign, Sparkles, Calendar, Filter, Activity,
-  ArrowUpRight, ArrowDownRight, Lightbulb, AlertCircle, CheckCircle2,
+  ArrowUpRight, ArrowDownRight, Lightbulb, AlertCircle, CheckCircle2, Database,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { seedDemoData, resetDemoData } from '@/data/mockDb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
