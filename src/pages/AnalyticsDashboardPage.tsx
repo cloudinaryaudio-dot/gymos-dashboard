@@ -499,12 +499,12 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           {/* ROW 2: members growth + expenses donut */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <Card className="lg:col-span-2 rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Member Growth</CardTitle>
               </CardHeader>
-              <CardContent className="h-[280px]">
+              <CardContent className="h-[260px] sm:h-[280px] min-h-[250px] px-2 sm:px-6">
                 {(!memberGrowthChart || memberGrowthChart.length === 0) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
                 ) : (
