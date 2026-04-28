@@ -267,7 +267,7 @@ export default function OwnerSummaryPage() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
             {/* Cash status */}
             <Card className="cursor-pointer hover:border-primary/50" onClick={() => navigate('/app/payments')}>
               <CardHeader><CardTitle className="text-lg">Cash Status</CardTitle></CardHeader>
