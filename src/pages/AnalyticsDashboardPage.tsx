@@ -521,10 +521,10 @@ export default function AnalyticsDashboardPage() {
               </CardContent>
             </Card>
             <Card className="rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Expense Categories</CardTitle>
               </CardHeader>
-              <CardContent className="h-[280px]">
+              <CardContent className="h-[260px] sm:h-[280px] min-h-[250px] px-2 sm:px-6">
                 {expenseByCategory.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
                 ) : (
