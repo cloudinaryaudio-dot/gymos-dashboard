@@ -357,11 +357,11 @@ export default function OwnerSummaryPage() {
             </Card>
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/payments')}>View Payments</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/members')}>View Members</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/leads')}>View Leads</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/app/expenses')}>View Expenses</Button>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 pt-2">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/payments')}>View Payments</Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/members')}>View Members</Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/leads')}>View Leads</Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate('/app/expenses')}>View Expenses</Button>
           </div>
         </>
       )}
