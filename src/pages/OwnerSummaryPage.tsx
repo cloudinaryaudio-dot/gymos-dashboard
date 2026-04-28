@@ -249,7 +249,7 @@ export default function OwnerSummaryPage() {
 
             <Card>
               <CardHeader><CardTitle className="text-lg">Expense Breakdown</CardTitle></CardHeader>
-              <CardContent style={{ height: 300 }}>
+              <CardContent style={{ height: 300 }} className="min-h-[250px] px-2 sm:px-6">
                 {curr && curr.expenseBreakdown.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
