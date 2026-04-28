@@ -322,7 +322,7 @@ export default function OwnerSummaryPage() {
           </div>
 
           {/* Insights & Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
             <Card>
               <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Quick Insights</CardTitle></CardHeader>
               <CardContent className="space-y-2">
