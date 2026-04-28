@@ -449,12 +449,12 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           {/* ROW 1: revenue trend + payment donut */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <Card className="lg:col-span-2 rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Revenue Trend ({rangeLabel})</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[260px] sm:h-[300px] min-h-[250px] px-2 sm:px-6">
                 {(!revenueChartFiltered || revenueChartFiltered.length === 0 || revenueChartFiltered.every(p => p.revenue === 0)) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No revenue in this period</div>
                 ) : (
