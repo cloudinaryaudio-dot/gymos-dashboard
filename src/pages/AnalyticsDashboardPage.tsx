@@ -429,7 +429,7 @@ export default function AnalyticsDashboardPage() {
         {/* MAIN COLUMN */}
         <div className="space-y-6 min-w-0">
           {/* KPI CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             <KpiCard label="Total Revenue" value={inr(stats.totalRevenue)} change={stats.revGrowth} icon={DollarSign}
               gradient="bg-gradient-to-br from-violet-500 to-purple-600" onClick={() => navigate('/app/payments')} />
             <KpiCard label="Total Members" value={String(stats.totalMembers)} change={stats.memberGrowth} icon={Users}
