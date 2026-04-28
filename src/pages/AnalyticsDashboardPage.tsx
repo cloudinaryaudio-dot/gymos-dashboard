@@ -351,7 +351,7 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* Top Time Filter Bar */}
-      <Card className="rounded-2xl sticky top-2 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <Card className="rounded-2xl md:sticky md:top-2 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <CardContent className="p-3 sm:p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-wrap">
           <div className="flex items-center gap-2 shrink-0">
             <Filter className="h-4 w-4 text-primary" />
