@@ -477,10 +477,10 @@ export default function AnalyticsDashboardPage() {
               </CardContent>
             </Card>
             <Card className="rounded-2xl">
-              <CardHeader>
+              <CardHeader className="pb-2 sm:pb-4">
                 <CardTitle className="text-base">Payment Distribution</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[260px] sm:h-[300px] min-h-[250px] px-2 sm:px-6">
                 {stats.paymentDist.every(p => p.value === 0) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Data not available</div>
                 ) : (
