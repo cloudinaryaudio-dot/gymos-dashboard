@@ -471,7 +471,7 @@ export default function MembersPage() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : members && members.length > 0 ? (
-            <Table>
+            <div className="responsive-card-table"><Table>
               <TableHeader>
                 <TableRow>
                   <TableHead><button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('name')}>Name <ArrowUpDown className="h-3 w-3 opacity-50" /></button></TableHead>
@@ -508,10 +508,10 @@ export default function MembersPage() {
                       )}
                       onClick={() => navigate(`/app/members/${member.id}`)}
                     >
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell>{member.phone}</TableCell>
-                      <TableCell>{member.plans?.name ?? '—'}</TableCell>
-                      <TableCell>
+                      <TableCell data-label="Name" className="font-medium">{member.name}</TableCell>
+                      <TableCell data-label="Phone">{member.phone}</TableCell>
+                      <TableCell data-label="Plan">{member.plans?.name ?? '—'}</TableCell>
+                      <TableCell data-label="Status">
                         {expiry.variant === 'expired' ? (
                           <Badge variant="destructive">Expired</Badge>
                         ) : expiry.variant === 'expiring' ? (
@@ -522,7 +522,7 @@ export default function MembersPage() {
                           <Badge variant="default">Active</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Payment">
                         {payStatus === 'paid' ? (
                           <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 border">Paid</Badge>
                         ) : payStatus === 'overdue' ? (
@@ -531,7 +531,7 @@ export default function MembersPage() {
                           <Badge variant="outline" className="border-orange-400 text-orange-500 bg-orange-500/10">Pending</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Expiry">
                         <span className={cn(
                           expiry.variant === 'expired' && 'text-destructive font-medium',
                           expiry.variant === 'expiring' && 'text-yellow-600 font-medium'
@@ -539,7 +539,7 @@ export default function MembersPage() {
                           {format(new Date(member.expiry_date), 'dd MMM yyyy')}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell data-label="Actions" className="text-right actions-cell">
                         <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                           <Button
                             variant="ghost"
@@ -596,7 +596,7 @@ export default function MembersPage() {
                   );
                 })}
               </TableBody>
-            </Table>
+            </Table></div>
           ) : null}
           {members && members.length > 0 && totalPages > 1 && (
             <div className="flex items-center justify-between p-4 border-t">
