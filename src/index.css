@@ -263,3 +263,81 @@ html[data-theme-mode="light"] #theme-root [class*="text-white/"] {
   color: var(--text-heading) !important;
 }
 
+/* ──────────────────────────────────────────────────────────
+   Mobile overflow & responsive table card view (/app/* only)
+   Activates on screens ≤ 768px. Desktop unchanged.
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html, body, #root {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* Tighter dashboard padding on mobile */
+  .app-shell main {
+    padding: 12px !important;
+  }
+
+  /* Convert any <Table> inside an .app-shell main to a card-stack on mobile.
+     Cells must carry a data-label="..." attribute for the label to appear.
+     Cells without data-label still render but without a label prefix. */
+  .app-shell main table.responsive-card-table,
+  .app-shell main .responsive-card-table table {
+    border: 0;
+    width: 100%;
+  }
+  .app-shell main .responsive-card-table thead {
+    display: none;
+  }
+  .app-shell main .responsive-card-table tbody,
+  .app-shell main .responsive-card-table tr,
+  .app-shell main .responsive-card-table td {
+    display: block;
+    width: 100%;
+  }
+  .app-shell main .responsive-card-table tr {
+    margin-bottom: 12px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    background: hsl(var(--card));
+    padding: 8px 4px;
+  }
+  .app-shell main .responsive-card-table td {
+    border: 0 !important;
+    padding: 8px 12px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+    min-height: 40px;
+  }
+  .app-shell main .responsive-card-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+    flex: 0 0 auto;
+  }
+  /* Action cells: stack actions wrapping on the right */
+  .app-shell main .responsive-card-table td[data-label="Actions"] > div,
+  .app-shell main .responsive-card-table td.actions-cell > div {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* Avoid nested scroll-area cropping in card mode */
+  .app-shell main .responsive-card-table > div[class*="overflow"] {
+    overflow: visible !important;
+  }
+
+  /* Make filter Select/Input full width on mobile inside dashboard */
+  .app-shell main [data-mobile-full] {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
