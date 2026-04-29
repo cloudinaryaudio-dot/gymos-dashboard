@@ -150,19 +150,19 @@ export default function PlansPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-full">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-display">Plans</h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your membership plans</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/app/plans/dashboard')}>
+        <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/plans/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Plans Dashboard
           </Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
+              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
@@ -181,7 +181,7 @@ export default function PlansPage() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : plans && plans.length > 0 ? (
-            <Table>
+            <div className="responsive-card-table"><Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
@@ -196,30 +196,32 @@ export default function PlansPage() {
               <TableBody>
                 {plans.map((plan: any) => (
                   <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell>₹{plan.price.toLocaleString()}</TableCell>
-                    <TableCell>{plan.duration_days} days</TableCell>
-                    <TableCell>
+                    <TableCell data-label="Name" className="font-medium">{plan.name}</TableCell>
+                    <TableCell data-label="Price">₹{plan.price.toLocaleString()}</TableCell>
+                    <TableCell data-label="Duration">{plan.duration_days} days</TableCell>
+                    <TableCell data-label="Category">
                       <Badge variant="outline" className="capitalize">{plan.category || 'general'}</Badge>
                     </TableCell>
-                    <TableCell>
-                      {plan.show_on_homepage && <span className="text-primary font-medium text-sm">🏠 Yes</span>}
+                    <TableCell data-label="Homepage">
+                      {plan.show_on_homepage ? <span className="text-primary font-medium text-sm">🏠 Yes</span> : <span className="text-muted-foreground text-sm">—</span>}
                     </TableCell>
-                    <TableCell>
-                      {plan.is_highlighted && <Crown className="h-4 w-4 text-primary" />}
+                    <TableCell data-label="Highlight">
+                      {plan.is_highlighted ? <Crown className="h-4 w-4 text-primary" /> : <span className="text-muted-foreground text-sm">—</span>}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingPlan(plan); setDialogOpen(true); }}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(plan.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                    <TableCell data-label="Actions" className="text-right actions-cell">
+                      <div className="inline-flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingPlan(plan); setDialogOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(plan.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </Table></div>
           ) : (
             <div className="flex flex-col items-center justify-center p-16 text-center">
               <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">

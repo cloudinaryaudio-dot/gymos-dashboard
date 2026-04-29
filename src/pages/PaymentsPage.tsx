@@ -185,7 +185,7 @@ export default function PaymentsPage() {
 
     return (
       <>
-        <Table>
+        <div className="responsive-card-table"><Table>
           <TableHeader>
             <TableRow>
               <TableHead>Member</TableHead>
@@ -199,11 +199,11 @@ export default function PaymentsPage() {
           <TableBody>
             {pageData.map(p => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.members?.name ?? '—'}</TableCell>
-                <TableCell>₹{Number(p.amount).toLocaleString()}</TableCell>
-                <TableCell>{format(new Date(p.payment_date), 'dd MMM yyyy')}</TableCell>
-                <TableCell className="capitalize">{p.method.replace('_', ' ')}</TableCell>
-                <TableCell>
+                <TableCell data-label="Member" className="font-medium">{p.members?.name ?? '—'}</TableCell>
+                <TableCell data-label="Amount">₹{Number(p.amount).toLocaleString()}</TableCell>
+                <TableCell data-label="Date">{format(new Date(p.payment_date), 'dd MMM yyyy')}</TableCell>
+                <TableCell data-label="Method" className="capitalize">{p.method.replace('_', ' ')}</TableCell>
+                <TableCell data-label="Status">
                   <Badge variant={p.status === 'paid' ? 'default' : p.status === 'overdue' ? 'destructive' : 'secondary'}
                     className={cn(
                       p.status === 'paid' && 'bg-emerald-500/10 text-emerald-600 border border-emerald-300',
@@ -213,7 +213,8 @@ export default function PaymentsPage() {
                     {p.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell data-label="Actions" className="text-right actions-cell">
+                  <div className="inline-flex items-center gap-1 justify-end">
                   {showMarkPaid && (p.status === 'pending' || p.status === 'overdue') && (
                     <Button
                       variant="ghost"
@@ -232,11 +233,12 @@ export default function PaymentsPage() {
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </Table></div>
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <p className="text-xs text-muted-foreground">
@@ -293,21 +295,21 @@ export default function PaymentsPage() {
 
 
   return (
-    <div className="space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-full">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold font-display">Payments</h1>
             <p className="text-muted-foreground text-sm mt-1">Track all payment transactions</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/app/payments/dashboard">
-              <Button variant="outline">
+          <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
+            <Link to="/app/payments/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <BarChart3 className="h-4 w-4 mr-2" />Payments Dashboard
               </Button>
             </Link>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button disabled={!members || members.length === 0}>
+                <Button className="w-full sm:w-auto" disabled={!members || members.length === 0}>
                   <Plus className="h-4 w-4 mr-2" />Add Payment
                 </Button>
               </DialogTrigger>
@@ -403,7 +405,7 @@ export default function PaymentsPage() {
         </div>
 
         <Tabs defaultValue="all">
-          <TabsList>
+          <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
             <TabsTrigger value="all">All ({filteredPayments.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingPayments.length})</TabsTrigger>
             <TabsTrigger value="overdue">Overdue ({overduePayments.length})</TabsTrigger>

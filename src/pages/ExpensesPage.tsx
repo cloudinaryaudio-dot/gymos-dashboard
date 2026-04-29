@@ -172,14 +172,14 @@ export default function ExpensesPage() {
             <span className="text-muted-foreground"> · {filtered.length} entries</span>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => navigate('/app/expenses/dashboard')}>
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/expenses/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Expenses Dashboard
           </Button>
-          <Button variant="outline" onClick={() => setCatDialogOpen(true)}>Manage Categories</Button>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setCatDialogOpen(true)}>Manage Categories</Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Add Expense</Button>
+              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Expense</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Expense</DialogTitle></DialogHeader>
@@ -275,7 +275,7 @@ export default function ExpensesPage() {
             </div>
           ) : pageRows.length > 0 ? (
             <>
-              <Table>
+              <div className="responsive-card-table"><Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
@@ -300,11 +300,11 @@ export default function ExpensesPage() {
                 <TableBody>
                   {pageRows.map(exp => (
                     <TableRow key={exp.id}>
-                      <TableCell className="font-medium">{exp.title}</TableCell>
-                      <TableCell>₹{Number(exp.amount).toLocaleString()}</TableCell>
-                      <TableCell>{format(new Date(exp.expense_date), 'dd MMM yyyy')}</TableCell>
-                      <TableCell>{exp.category ? <Badge variant="secondary">{exp.category}</Badge> : '—'}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell data-label="Title" className="font-medium">{exp.title}</TableCell>
+                      <TableCell data-label="Amount">₹{Number(exp.amount).toLocaleString()}</TableCell>
+                      <TableCell data-label="Date">{format(new Date(exp.expense_date), 'dd MMM yyyy')}</TableCell>
+                      <TableCell data-label="Category">{exp.category ? <Badge variant="secondary">{exp.category}</Badge> : '—'}</TableCell>
+                      <TableCell data-label="Actions" className="text-right actions-cell">
                         <Button variant="ghost" size="icon" onClick={() => deleteExpense.mutateAsync(exp.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -312,7 +312,7 @@ export default function ExpensesPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </Table></div>
               <div className="flex items-center justify-between p-4 border-t">
                 <span className="text-sm text-muted-foreground">
                   Page {safePage} of {totalPages} · {sorted.length} results

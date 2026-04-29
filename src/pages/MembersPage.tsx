@@ -338,21 +338,21 @@ export default function MembersPage() {
   }).length ?? 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-6 max-w-full">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-display">Members</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Manage your gym members
             {(expiringCount > 0 || expiredCount > 0) && (
-              <span className="ml-2">
+              <span className="ml-2 inline-flex flex-wrap gap-1">
                 {expiringCount > 0 && (
-                  <Badge variant="outline" className="ml-1 border-yellow-500 text-yellow-600 bg-yellow-500/10">
+                  <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-500/10">
                     {expiringCount} expiring
                   </Badge>
                 )}
                 {expiredCount > 0 && (
-                  <Badge variant="destructive" className="ml-1">
+                  <Badge variant="destructive">
                     {expiredCount} expired
                   </Badge>
                 )}
@@ -360,14 +360,13 @@ export default function MembersPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => navigate('/app/members/dashboard')}>
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/members/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Members Dashboard
           </Button>
-          {/* Quick Add */}
           <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={!plans || plans.length === 0}>
+              <Button variant="outline" className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
                 <Zap className="h-4 w-4 mr-2" /> Quick Add
               </Button>
             </DialogTrigger>
@@ -378,19 +377,13 @@ export default function MembersPage() {
                 </DialogTitle>
               </DialogHeader>
               {plans && plans.length > 0 && (
-                <QuickAddForm
-                  plans={plans}
-                  onSubmit={handleSubmit}
-                  onCancel={() => setQuickAddOpen(false)}
-                />
+                <QuickAddForm plans={plans} onSubmit={handleSubmit} onCancel={() => setQuickAddOpen(false)} />
               )}
             </DialogContent>
           </Dialog>
-
-          {/* Full Add */}
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingMember(undefined); }}>
             <DialogTrigger asChild>
-              <Button disabled={!plans || plans.length === 0}>
+              <Button className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
                 <Plus className="h-4 w-4 mr-2" /> Add Member
               </Button>
             </DialogTrigger>
@@ -399,12 +392,7 @@ export default function MembersPage() {
                 <DialogTitle>{editingMember ? 'Edit Member' : 'Add New Member'}</DialogTitle>
               </DialogHeader>
               {plans && plans.length > 0 && (
-                <MemberForm
-                  member={editingMember}
-                  plans={plans}
-                  onSubmit={handleSubmit}
-                  onCancel={() => setDialogOpen(false)}
-                />
+                <MemberForm member={editingMember} plans={plans} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} />
               )}
             </DialogContent>
           </Dialog>
@@ -413,19 +401,19 @@ export default function MembersPage() {
 
       {/* Controls: search + filters */}
       <Card>
-        <CardContent className="p-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[220px]">
+        <CardContent className="p-3 sm:p-4 grid grid-cols-1 sm:flex sm:flex-wrap sm:items-center gap-3">
+          <div className="relative flex-1 min-w-0 sm:min-w-[220px] w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Search by name, phone, or plan…"
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
 
           <Select value={statusFilter} onValueChange={(v) => updateParam('status', v)}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger data-mobile-full className="w-full sm:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
@@ -435,7 +423,7 @@ export default function MembersPage() {
           </Select>
 
           <Select value={planFilter} onValueChange={(v) => updateParam('plan', v)}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Plan category" /></SelectTrigger>
+            <SelectTrigger data-mobile-full className="w-full sm:w-[160px]"><SelectValue placeholder="Plan category" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All plans</SelectItem>
               {planCategories.map(c => (
@@ -445,7 +433,7 @@ export default function MembersPage() {
           </Select>
 
           <Select value={expiryFilter} onValueChange={(v) => updateParam('expiry', v)}>
-            <SelectTrigger className="w-[170px]"><SelectValue placeholder="Expiry" /></SelectTrigger>
+            <SelectTrigger data-mobile-full className="w-full sm:w-[170px]"><SelectValue placeholder="Expiry" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Any expiry</SelectItem>
               <SelectItem value="7days">Expiring in 7 days</SelectItem>
@@ -483,7 +471,7 @@ export default function MembersPage() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : members && members.length > 0 ? (
-            <Table>
+            <div className="responsive-card-table"><Table>
               <TableHeader>
                 <TableRow>
                   <TableHead><button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('name')}>Name <ArrowUpDown className="h-3 w-3 opacity-50" /></button></TableHead>
@@ -520,10 +508,10 @@ export default function MembersPage() {
                       )}
                       onClick={() => navigate(`/app/members/${member.id}`)}
                     >
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell>{member.phone}</TableCell>
-                      <TableCell>{member.plans?.name ?? '—'}</TableCell>
-                      <TableCell>
+                      <TableCell data-label="Name" className="font-medium">{member.name}</TableCell>
+                      <TableCell data-label="Phone">{member.phone}</TableCell>
+                      <TableCell data-label="Plan">{member.plans?.name ?? '—'}</TableCell>
+                      <TableCell data-label="Status">
                         {expiry.variant === 'expired' ? (
                           <Badge variant="destructive">Expired</Badge>
                         ) : expiry.variant === 'expiring' ? (
@@ -534,7 +522,7 @@ export default function MembersPage() {
                           <Badge variant="default">Active</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Payment">
                         {payStatus === 'paid' ? (
                           <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 border-emerald-300 border">Paid</Badge>
                         ) : payStatus === 'overdue' ? (
@@ -543,7 +531,7 @@ export default function MembersPage() {
                           <Badge variant="outline" className="border-orange-400 text-orange-500 bg-orange-500/10">Pending</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Expiry">
                         <span className={cn(
                           expiry.variant === 'expired' && 'text-destructive font-medium',
                           expiry.variant === 'expiring' && 'text-yellow-600 font-medium'
@@ -551,7 +539,7 @@ export default function MembersPage() {
                           {format(new Date(member.expiry_date), 'dd MMM yyyy')}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell data-label="Actions" className="text-right actions-cell">
                         <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                           <Button
                             variant="ghost"
@@ -608,7 +596,7 @@ export default function MembersPage() {
                   );
                 })}
               </TableBody>
-            </Table>
+            </Table></div>
           ) : null}
           {members && members.length > 0 && totalPages > 1 && (
             <div className="flex items-center justify-between p-4 border-t">
