@@ -268,7 +268,7 @@ export default function LandingPage() {
       />
 
       {/* ─── HERO ─── */}
-      <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
+      <section id="hero" className="relative min-h-screen md:min-h-screen flex items-center overflow-hidden">
         {heroContent.video_url ? (
           <>
             <HeroBackground url={heroContent.video_url} className="hidden md:block" />
