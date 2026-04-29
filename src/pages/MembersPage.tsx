@@ -338,21 +338,21 @@ export default function MembersPage() {
   }).length ?? 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-6 max-w-full">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-display">Members</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Manage your gym members
             {(expiringCount > 0 || expiredCount > 0) && (
-              <span className="ml-2">
+              <span className="ml-2 inline-flex flex-wrap gap-1">
                 {expiringCount > 0 && (
-                  <Badge variant="outline" className="ml-1 border-yellow-500 text-yellow-600 bg-yellow-500/10">
+                  <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-500/10">
                     {expiringCount} expiring
                   </Badge>
                 )}
                 {expiredCount > 0 && (
-                  <Badge variant="destructive" className="ml-1">
+                  <Badge variant="destructive">
                     {expiredCount} expired
                   </Badge>
                 )}
@@ -360,14 +360,13 @@ export default function MembersPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => navigate('/app/members/dashboard')}>
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/members/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Members Dashboard
           </Button>
-          {/* Quick Add */}
           <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={!plans || plans.length === 0}>
+              <Button variant="outline" className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
                 <Zap className="h-4 w-4 mr-2" /> Quick Add
               </Button>
             </DialogTrigger>
@@ -378,19 +377,13 @@ export default function MembersPage() {
                 </DialogTitle>
               </DialogHeader>
               {plans && plans.length > 0 && (
-                <QuickAddForm
-                  plans={plans}
-                  onSubmit={handleSubmit}
-                  onCancel={() => setQuickAddOpen(false)}
-                />
+                <QuickAddForm plans={plans} onSubmit={handleSubmit} onCancel={() => setQuickAddOpen(false)} />
               )}
             </DialogContent>
           </Dialog>
-
-          {/* Full Add */}
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingMember(undefined); }}>
             <DialogTrigger asChild>
-              <Button disabled={!plans || plans.length === 0}>
+              <Button className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
                 <Plus className="h-4 w-4 mr-2" /> Add Member
               </Button>
             </DialogTrigger>
@@ -399,12 +392,7 @@ export default function MembersPage() {
                 <DialogTitle>{editingMember ? 'Edit Member' : 'Add New Member'}</DialogTitle>
               </DialogHeader>
               {plans && plans.length > 0 && (
-                <MemberForm
-                  member={editingMember}
-                  plans={plans}
-                  onSubmit={handleSubmit}
-                  onCancel={() => setDialogOpen(false)}
-                />
+                <MemberForm member={editingMember} plans={plans} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} />
               )}
             </DialogContent>
           </Dialog>
