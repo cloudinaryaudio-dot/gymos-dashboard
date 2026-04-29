@@ -295,21 +295,21 @@ export default function PaymentsPage() {
 
 
   return (
-    <div className="space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-full">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold font-display">Payments</h1>
             <p className="text-muted-foreground text-sm mt-1">Track all payment transactions</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/app/payments/dashboard">
-              <Button variant="outline">
+          <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
+            <Link to="/app/payments/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <BarChart3 className="h-4 w-4 mr-2" />Payments Dashboard
               </Button>
             </Link>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button disabled={!members || members.length === 0}>
+                <Button className="w-full sm:w-auto" disabled={!members || members.length === 0}>
                   <Plus className="h-4 w-4 mr-2" />Add Payment
                 </Button>
               </DialogTrigger>
@@ -405,7 +405,7 @@ export default function PaymentsPage() {
         </div>
 
         <Tabs defaultValue="all">
-          <TabsList>
+          <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
             <TabsTrigger value="all">All ({filteredPayments.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingPayments.length})</TabsTrigger>
             <TabsTrigger value="overdue">Overdue ({overduePayments.length})</TabsTrigger>
