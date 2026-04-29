@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { useQuery } from '@tanstack/react-query';
 import { Lightbox } from '@/components/Lightbox';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ function isVideoUrl(url: string) {
 }
 
 export default function GalleryPage() {
+  usePublicTheme();
   const [filter, setFilter] = useState<FilterType>('all');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
