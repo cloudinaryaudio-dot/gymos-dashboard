@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
@@ -20,6 +21,7 @@ interface Plan {
 const CATEGORY_ORDER = ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'Male', 'Female', 'Couple', 'Student', 'general'];
 
 export default function PublicPlansPage() {
+  usePublicTheme();
   const navigate = useNavigate();
   const { data: gymBranding } = usePublicGymSettings();
   const brandName = gymBranding?.gym_name || 'GymOS';

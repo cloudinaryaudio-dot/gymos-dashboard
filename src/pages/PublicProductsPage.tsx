@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
@@ -9,6 +10,7 @@ import * as ds from '@/services/dataService';
 import type { ProductsContent, ProductItem, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 
 export default function PublicProductsPage() {
+  usePublicTheme();
   const { data, isLoading } = useQuery({
     queryKey: ['public-products-page'],
     queryFn: async () => {

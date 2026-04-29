@@ -268,7 +268,7 @@ export default function LandingPage() {
       />
 
       {/* ─── HERO ─── */}
-      <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
+      <section id="hero" className="relative min-h-screen md:min-h-screen flex items-center overflow-hidden">
         {heroContent.video_url ? (
           <>
             <HeroBackground url={heroContent.video_url} className="hidden md:block" />
@@ -289,7 +289,7 @@ export default function LandingPage() {
           <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-8 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative z-10 w-full grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-8 items-center">
           {/* LEFT: Content */}
           <div className="text-center md:text-left">
             <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>

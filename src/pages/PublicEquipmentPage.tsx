@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
 import { ArrowLeft, Dumbbell } from 'lucide-react';
@@ -7,6 +8,7 @@ import * as ds from '@/services/dataService';
 import type { EquipmentContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 
 export default function PublicEquipmentPage() {
+  usePublicTheme();
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['public-equipment-page'],
     queryFn: async () => {

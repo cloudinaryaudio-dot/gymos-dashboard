@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, ExternalLink, Tag, Star } from 'lucide-react';
@@ -7,6 +8,7 @@ import * as ds from '@/services/dataService';
 import type { ProductsContent, ProductItem, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 
 export default function PublicProductDetailPage() {
+  usePublicTheme();
   const { id } = useParams<{ id: string }>();
   const idx = parseInt(id ?? '', 10);
 

@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
@@ -9,6 +10,7 @@ import type { TrainersContent, WebsiteContentRow } from '@/hooks/useWebsiteConte
 import * as ds from '@/services/dataService';
 
 export default function PublicTrainersPage() {
+  usePublicTheme();
   const navigate = useNavigate();
   const { data: gymBranding } = usePublicGymSettings();
   const brandName = gymBranding?.gym_name || 'GymOS';

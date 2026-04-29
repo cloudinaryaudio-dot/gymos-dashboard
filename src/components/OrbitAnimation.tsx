@@ -31,7 +31,7 @@ export default function OrbitAnimation({ speed = 'normal', pauseOnHover = true, 
   const icons = customIcons?.length ? customIcons : DEFAULT_ICONS;
 
   return (
-    <div className="relative w-[320px] h-[320px] md:w-[460px] md:h-[460px] mx-auto">
+    <div className="orbit-anim-wrap relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] md:w-[460px] md:h-[460px] mx-auto max-w-full">
       {/* Ambient glow */}
       <div className="absolute inset-0 rounded-full bg-primary/10 blur-[60px] animate-[glow-pulse_4s_ease-in-out_infinite]" />
 

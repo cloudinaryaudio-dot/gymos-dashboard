@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
 import { ArrowLeft, Star, User } from 'lucide-react';
@@ -8,6 +9,7 @@ import * as ds from '@/services/dataService';
 import type { TestimonialsContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 
 export default function PublicTestimonialsPage() {
+  usePublicTheme();
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['public-testimonials-page'],
     queryFn: async () => {

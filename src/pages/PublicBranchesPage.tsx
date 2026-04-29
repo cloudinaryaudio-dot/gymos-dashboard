@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { usePublicTheme } from '@/hooks/usePublicTheme';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useInView } from 'framer-motion';
 import { ArrowLeft, MapPin, Phone, Building2 } from 'lucide-react';
@@ -6,6 +7,7 @@ import * as ds from '@/services/dataService';
 import type { BranchesContent, WebsiteContentRow } from '@/hooks/useWebsiteContent';
 
 export default function PublicBranchesPage() {
+  usePublicTheme();
   const { data: branches = [], isLoading } = useQuery({
     queryKey: ['public-branches-page'],
     queryFn: async () => {

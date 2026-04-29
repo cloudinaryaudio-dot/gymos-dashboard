@@ -120,7 +120,18 @@ export function PricingSection({ plans, content, onCtaClick, showViewAll }: Pric
           <p className="text-center -mt-10 mb-16 text-primary/80 font-semibold text-sm">{content.cta_note}</p>
         )}
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${plans.length >= 3 ? 'lg:grid-cols-3' : ''} gap-6 max-w-5xl mx-auto`}>
+        {/* Mobile: snap carousel (1 card per view). Desktop: grid */}
+        <div className="sm:hidden flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-4 snap-x snap-mandatory">
+          {plans.map((plan, i) => {
+            const isPopular = highlightedPlan ? plan.id === highlightedPlan.id : i === Math.floor((plans.length - 1) / 2);
+            return (
+              <div key={plan.id} className="min-w-[88%] snap-center flex-shrink-0">
+                <PlanCard plan={plan} index={i} isPopular={isPopular} onCtaClick={onCtaClick} />
+              </div>
+            );
+          })}
+        </div>
+        <div className={`hidden sm:grid sm:grid-cols-2 ${plans.length >= 3 ? 'lg:grid-cols-3' : ''} gap-6 max-w-5xl mx-auto`}>
           {plans.map((plan, i) => {
             const isPopular = highlightedPlan ? plan.id === highlightedPlan.id : i === Math.floor((plans.length - 1) / 2);
             return (
