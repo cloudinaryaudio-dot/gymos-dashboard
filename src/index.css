@@ -341,3 +341,88 @@ html[data-theme-mode="light"] #theme-root [class*="text-white/"] {
   }
 }
 
+/* ──────────────────────────────────────────────────────────
+   Mobile responsiveness for ALL public landing pages.
+   Activates on screens ≤ 768px under the `theme-public` scope
+   (set by LandingPage and applied to all /, /plans, /services,
+   /trainers, /gallery, /branches, /products, etc. via html/body).
+   Desktop ≥ 769px is completely unaffected.
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html.theme-public,
+  body.theme-public,
+  body.theme-public #root {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* Prevent any descendant from breaking the viewport width */
+  body.theme-public img,
+  body.theme-public video,
+  body.theme-public iframe,
+  body.theme-public svg {
+    max-width: 100%;
+  }
+
+  /* Long words / urls wrap instead of overflowing */
+  body.theme-public h1,
+  body.theme-public h2,
+  body.theme-public h3,
+  body.theme-public p,
+  body.theme-public a,
+  body.theme-public span {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Tighten section padding on mobile */
+  body.theme-public section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 56px !important;
+    padding-bottom: 56px !important;
+  }
+
+  /* Buttons: comfortable tap target */
+  body.theme-public button,
+  body.theme-public .btn,
+  body.theme-public a[role="button"] {
+    min-height: 44px;
+  }
+
+  /* Footer: stack and center on mobile */
+  body.theme-public footer .grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+    text-align: center;
+  }
+  body.theme-public footer .grid > div {
+    align-items: center;
+  }
+  body.theme-public footer .grid > div > div.flex.items-center.gap-3 {
+    justify-content: center;
+  }
+  body.theme-public footer .mt-12.pt-8 {
+    flex-direction: column !important;
+    text-align: center;
+    gap: 16px !important;
+  }
+
+  /* Hide native scrollbars on horizontal carousels (defensive) */
+  body.theme-public .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  body.theme-public .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Smaller orbit on very narrow phones to prevent icon overflow */
+@media (max-width: 380px) {
+  body.theme-public .orbit-anim-wrap {
+    transform: scale(0.85);
+    transform-origin: center;
+  }
+}
+
