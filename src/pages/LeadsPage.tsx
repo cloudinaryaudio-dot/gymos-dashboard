@@ -201,19 +201,19 @@ export default function LeadsPage() {
   const yearOptions = Array.from({ length: 6 }, (_, i) => today.getFullYear() - i);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-6 max-w-full">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold font-display">Lead Pipeline</h1>
           <p className="text-muted-foreground text-sm mt-1">Track and convert potential members</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/app/leads/dashboard')}>
+        <div className="grid grid-cols-1 sm:flex sm:gap-2 gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/leads/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" />Leads Dashboard
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Add Lead</Button>
+              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Lead</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Lead</DialogTitle></DialogHeader>
@@ -375,7 +375,7 @@ export default function LeadsPage() {
         </div>
       ) : (
         <>
-          <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="rounded-xl border bg-card overflow-hidden responsive-card-table">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
@@ -413,10 +413,10 @@ export default function LeadsPage() {
                         lead.status === 'new' && 'bg-blue-500/5'
                       )}
                     >
-                      <td className="p-3 font-medium">{lead.name}</td>
-                      <td className="p-3 text-muted-foreground">{lead.phone}</td>
-                      <td className="p-3 text-muted-foreground">{lead.fitness_goal ?? '—'}</td>
-                      <td className="p-3">
+                      <td data-label="Name" className="p-3 font-medium">{lead.name}</td>
+                      <td data-label="Phone" className="p-3 text-muted-foreground">{lead.phone}</td>
+                      <td data-label="Goal" className="p-3 text-muted-foreground">{lead.fitness_goal ?? '—'}</td>
+                      <td data-label="Status" className="p-3">
                         {isActive ? (
                           <Select
                             value={lead.status}
@@ -439,10 +439,10 @@ export default function LeadsPage() {
                           </Badge>
                         )}
                       </td>
-                      <td className="p-3 text-muted-foreground">
+                      <td data-label="Date" className="p-3 text-muted-foreground">
                         {lead.created_at ? format(new Date(lead.created_at), 'dd MMM yyyy') : '—'}
                       </td>
-                      <td className="p-3 text-right">
+                      <td data-label="Actions" className="p-3 text-right actions-cell">
                         <div className="flex items-center justify-end gap-1">
                           {nextAction && (
                             <Button
