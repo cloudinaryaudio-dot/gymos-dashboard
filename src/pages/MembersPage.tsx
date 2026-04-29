@@ -401,19 +401,19 @@ export default function MembersPage() {
 
       {/* Controls: search + filters */}
       <Card>
-        <CardContent className="p-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[220px]">
+        <CardContent className="p-3 sm:p-4 grid grid-cols-1 sm:flex sm:flex-wrap sm:items-center gap-3">
+          <div className="relative flex-1 min-w-0 sm:min-w-[220px] w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Search by name, phone, or plan…"
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
 
           <Select value={statusFilter} onValueChange={(v) => updateParam('status', v)}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger data-mobile-full className="w-full sm:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
@@ -423,7 +423,7 @@ export default function MembersPage() {
           </Select>
 
           <Select value={planFilter} onValueChange={(v) => updateParam('plan', v)}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Plan category" /></SelectTrigger>
+            <SelectTrigger data-mobile-full className="w-full sm:w-[160px]"><SelectValue placeholder="Plan category" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All plans</SelectItem>
               {planCategories.map(c => (
@@ -433,7 +433,7 @@ export default function MembersPage() {
           </Select>
 
           <Select value={expiryFilter} onValueChange={(v) => updateParam('expiry', v)}>
-            <SelectTrigger className="w-[170px]"><SelectValue placeholder="Expiry" /></SelectTrigger>
+            <SelectTrigger data-mobile-full className="w-full sm:w-[170px]"><SelectValue placeholder="Expiry" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Any expiry</SelectItem>
               <SelectItem value="7days">Expiring in 7 days</SelectItem>
