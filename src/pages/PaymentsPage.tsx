@@ -185,7 +185,7 @@ export default function PaymentsPage() {
 
     return (
       <>
-        <Table>
+        <div className="responsive-card-table"><Table>
           <TableHeader>
             <TableRow>
               <TableHead>Member</TableHead>
@@ -199,11 +199,11 @@ export default function PaymentsPage() {
           <TableBody>
             {pageData.map(p => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.members?.name ?? '—'}</TableCell>
-                <TableCell>₹{Number(p.amount).toLocaleString()}</TableCell>
-                <TableCell>{format(new Date(p.payment_date), 'dd MMM yyyy')}</TableCell>
-                <TableCell className="capitalize">{p.method.replace('_', ' ')}</TableCell>
-                <TableCell>
+                <TableCell data-label="Member" className="font-medium">{p.members?.name ?? '—'}</TableCell>
+                <TableCell data-label="Amount">₹{Number(p.amount).toLocaleString()}</TableCell>
+                <TableCell data-label="Date">{format(new Date(p.payment_date), 'dd MMM yyyy')}</TableCell>
+                <TableCell data-label="Method" className="capitalize">{p.method.replace('_', ' ')}</TableCell>
+                <TableCell data-label="Status">
                   <Badge variant={p.status === 'paid' ? 'default' : p.status === 'overdue' ? 'destructive' : 'secondary'}
                     className={cn(
                       p.status === 'paid' && 'bg-emerald-500/10 text-emerald-600 border border-emerald-300',
@@ -213,7 +213,8 @@ export default function PaymentsPage() {
                     {p.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell data-label="Actions" className="text-right actions-cell">
+                  <div className="inline-flex items-center gap-1 justify-end">
                   {showMarkPaid && (p.status === 'pending' || p.status === 'overdue') && (
                     <Button
                       variant="ghost"
@@ -232,11 +233,12 @@ export default function PaymentsPage() {
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </Table></div>
 
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <p className="text-xs text-muted-foreground">
