@@ -287,7 +287,7 @@ export default function MembersPage() {
     });
 
     return list;
-  }, [members, payments, plans, statusFilter, planFilter, expiryFilter, sortKey, sortDir, debouncedSearch]);
+  }, [members, payments, plans, statusFilter, planFilter, expiryFilter, sortKey, sortDir, debouncedSearch, vendorFilter]);
 
   const totalPages = Math.max(1, Math.ceil(processed.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
