@@ -35,7 +35,14 @@ export function getUserPermissions(user: DemoUser): Permission[] {
 
 export function checkPermission(user: DemoUser | null, module: Module, action: Action): boolean {
   if (!user) return false;
+  // super_admin always has access (lock does not affect platform admin).
   if (user.role === 'super_admin') return true;
+
+  // Vendor lock — block ALL edit/create/delete actions, allow view only.
+  if (action === 'edit' && user.vendor_id && isVendorLocked(user.vendor_id)) {
+    return false;
+  }
+
   const key = `${module}:${action}` as Permission;
   // Treat 'edit' permission as also granting 'view'.
   if (action === 'view') {
