@@ -431,7 +431,7 @@ export default function LeadsPage() {
                       <td data-label="Phone" className="p-3 text-muted-foreground">{lead.phone}</td>
                       <td data-label="Goal" className="p-3 text-muted-foreground">{lead.fitness_goal ?? '—'}</td>
                       <td data-label="Status" className="p-3">
-                        {isActive ? (
+                        {isActive && canEdit ? (
                           <Select
                             value={lead.status}
                             onValueChange={(v) => updateLeadStatus.mutate({ id: lead.id, status: v as LeadStatus })}
@@ -463,6 +463,7 @@ export default function LeadsPage() {
                               variant="outline"
                               size="sm"
                               className="text-xs h-7"
+                              disabled={!canEdit}
                               onClick={() => updateLeadStatus.mutate({ id: lead.id, status: nextAction.next })}
                             >
                               <nextAction.icon className="h-3 w-3 mr-1" />
@@ -475,6 +476,7 @@ export default function LeadsPage() {
                               variant="default"
                               size="sm"
                               className="text-xs h-7"
+                              disabled={!canEdit}
                               onClick={() => setConvertLead(lead)}
                             >
                               <UserCheck className="h-3 w-3 mr-1" />
@@ -487,6 +489,7 @@ export default function LeadsPage() {
                               variant="ghost"
                               size="sm"
                               className="text-xs h-7 text-muted-foreground"
+                              disabled={!canEdit}
                               onClick={() => updateLeadStatus.mutate({ id: lead.id, status: 'lost' })}
                             >
                               <X className="h-3 w-3 mr-1" />
@@ -494,7 +497,7 @@ export default function LeadsPage() {
                             </Button>
                           )}
 
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteLead.mutate(lead.id)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!canEdit} onClick={() => deleteLead.mutate(lead.id)}>
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </Button>
                         </div>
