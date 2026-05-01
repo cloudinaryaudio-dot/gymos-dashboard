@@ -261,6 +261,8 @@ export default function OwnerSummaryPage() {
           </CardContent>
         </Card>
       )}
+
+      {isLoading || !k ? (
         <div className="text-muted-foreground">Loading…</div>
       ) : (
         <>
