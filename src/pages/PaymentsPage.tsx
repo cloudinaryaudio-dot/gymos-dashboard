@@ -107,22 +107,23 @@ export default function PaymentsPage() {
 
   const filteredPayments = useMemo(() => {
     if (!payments) return [];
-    if (timeMode === 'all') return payments;
+    const scoped = vendorFilter(payments as any) as typeof payments;
+    if (timeMode === 'all') return scoped;
     if (timeMode === 'month') {
       const f = startOfMonth(new Date(filterYear, filterMonth, 1));
       const t = endOfMonth(f);
-      return payments.filter(p => {
+      return scoped.filter(p => {
         const d = new Date(p.payment_date);
         return d >= f && d <= t;
       });
     }
     const f = startOfYear(new Date(filterYear, 0, 1));
     const t = endOfYear(f);
-    return payments.filter(p => {
+    return scoped.filter(p => {
       const d = new Date(p.payment_date);
       return d >= f && d <= t;
     });
-  }, [payments, timeMode, filterMonth, filterYear]);
+  }, [payments, timeMode, filterMonth, filterYear, vendorFilter]);
 
   const paidPayments = filteredPayments.filter(p => p.status === 'paid');
   const pendingPayments = filteredPayments.filter(p => p.status === 'pending');
