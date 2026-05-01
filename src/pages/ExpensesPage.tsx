@@ -319,7 +319,7 @@ export default function ExpensesPage() {
                       <TableCell data-label="Date">{format(new Date(exp.expense_date), 'dd MMM yyyy')}</TableCell>
                       <TableCell data-label="Category">{exp.category ? <Badge variant="secondary">{exp.category}</Badge> : '—'}</TableCell>
                       <TableCell data-label="Actions" className="text-right actions-cell">
-                        <Button variant="ghost" size="icon" onClick={() => deleteExpense.mutateAsync(exp.id)}>
+                        <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => deleteExpense.mutateAsync(exp.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>
