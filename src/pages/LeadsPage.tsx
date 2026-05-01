@@ -52,6 +52,9 @@ export default function LeadsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { leads, isLoading, addLead, updateLeadStatus, deleteLead, convertToMember } = useLeads();
   const { data: plans } = usePlans();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('leads', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
 
   // Add lead dialog
   const [open, setOpen] = useState(false);
