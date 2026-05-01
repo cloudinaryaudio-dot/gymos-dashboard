@@ -161,16 +161,17 @@ export default function LeadsPage() {
 
   // Stats over period (all leads in active time window, ignoring status filter)
   const periodLeads = useMemo(() => {
-    if (mode === 'all') return leads;
+    const scoped = vendorFilter(leads as any) as typeof leads;
+    if (mode === 'all') return scoped;
     if (mode === 'month') {
       const f = startOfMonth(new Date(year, month, 1));
       const t = endOfMonth(f);
-      return leads.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
+      return scoped.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
     }
     const f = startOfYear(new Date(year, 0, 1));
     const t = endOfYear(f);
-    return leads.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
-  }, [leads, mode, month, year]);
+    return scoped.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
+  }, [leads, mode, month, year, vendorFilter]);
 
   const totalLeads = periodLeads.length;
   const convertedLeads = periodLeads.filter(l => l.status === 'joined').length;
