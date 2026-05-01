@@ -228,7 +228,8 @@ export default function PaymentsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      title="Mark as Paid"
+                      disabled={!canEdit}
+                      title={!canEdit ? 'View only' : 'Mark as Paid'}
                       onClick={() => setConfirmAction({ type: 'mark-paid', payment: p })}
                     >
                       <CheckCircle className="h-4 w-4 text-primary" />
@@ -237,7 +238,8 @@ export default function PaymentsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    title="Delete Payment"
+                    disabled={!canEdit}
+                    title={!canEdit ? 'View only' : 'Delete Payment'}
                     onClick={() => setConfirmAction({ type: 'delete', payment: p })}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
