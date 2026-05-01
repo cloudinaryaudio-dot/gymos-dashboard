@@ -42,6 +42,9 @@ export default function ExpensesPage() {
   const createExpense = useCreateExpense();
   const deleteExpense = useDeleteExpense();
   const { toast } = useToast();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('expenses', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
 
   // dialog
   const [dialogOpen, setDialogOpen] = useState(false);
