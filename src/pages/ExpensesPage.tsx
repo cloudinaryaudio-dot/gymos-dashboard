@@ -134,7 +134,7 @@ export default function ExpensesPage() {
       }
       return true;
     });
-  }, [expenses, mode, selMonth, selYear, filterCategory, search]);
+  }, [expenses, mode, selMonth, selYear, filterCategory, search, vendorFilter]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
