@@ -376,9 +376,9 @@ export default function MembersPage() {
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/members/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Members Dashboard
           </Button>
-          <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+          <Dialog open={quickAddOpen} onOpenChange={(o) => { if (o && !canEdit) return; setQuickAddOpen(o); }}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
+              <Button variant="outline" className="w-full sm:w-auto" disabled={!canEdit || !plans || plans.length === 0} title={!canEdit ? 'You do not have permission' : undefined}>
                 <Zap className="h-4 w-4 mr-2" /> Quick Add
               </Button>
             </DialogTrigger>
