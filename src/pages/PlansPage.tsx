@@ -159,16 +159,19 @@ export default function PlansPage() {
     <div className="space-y-6 max-w-full">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Plans</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Plans
+            <ViewOnlyPill module="settings" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your membership plans</p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/plans/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Plans Dashboard
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { if (open && !canEdit) return; setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
+              <Button className="w-full sm:w-auto" disabled={!canEdit} title={!canEdit ? 'You do not have permission' : undefined}><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
