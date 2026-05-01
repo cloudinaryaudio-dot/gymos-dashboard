@@ -372,6 +372,7 @@ export default function MembersPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/members/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Members Dashboard
           </Button>
