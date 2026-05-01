@@ -119,7 +119,8 @@ export default function ExpensesPage() {
   // filter by period + search + category
   const filtered = useMemo(() => {
     if (!expenses) return [];
-    return expenses.filter(e => {
+    const scoped = vendorFilter(expenses as any) as typeof expenses;
+    return scoped.filter(e => {
       const d = new Date(e.expense_date);
       if (mode === 'month') {
         if (d.getMonth() + 1 !== selMonth || d.getFullYear() !== selYear) return false;
