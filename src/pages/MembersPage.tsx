@@ -249,7 +249,7 @@ export default function MembersPage() {
     const in30Str = in30.toISOString().slice(0, 10);
     const q = debouncedSearch.trim().toLowerCase();
 
-    let list = members.filter(m => {
+    let list = scoped.filter(m => {
       if (statusFilter === 'active' && m.expiry_date < todayStr) return false;
       if (statusFilter === 'expired' && m.expiry_date >= todayStr) return false;
       if (statusFilter === 'overdue') {
