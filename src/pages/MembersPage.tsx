@@ -349,7 +349,10 @@ export default function MembersPage() {
     <div className="space-y-6 max-w-full">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Members</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Members
+            <ViewOnlyPill module="members" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Manage your gym members
             {(expiringCount > 0 || expiredCount > 0) && (
