@@ -146,6 +146,7 @@ export default function PlansPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to delete plans.', variant: 'destructive' }); return; }
     try {
       await deletePlan.mutateAsync(id);
       toast({ title: 'Plan deleted!' });
