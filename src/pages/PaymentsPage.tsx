@@ -139,6 +139,7 @@ export default function PaymentsPage() {
 
   const handleConfirm = async () => {
     if (!confirmAction) return;
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to modify payments.', variant: 'destructive' }); setConfirmAction(null); return; }
     try {
       if (confirmAction.type === 'mark-paid') {
         await updateStatus.mutateAsync({ id: confirmAction.payment.id, status: 'paid' });
