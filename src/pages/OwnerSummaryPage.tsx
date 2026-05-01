@@ -215,7 +215,52 @@ export default function OwnerSummaryPage() {
         </div>
       </div>
 
-      {isLoading || !k ? (
+      {isSuperAdmin && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Vendors Overview</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <div className="responsive-card-table"><Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Active Members</TableHead>
+                  <TableHead>Overdue %</TableHead>
+                  <TableHead className="text-right">Lock</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vendorRows.map(({ vendor, active, revenue, overduePct }) => {
+                  const locks = (() => { try { return JSON.parse(localStorage.getItem('gymos_vendor_locks') || '{}'); } catch { return {}; } })();
+                  void demo.changeTick; // re-evaluate when vendor lock state changes
+                  const isLocked = !!locks[vendor.id];
+                  return (
+                    <TableRow key={vendor.id}>
+                      <TableCell data-label="Vendor" className="font-medium">
+                        {vendor.name} <span className="text-muted-foreground text-xs">· {vendor.city}</span>
+                      </TableCell>
+                      <TableCell data-label="Revenue">₹{revenue.toLocaleString()}</TableCell>
+                      <TableCell data-label="Active Members">{active}</TableCell>
+                      <TableCell data-label="Overdue %">
+                        <Badge variant={overduePct > 20 ? 'destructive' : 'secondary'}>{overduePct}%</Badge>
+                      </TableCell>
+                      <TableCell data-label="Lock" className="text-right">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span className="text-xs text-muted-foreground">{isLocked ? 'Locked' : 'Unlocked'}</span>
+                          <Switch
+                            checked={isLocked}
+                            onCheckedChange={(v) => demo.setVendorLocked(vendor.id, v)}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table></div>
+          </CardContent>
+        </Card>
+      )}
         <div className="text-muted-foreground">Loading…</div>
       ) : (
         <>
