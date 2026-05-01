@@ -103,6 +103,7 @@ function KpiCard({
 
 export default function OwnerSummaryPage() {
   const navigate = useNavigate();
+  const demo = useDemoMode();
   const [rangeKey, setRangeKey] = useState<RangeKey>('month');
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
