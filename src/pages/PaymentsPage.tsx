@@ -82,6 +82,7 @@ export default function PaymentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to record payments.', variant: 'destructive' }); return; }
     try {
       await createPayment.mutateAsync({
         member_id: memberId,
