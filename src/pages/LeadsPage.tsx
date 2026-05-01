@@ -153,7 +153,7 @@ export default function LeadsPage() {
       return 0;
     });
     return rows;
-  }, [leads, mode, month, year, filter, search, sortKey, sortDir]);
+  }, [leads, mode, month, year, filter, search, sortKey, sortDir, vendorFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
