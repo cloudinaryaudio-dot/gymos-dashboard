@@ -13,6 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Receipt, Search, ArrowUpDown, BarChart3, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 const DEFAULT_CATEGORIES = ['Rent', 'Salaries', 'Equipment', 'Utilities', 'Maintenance', 'Marketing', 'Other'];
 const PAGE_SIZE = 15;
