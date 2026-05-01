@@ -240,6 +240,7 @@ export default function MembersPage() {
 
   const processed = useMemo(() => {
     if (!members) return [] as Member[];
+    const scoped = vendorFilter(members as any) as Member[];
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().slice(0, 10);
     const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
