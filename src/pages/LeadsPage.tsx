@@ -212,16 +212,22 @@ export default function LeadsPage() {
     <div className="space-y-6 max-w-full">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Lead Pipeline</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Lead Pipeline
+            <ViewOnlyPill module="leads" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">Track and convert potential members</p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:gap-2 gap-2">
+          <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/leads/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" />Leads Dashboard
           </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(o) => { if (o && !canEdit) return; setOpen(o); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Lead</Button>
+              <Button className="w-full sm:w-auto" disabled={!canEdit} title={!canEdit ? 'You do not have permission' : undefined}>
+                <Plus className="h-4 w-4 mr-2" />Add Lead
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Lead</DialogTitle></DialogHeader>
