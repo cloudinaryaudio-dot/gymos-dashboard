@@ -307,18 +307,22 @@ export default function PaymentsPage() {
     <div className="space-y-6 max-w-full">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold font-display">Payments</h1>
+            <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+              Payments
+              <ViewOnlyPill module="payments" />
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">Track all payment transactions</p>
           </div>
           <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
+            <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
             <Link to="/app/payments/dashboard" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full sm:w-auto">
                 <BarChart3 className="h-4 w-4 mr-2" />Payments Dashboard
               </Button>
             </Link>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { if (o && !canEdit) return; setDialogOpen(o); }}>
               <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto" disabled={!members || members.length === 0}>
+                <Button className="w-full sm:w-auto" disabled={!canEdit || !members || members.length === 0} title={!canEdit ? 'You do not have permission' : undefined}>
                   <Plus className="h-4 w-4 mr-2" />Add Payment
                 </Button>
               </DialogTrigger>
