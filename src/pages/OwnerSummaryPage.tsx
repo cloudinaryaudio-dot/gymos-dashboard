@@ -122,6 +122,23 @@ export default function OwnerSummaryPage() {
   const { data: payments = [] } = useQuery({ queryKey: ['payments'], queryFn: ds.getPayments });
   const { data: leads = [] } = useQuery({ queryKey: ['leads'], queryFn: ds.getLeads });
 
+  // Super-admin: per-vendor overview (demo mode only).
+  const isSuperAdmin = demo.isDemo && demo.currentUser?.role === 'super_admin';
+  const vendorRows = useMemo(() => {
+    if (!isSuperAdmin) return [];
+    return demo.vendors.map(v => {
+      const vMembers = (members as any[]).filter(m => m.vendor_id === v.id);
+      const vPayments = (payments as any[]).filter(p => p.vendor_id === v.id);
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const active = vMembers.filter(m => m.expiry_date >= todayStr).length;
+      const revenue = vPayments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+      const overdue = vPayments.filter(p => p.status === 'overdue').length;
+      const total = vPayments.length || 1;
+      const overduePct = Math.round((overdue / total) * 100);
+      return { vendor: v, active, revenue, overduePct };
+    });
+  }, [isSuperAdmin, demo.vendors, members, payments]);
+
   const today = new Date().toISOString().slice(0, 10);
   const sevenDays = new Date(); sevenDays.setDate(sevenDays.getDate() + 7);
   const sevenStr = sevenDays.toISOString().slice(0, 10);
