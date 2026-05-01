@@ -309,6 +309,7 @@ export default function MembersPage() {
 
 
   const handleSubmit = async (data: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to modify members.', variant: 'destructive' }); return; }
     try {
       if (editingMember) {
         await updateMember.mutateAsync({ id: editingMember.id, ...data });
