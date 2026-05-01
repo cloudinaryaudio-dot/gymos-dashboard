@@ -20,6 +20,9 @@ import {
 } from 'lucide-react';
 import { format, addDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 const statusConfig: Record<string, { color: string; bg: string; border: string }> = {
   new: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
