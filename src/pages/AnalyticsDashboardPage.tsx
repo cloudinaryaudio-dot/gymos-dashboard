@@ -122,6 +122,8 @@ export default function AnalyticsDashboardPage() {
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
   const { leads = [] } = useLeads();
+  const { isDemo, can } = useDemoMode();
+  const { vendorId: vfId, setVendorId: setVfId } = useDemoVendorFilter();
 
   const [tab, setTab] = useState('overview');
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
