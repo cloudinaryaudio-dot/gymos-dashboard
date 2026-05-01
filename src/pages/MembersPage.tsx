@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
 import { AddPaymentDialog } from '@/components/AddPaymentDialog';
 import { ReminderDialog, whatsappDirect } from '@/components/ReminderDialog';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 type SortKey = 'name' | 'start_date' | 'expiry_date' | 'plan' | 'status';
 type SortDir = 'asc' | 'desc';
