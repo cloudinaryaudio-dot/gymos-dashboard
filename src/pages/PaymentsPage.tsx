@@ -62,6 +62,9 @@ export default function PaymentsPage() {
   const deletePayment = useDeletePayment();
   const updateStatus = useUpdatePaymentStatus();
   const { toast } = useToast();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('payments', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [memberId, setMemberId] = useState('');
   const [amount, setAmount] = useState('');
