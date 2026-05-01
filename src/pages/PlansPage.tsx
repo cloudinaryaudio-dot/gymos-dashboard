@@ -219,10 +219,10 @@ export default function PlansPage() {
                     </TableCell>
                     <TableCell data-label="Actions" className="text-right actions-cell">
                       <div className="inline-flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingPlan(plan); setDialogOpen(true); }}>
+                       <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => { setEditingPlan(plan); setDialogOpen(true); }}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(plan.id)}>
+                        <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => handleDelete(plan.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
