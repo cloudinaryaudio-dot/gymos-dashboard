@@ -174,20 +174,26 @@ export default function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Expenses</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Expenses
+            <ViewOnlyPill module="expenses" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {periodLabel}: <span className="text-foreground font-semibold">₹{totalForPeriod.toLocaleString()}</span>
             <span className="text-muted-foreground"> · {filtered.length} entries</span>
           </p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/expenses/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Expenses Dashboard
           </Button>
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setCatDialogOpen(true)}>Manage Categories</Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Button variant="outline" className="w-full sm:w-auto" disabled={!canEdit} onClick={() => setCatDialogOpen(true)}>Manage Categories</Button>
+          <Dialog open={dialogOpen} onOpenChange={(o) => { if (o && !canEdit) return; setDialogOpen(o); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Expense</Button>
+              <Button className="w-full sm:w-auto" disabled={!canEdit} title={!canEdit ? 'You do not have permission' : undefined}>
+                <Plus className="h-4 w-4 mr-2" />Add Expense
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Expense</DialogTitle></DialogHeader>
