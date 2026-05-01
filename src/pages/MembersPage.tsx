@@ -327,6 +327,7 @@ export default function MembersPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to delete members.', variant: 'destructive' }); return; }
     try {
       await deleteMember.mutateAsync(id);
       toast({ title: 'Member deleted!' });
