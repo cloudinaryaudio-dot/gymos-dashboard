@@ -129,6 +129,7 @@ export default function PlansPage() {
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
   const handleSubmit = async (data: { name: string; price: number; duration_days: number; category: string; benefits: string[]; is_highlighted: boolean; show_on_homepage: boolean }) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to modify plans.', variant: 'destructive' }); return; }
     try {
       if (editingPlan) {
         await updatePlan.mutateAsync({ id: editingPlan.id, ...data });
