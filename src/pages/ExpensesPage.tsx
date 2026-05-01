@@ -102,6 +102,7 @@ export default function ExpensesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to add expenses.', variant: 'destructive' }); return; }
     try {
       await createExpense.mutateAsync({
         title, amount: parseFloat(amount), expense_date: date,
