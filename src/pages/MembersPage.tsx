@@ -201,6 +201,10 @@ export default function MembersPage() {
   const [paymentMember, setPaymentMember] = useState<Member | undefined>();
   const [reminderMember, setReminderMember] = useState<Member | undefined>();
 
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('members', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
+
   // ─── URL-driven state ───
   const statusFilter = (searchParams.get('status') ?? 'all') as 'all' | 'active' | 'expired' | 'overdue';
   const planFilter = searchParams.get('plan') ?? 'all';
