@@ -393,9 +393,9 @@ export default function MembersPage() {
               )}
             </DialogContent>
           </Dialog>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingMember(undefined); }}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { if (open && !canEdit) return; setDialogOpen(open); if (!open) setEditingMember(undefined); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
+              <Button className="w-full sm:w-auto" disabled={!canEdit || !plans || plans.length === 0} title={!canEdit ? 'You do not have permission' : undefined}>
                 <Plus className="h-4 w-4 mr-2" /> Add Member
               </Button>
             </DialogTrigger>
