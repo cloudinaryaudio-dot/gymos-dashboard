@@ -55,7 +55,7 @@ export function ServicesSection({ content, showViewAll }: Props) {
           <div className="text-center mt-12">
             <Link to="/services">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-                <Button variant="outline" size="lg" className="border-ws-border-light bg-ws-card/50 text-ws-text hover:bg-ws-border rounded-xl h-12 px-8 font-semibold">
+                <Button variant="outline" size="lg" className="rounded-xl h-12 px-8 font-semibold shadow-lg shadow-primary/20" style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }} >
                   View All Services <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </motion.div>

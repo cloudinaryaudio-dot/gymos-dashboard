@@ -57,19 +57,19 @@ export default function Dashboard() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <SetupBanner />
 
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold font-display">Analytics Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
+          <h1 className="text-xl sm:text-2xl font-bold font-display">Analytics Dashboard</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-1 sm:flex sm:items-center sm:gap-2 sm:flex-wrap gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0">
                 <Database className="mr-2 h-4 w-4" /> Load Demo Data
               </Button>
             </AlertDialogTrigger>
@@ -87,7 +87,7 @@ export default function Dashboard() {
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 text-destructive border-destructive/30 hover:bg-destructive/10">
                 <RotateCcw className="mr-2 h-4 w-4" /> Reset Data
               </Button>
             </AlertDialogTrigger>
@@ -105,7 +105,7 @@ export default function Dashboard() {
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 text-destructive border-destructive/30 hover:bg-destructive/10">
                 <Trash2 className="mr-2 h-4 w-4" /> Clear Local Data
               </Button>
             </AlertDialogTrigger>
@@ -123,15 +123,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-6">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <TabsList className="bg-muted">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-4 md:space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 md:flex-wrap">
+          <TabsList className="bg-muted w-full md:w-auto grid grid-cols-4 md:inline-flex">
             <TabsTrigger value="today">Today</TabsTrigger>
             <TabsTrigger value="weekly">Weekly</TabsTrigger>
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
             <TabsTrigger value="yearly">Yearly</TabsTrigger>
           </TabsList>
-          <div>
+          <div className="w-full md:w-auto">
             {tab === 'today' && <TodayPicker date={day} onChange={setDay} />}
             {tab === 'weekly' && <WeekPicker weekStart={week} onChange={setWeek} />}
             {tab === 'monthly' && <MonthPicker month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />}

@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BrandingProvider } from "./components/BrandingProvider";
+import { DemoModeProvider } from "./demo/DemoModeContext";
+import { DemoQuerySync } from "./demo/DemoQuerySync";
 import LandingPage from "./pages/LandingPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import MembersPage from "./pages/MembersPage";
@@ -33,6 +35,9 @@ import PublicProductsPage from "./pages/PublicProductsPage";
 import PublicProductDetailPage from "./pages/PublicProductDetailPage";
 import OwnerSummaryPage from "./pages/OwnerSummaryPage";
 import InvoiceSettingsPage from "./pages/InvoiceSettingsPage";
+import RecycleBinPage from "./pages/RecycleBinPage";
+import { useEffect } from "react";
+import { runRecycleCleanup } from "./services/dataService";
 
 const queryClient = new QueryClient();
 
@@ -59,18 +64,31 @@ function AppLayout() {
         <Route path="contact" element={<ContactSettingsPage />} />
         <Route path="settings" element={<BrandingSettingsPage />} />
         <Route path="settings/invoice" element={<InvoiceSettingsPage />} />
+        <Route path="recycle" element={<RecycleBinPage />} />
       </Routes>
     </DashboardLayout>
   );
 }
 
-const App = () => (
+const App = () => {
+  // Run recycle bin cleanup on app load (purges items >24h old)
+  useEffect(() => {
+    try { runRecycleCleanup(); } catch (e) { console.warn('[recycle] cleanup failed', e); }
+    const interval = setInterval(() => {
+      try { runRecycleCleanup(); } catch {}
+    }, 60 * 60 * 1000); // hourly
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
-        <BrandingProvider>
-          <Routes>
+        <DemoModeProvider>
+          <DemoQuerySync />
+          <BrandingProvider>
+            <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/plans" element={<PublicPlansPage />} />
@@ -83,11 +101,13 @@ const App = () => (
             <Route path="/products/:id" element={<PublicProductDetailPage />} />
             <Route path="/app/*" element={<AppLayout />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrandingProvider>
+            </Routes>
+          </BrandingProvider>
+        </DemoModeProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+};
 
 export default App;

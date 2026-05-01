@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, CreditCard, UserPlus, Receipt, Globe, Settings, Dumbbell, Package, MessageCircle, Sparkles, BarChart3, FileText,
+  LayoutDashboard, Users, CreditCard, UserPlus, Receipt, Globe, Settings, Dumbbell, Package, MessageCircle, Sparkles, BarChart3, FileText, Trash2,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -20,12 +22,20 @@ const navItems = [
   { title: 'Contact', url: '/app/contact', icon: MessageCircle },
   { title: 'Settings', url: '/app/settings', icon: Settings },
   { title: 'Invoice Template', url: '/app/settings/invoice', icon: FileText },
+  { title: 'Recycle Bin', url: '/app/recycle', icon: Trash2 },
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
   const { resolved } = useGymSettings();
+  const location = useLocation();
+
+  // Auto-close mobile sidebar on route change
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   return (
     <Sidebar collapsible="icon">

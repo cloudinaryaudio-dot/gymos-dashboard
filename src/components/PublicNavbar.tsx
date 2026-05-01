@@ -130,12 +130,12 @@ export function PublicNavbar({ config, brandName = 'GymOS', brandLogo, navLinks,
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-400 ${
-          mobileOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+        className={`md:hidden overflow-y-auto transition-all duration-400 ${
+          mobileOpen ? 'max-h-[calc(100vh-4.5rem)] opacity-100' : 'max-h-0 opacity-0'
         }`}
         style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
       >
-        <div className="bg-ws-card-alt border-t border-ws-border-dim px-6 py-6 space-y-1">
+        <div className="bg-ws-card-alt border-t border-ws-border-dim px-6 pt-6 pb-8 flex flex-col gap-2">
           {navLinks.map((link, i) => (
             <button
               key={link.id}

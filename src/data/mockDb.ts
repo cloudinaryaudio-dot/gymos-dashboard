@@ -30,18 +30,22 @@ export interface PlanRow {
 export interface MemberRow {
   id: string; user_id: string; name: string; phone: string; plan_id: string | null;
   start_date: string; expiry_date: string; status: string; created_at: string;
+  is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface PaymentRow {
   id: string; user_id: string; member_id: string; amount: number; payment_date: string;
   method: string; status: string; note: string | null; created_at: string;
+  is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface ExpenseRow {
   id: string; user_id: string; title: string; amount: number; expense_date: string;
   category: string | null; created_at: string;
+  is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface LeadRow {
   id: string; user_id: string; name: string; phone: string; fitness_goal: string | null;
   status: string; created_at: string; updated_at: string;
+  is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface WebsiteContentRow {
   id: string; user_id: string; section_key: string; is_enabled: boolean;
@@ -154,6 +158,8 @@ export function createSeedData(): MockDb {
     'Riya Malhotra', 'Manish Tiwari', 'Kavita Das', 'Nikhil Bhat', 'Anita Saxena',
     'Deepak Soni', 'Swati Pandey', 'Amit Jha', 'Ishita Banerjee', 'Rajesh Yadav',
     'Tanvi Mishra', 'Suresh Kulkarni', 'Pallavi Deshmukh',
+    'Harshad Pawar', 'Lavanya Krishnan', 'Mohit Bansal', 'Nandini Pillai', 'Omkar Jadhav',
+    'Preeti Chawla', 'Sanjay Trivedi',
   ];
 
   const members: MemberRow[] = indianNames.map((name, i) => {
@@ -217,6 +223,25 @@ export function createSeedData(): MockDb {
       });
     }
   }
+
+  // Per-member renewal history — guarantee 2-5 payments per member, spread across last 6 months
+  members.forEach((m, i) => {
+    const plan = plans.find(p => p.id === m.plan_id)!;
+    const extraCount = 1 + (i % 4); // 1..4 extra → totals 2..5 incl. current cycle
+    for (let k = 0; k < extraCount; k++) {
+      const monthsBack = 1 + ((i + k * 2) % 6);
+      const monthDate = subMonths(now, monthsBack);
+      const day = 3 + ((i * 7 + k * 11) % 25);
+      const pDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+      const pickStatus = (i + k) % 10 < 7 ? 'paid' : (i + k) % 10 < 9 ? 'pending' : 'overdue';
+      payments.push({
+        id: genId(), user_id: DEMO_USER_ID, member_id: m.id, amount: plan.price,
+        payment_date: format(pDate, 'yyyy-MM-dd'), method: methods[(i + k) % methods.length],
+        status: pickStatus, note: pickStatus === 'overdue' ? 'Renewal overdue' : 'Member renewal',
+        created_at: pDate.toISOString(),
+      });
+    }
+  });
 
   // Today payment so Today tab is non-empty
   if (members.length > 0) {
@@ -289,11 +314,18 @@ export function createSeedData(): MockDb {
     { name: 'Aditi Sharma', phone: '+91 9876543225', goal: 'General Fitness', status: 'new' },
     { name: 'Gaurav Saxena', phone: '+91 9876543226', goal: 'Strength Training', status: 'new' },
     { name: 'Bhavna Puri', phone: '+91 9876543227', goal: 'Weight Loss', status: 'contacted' },
+    { name: 'Aniket Wagh', phone: '+91 9876543228', goal: 'Muscle Gain', status: 'new' },
+    { name: 'Charul Saini', phone: '+91 9876543229', goal: 'Yoga', status: 'contacted' },
+    { name: 'Devansh Rana', phone: '+91 9876543230', goal: 'Strength Training', status: 'visit_scheduled' },
+    { name: 'Esha Bhardwaj', phone: '+91 9876543231', goal: 'Weight Loss', status: 'joined' },
+    { name: 'Farhan Qureshi', phone: '+91 9876543232', goal: 'General Fitness', status: 'lost' },
+    { name: 'Gitanjali Roy', phone: '+91 9876543233', goal: 'Yoga', status: 'contacted' },
+    { name: 'Hardik Vyas', phone: '+91 9876543234', goal: 'Muscle Gain', status: 'joined' },
   ];
   const leads: LeadRow[] = leadData.map((l, i) => ({
     id: genId(), user_id: DEMO_USER_ID, name: l.name, phone: l.phone,
     fitness_goal: l.goal, status: l.status,
-    created_at: subDays(now, Math.floor(Math.random() * 30)).toISOString(),
+    created_at: subDays(now, Math.floor(Math.random() * 180)).toISOString(),
     updated_at: nowIso,
   }));
 

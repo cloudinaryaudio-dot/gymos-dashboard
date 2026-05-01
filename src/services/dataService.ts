@@ -1,9 +1,15 @@
 /**
  * Data service abstraction layer.
  * All data operations go through here. Currently backed by local mock data.
- * Switch DATA_SOURCE to 'supabase' for production migration.
+ *
+ * When demo mode is active (`shouldUseDemo()` true), every function
+ * delegates to `src/demo/demoDataService.ts`, which reads from the
+ * multi-vendor seedDemoData fixture in localStorage and enforces RBAC.
  */
 import { getDb, setDb, genId, type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow, type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow } from '@/data/mockDb';
+import * as demo from '@/demo/demoDataService';
+
+const useDemo = () => demo.shouldUseDemo();
 
 // Simulate async
 const delay = () => new Promise<void>(r => setTimeout(r, 50));
@@ -13,12 +19,13 @@ function save(d: MockDb) { setDb(d); }
 
 // ─── Plans ───
 export async function getPlans(): Promise<PlanRow[]> {
+  if (useDemo()) return demo.getPlans() as any;
   await delay();
   return [...db().plans].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export async function createPlan(p: { name: string; price: number; duration_days: number; category?: string; benefits?: string[]; is_highlighted?: boolean; show_on_homepage?: boolean }): Promise<PlanRow> {
-  await delay();
+  if (useDemo()) return demo.createPlan(p) as any;
   const row: PlanRow = { id: genId(), user_id: 'demo-user', ...p, created_at: new Date().toISOString() };
   const d = db();
   d.plans.push(row);
@@ -27,7 +34,7 @@ export async function createPlan(p: { name: string; price: number; duration_days
 }
 
 export async function updatePlan(id: string, p: { name: string; price: number; duration_days: number; category?: string; benefits?: string[]; is_highlighted?: boolean; show_on_homepage?: boolean }): Promise<PlanRow> {
-  await delay();
+  if (useDemo()) return demo.updatePlan(id, p) as any;
   const d = db();
   const idx = d.plans.findIndex(x => x.id === id);
   if (idx === -1) throw new Error('Plan not found');
@@ -37,6 +44,7 @@ export async function updatePlan(id: string, p: { name: string; price: number; d
 }
 
 export async function deletePlan(id: string): Promise<void> {
+  if (useDemo()) return demo.deletePlan(id) as any;
   await delay();
   const d = db();
   d.plans = d.plans.filter(x => x.id !== id);
@@ -45,10 +53,11 @@ export async function deletePlan(id: string): Promise<void> {
 
 // ─── Members ───
 export async function getMembers(): Promise<(MemberRow & { plans?: { name: string; duration_days: number } | null })[]> {
-  await delay();
+  if (useDemo()) return demo.getMembers() as any;
   const d = db();
   const today = new Date().toISOString().split('T')[0];
   return d.members
+    .filter(m => !m.is_deleted)
     .map(m => {
       const plan = d.plans.find(p => p.id === m.plan_id);
       return {
@@ -61,8 +70,8 @@ export async function getMembers(): Promise<(MemberRow & { plans?: { name: strin
 }
 
 export async function createMember(m: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }): Promise<MemberRow> {
-  await delay();
-  const row: MemberRow = { id: genId(), user_id: 'demo-user', ...m, status: 'active', created_at: new Date().toISOString() };
+  if (useDemo()) return demo.createMember(m) as any;
+  const row: MemberRow = { id: genId(), user_id: 'demo-user', ...m, status: 'active', created_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.members.push(row);
   save(d);
@@ -70,7 +79,7 @@ export async function createMember(m: { name: string; phone: string; plan_id: st
 }
 
 export async function updateMember(id: string, m: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }): Promise<MemberRow> {
-  await delay();
+  if (useDemo()) return demo.updateMember(id, m) as any;
   const d = db();
   const idx = d.members.findIndex(x => x.id === id);
   if (idx === -1) throw new Error('Member not found');
@@ -81,17 +90,16 @@ export async function updateMember(id: string, m: { name: string; phone: string;
 }
 
 export async function deleteMember(id: string): Promise<void> {
-  await delay();
-  const d = db();
-  d.members = d.members.filter(x => x.id !== id);
-  save(d);
+  if (useDemo()) return demo.deleteMember(id) as any;
+  await softDelete('member', id);
 }
 
 // ─── Payments ───
 export async function getPayments(): Promise<(PaymentRow & { members?: { name: string } | null })[]> {
-  await delay();
+  if (useDemo()) return demo.getPayments() as any;
   const d = db();
   return d.payments
+    .filter(p => !p.is_deleted)
     .map(p => {
       const member = d.members.find(m => m.id === p.member_id);
       return { ...p, members: member ? { name: member.name } : null };
@@ -100,8 +108,8 @@ export async function getPayments(): Promise<(PaymentRow & { members?: { name: s
 }
 
 export async function createPayment(p: { member_id: string; amount: number; payment_date: string; method: string; status: string; note?: string }): Promise<PaymentRow> {
-  await delay();
-  const row: PaymentRow = { id: genId(), user_id: 'demo-user', ...p, note: p.note || null, created_at: new Date().toISOString() };
+  if (useDemo()) return demo.createPayment(p) as any;
+  const row: PaymentRow = { id: genId(), user_id: 'demo-user', ...p, note: p.note || null, created_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.payments.push(row);
   save(d);
@@ -109,13 +117,12 @@ export async function createPayment(p: { member_id: string; amount: number; paym
 }
 
 export async function deletePayment(id: string): Promise<void> {
-  await delay();
-  const d = db();
-  d.payments = d.payments.filter(x => x.id !== id);
-  save(d);
+  if (useDemo()) return demo.deletePayment(id) as any;
+  await softDelete('payment', id);
 }
 
 export async function updatePaymentStatus(id: string, status: string): Promise<void> {
+  if (useDemo()) return demo.updatePaymentStatus(id, status) as any;
   await delay();
   const d = db();
   const idx = d.payments.findIndex(x => x.id === id);
@@ -127,13 +134,14 @@ export async function updatePaymentStatus(id: string, status: string): Promise<v
 
 // ─── Expenses ───
 export async function getExpenses(): Promise<ExpenseRow[]> {
+  if (useDemo()) return demo.getExpenses() as any;
   await delay();
-  return [...db().expenses].sort((a, b) => b.expense_date.localeCompare(a.expense_date));
+  return [...db().expenses].filter(e => !e.is_deleted).sort((a, b) => b.expense_date.localeCompare(a.expense_date));
 }
 
 export async function createExpense(e: { title: string; amount: number; expense_date: string; category?: string }): Promise<ExpenseRow> {
-  await delay();
-  const row: ExpenseRow = { id: genId(), user_id: 'demo-user', ...e, category: e.category || null, created_at: new Date().toISOString() };
+  if (useDemo()) return demo.createExpense(e) as any;
+  const row: ExpenseRow = { id: genId(), user_id: 'demo-user', ...e, category: e.category || null, created_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.expenses.push(row);
   save(d);
@@ -141,21 +149,20 @@ export async function createExpense(e: { title: string; amount: number; expense_
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  await delay();
-  const d = db();
-  d.expenses = d.expenses.filter(x => x.id !== id);
-  save(d);
+  if (useDemo()) return demo.deleteExpense(id) as any;
+  await softDelete('expense', id);
 }
 
 // ─── Leads ───
 export async function getLeads(): Promise<LeadRow[]> {
+  if (useDemo()) return demo.getLeads() as any;
   await delay();
-  return [...db().leads].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return [...db().leads].filter(l => !l.is_deleted).sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export async function createLead(l: { name: string; phone: string; fitness_goal?: string; status?: string }): Promise<LeadRow> {
-  await delay();
-  const row: LeadRow = { id: genId(), user_id: 'demo-user', ...l, fitness_goal: l.fitness_goal || null, status: l.status || 'new', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  if (useDemo()) return demo.createLead(l) as any;
+  const row: LeadRow = { id: genId(), user_id: 'demo-user', ...l, fitness_goal: l.fitness_goal || null, status: l.status || 'new', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.leads.push(row);
   save(d);
@@ -163,6 +170,7 @@ export async function createLead(l: { name: string; phone: string; fitness_goal?
 }
 
 export async function updateLeadStatus(id: string, status: string): Promise<void> {
+  if (useDemo()) return demo.updateLeadStatus(id, status) as any;
   await delay();
   const d = db();
   const idx = d.leads.findIndex(x => x.id === id);
@@ -174,20 +182,19 @@ export async function updateLeadStatus(id: string, status: string): Promise<void
 }
 
 export async function deleteLead(id: string): Promise<void> {
-  await delay();
-  const d = db();
-  d.leads = d.leads.filter(x => x.id !== id);
-  save(d);
+  if (useDemo()) return demo.deleteLead(id) as any;
+  await softDelete('lead', id);
 }
 
 export async function convertLeadToMember(params: { leadId: string; planId: string; startDate: string; expiryDate: string; name: string; phone: string }): Promise<void> {
-  await delay();
+  if (useDemo()) return demo.convertLeadToMember(params) as any;
   const d = db();
   // Create member
   d.members.push({
     id: genId(), user_id: 'demo-user', name: params.name, phone: params.phone,
     plan_id: params.planId, start_date: params.startDate, expiry_date: params.expiryDate,
     status: 'active', created_at: new Date().toISOString(),
+    is_deleted: false, deleted_at: null,
   });
   // Update lead status
   const idx = d.leads.findIndex(x => x.id === params.leadId);
@@ -196,6 +203,106 @@ export async function convertLeadToMember(params: { leadId: string; planId: stri
     d.leads[idx].updated_at = new Date().toISOString();
   }
   save(d);
+}
+
+// ─── Recycle Bin ───
+export type RecycleEntityType = 'member' | 'payment' | 'lead' | 'expense';
+const RECYCLE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function collectionFor(d: MockDb, type: RecycleEntityType) {
+  switch (type) {
+    case 'member': return d.members;
+    case 'payment': return d.payments;
+    case 'lead': return d.leads;
+    case 'expense': return d.expenses;
+  }
+}
+
+export async function softDelete(type: RecycleEntityType, id: string): Promise<void> {
+  await delay();
+  const d = db();
+  const arr = collectionFor(d, type) as any[];
+  const idx = arr.findIndex((x: any) => x.id === id);
+  if (idx === -1) return;
+  arr[idx].is_deleted = true;
+  arr[idx].deleted_at = new Date().toISOString();
+  save(d);
+}
+
+export async function restoreItem(type: RecycleEntityType, id: string): Promise<void> {
+  await delay();
+  const d = db();
+  const arr = collectionFor(d, type) as any[];
+  const idx = arr.findIndex((x: any) => x.id === id);
+  if (idx === -1) return;
+  arr[idx].is_deleted = false;
+  arr[idx].deleted_at = null;
+  save(d);
+}
+
+export async function permanentDelete(type: RecycleEntityType, id: string): Promise<void> {
+  await delay();
+  const d = db();
+  switch (type) {
+    case 'member': d.members = d.members.filter(x => x.id !== id); break;
+    case 'payment': d.payments = d.payments.filter(x => x.id !== id); break;
+    case 'lead': d.leads = d.leads.filter(x => x.id !== id); break;
+    case 'expense': d.expenses = d.expenses.filter(x => x.id !== id); break;
+  }
+  save(d);
+}
+
+export interface DeletedItem {
+  id: string;
+  type: RecycleEntityType;
+  label: string;
+  subtitle?: string;
+  deleted_at: string;
+  expires_at: string;
+  raw: any;
+}
+
+export async function getDeletedData(): Promise<DeletedItem[]> {
+  await delay();
+  const d = db();
+  const items: DeletedItem[] = [];
+  const pushItem = (type: RecycleEntityType, raw: any, label: string, subtitle?: string) => {
+    if (!raw.is_deleted || !raw.deleted_at) return;
+    const expires = new Date(new Date(raw.deleted_at).getTime() + RECYCLE_TTL_MS).toISOString();
+    items.push({ id: raw.id, type, label, subtitle, deleted_at: raw.deleted_at, expires_at: expires, raw });
+  };
+  d.members.forEach(m => pushItem('member', m, m.name, m.phone));
+  d.payments.forEach(p => {
+    const member = d.members.find(m => m.id === p.member_id);
+    pushItem('payment', p, `₹${p.amount} — ${member?.name ?? 'Unknown'}`, `${p.method} • ${p.payment_date}`);
+  });
+  d.leads.forEach(l => pushItem('lead', l, l.name, l.fitness_goal ?? l.status));
+  d.expenses.forEach(e => pushItem('expense', e, e.title, `₹${e.amount} • ${e.category ?? 'Other'}`));
+  return items.sort((a, b) => b.deleted_at.localeCompare(a.deleted_at));
+}
+
+export async function getActiveData(type: RecycleEntityType): Promise<any[]> {
+  await delay();
+  const d = db();
+  return (collectionFor(d, type) as any[]).filter((x: any) => !x.is_deleted);
+}
+
+export function runRecycleCleanup(): number {
+  const d = db();
+  const now = Date.now();
+  let removed = 0;
+  const sweep = (arr: any[]) => arr.filter((x: any) => {
+    if (!x.is_deleted || !x.deleted_at) return true;
+    const expired = now - new Date(x.deleted_at).getTime() >= RECYCLE_TTL_MS;
+    if (expired) { removed++; return false; }
+    return true;
+  });
+  d.members = sweep(d.members);
+  d.payments = sweep(d.payments);
+  d.leads = sweep(d.leads);
+  d.expenses = sweep(d.expenses);
+  if (removed > 0) save(d);
+  return removed;
 }
 
 // ─── Website Content ───
@@ -275,7 +382,7 @@ export async function upsertContactSettings(updates: Partial<Pick<ContactSetting
 
 // ─── Renew Membership ───
 export async function renewMembership(params: { memberId: string; planId: string; durationDays: number; amount: number; currentExpiry: string; method?: string }): Promise<void> {
-  await delay();
+  if (useDemo()) return demo.renewMembership(params) as any;
   const d = db();
   const today = new Date();
   const expiryBase = new Date(params.currentExpiry) > today ? new Date(params.currentExpiry) : today;
@@ -301,8 +408,16 @@ export async function renewMembership(params: { memberId: string; planId: string
 
 // ─── Dashboard Stats ───
 export async function getDashboardStats() {
+  if (useDemo()) return demo.getDashboardStats() as any;
   await delay();
-  const d = db();
+  const raw = db();
+  const d: MockDb = {
+    ...raw,
+    members: raw.members.filter(m => !m.is_deleted),
+    payments: raw.payments.filter(p => !p.is_deleted),
+    leads: raw.leads.filter(l => !l.is_deleted),
+    expenses: raw.expenses.filter(e => !e.is_deleted),
+  };
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   const monthStart = `${today.slice(0, 7)}-01`;
@@ -367,8 +482,10 @@ export async function getDashboardStats() {
 
 // ─── Revenue Chart ───
 export async function getRevenueChart() {
+  if (useDemo()) return demo.getRevenueChart() as any;
   await delay();
-  const d = db();
+  const raw = db();
+  const d = { ...raw, payments: raw.payments.filter(p => !p.is_deleted) };
   const now = new Date();
   const months: { month: string; revenue: number }[] = [];
 
@@ -386,6 +503,7 @@ export async function getRevenueChart() {
 
 // ─── Setup Detection ───
 export async function hasAnyData(): Promise<boolean> {
+  if (useDemo()) return demo.hasAnyData() as any;
   await delay();
   return db().plans.length > 0;
 }
@@ -446,8 +564,16 @@ function bucketLabelsForRange(from: Date, to: Date, granularity: 'day' | 'month'
 }
 
 export async function getAnalytics(range: AnalyticsRange, granularity: 'day' | 'month' = 'day'): Promise<AnalyticsResult> {
+  if (useDemo()) return demo.getAnalytics(range, granularity) as any;
   await delay();
-  const d = db();
+  const raw = db();
+  const d: MockDb = {
+    ...raw,
+    members: raw.members.filter(m => !m.is_deleted),
+    payments: raw.payments.filter(p => !p.is_deleted),
+    leads: raw.leads.filter(l => !l.is_deleted),
+    expenses: raw.expenses.filter(e => !e.is_deleted),
+  };
   const from = range.from;
   const to = range.to;
   const fromDate = new Date(`${from}T00:00:00`);

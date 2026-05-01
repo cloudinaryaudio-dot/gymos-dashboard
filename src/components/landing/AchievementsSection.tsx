@@ -15,12 +15,13 @@ export function AchievementsSection({ content }: Props) {
   const needsScroll = items.length > 3;
 
   return (
-    <section id="achievements" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt">
-      <div className="max-w-7xl mx-auto">
+    <section id="achievements" className="py-28 px-4 sm:px-6 lg:px-8 bg-ws-card-alt " >
+      <div className="max-w-7xl mx-auto" >
         <SectionHeader
           tag="Trust"
           title={content.title || 'Achievements & Certifications'}
           subtitle={content.subtitle}
+          
         />
         {needsScroll ? (
           <AutoScrollCarousel items={items} />
@@ -88,9 +89,10 @@ function AchievementCard({ item, index }: { item: AchievementsContent['items'][0
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.65, delay: (index % 3) * 0.1, ease: [0.22, 1, 0.36, 1] }}
       className="h-full"
+      
     >
-      <div className="rounded-2xl bg-ws-card border border-ws-border overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 h-full flex flex-col items-center text-center p-8">
-        <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-secondary/20 mb-6 flex items-center justify-center">
+      <div className="rounded-2xl border border-ws-border overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 h-full flex flex-col items-center text-center p-8" style={{ background: 'var(--card-bg)', borderColor: 'var(--card-border)' }} >
+        <div className="relative w-24 h-24 rounded-2xl overflow-hidden mb-6 flex items-center justify-center" >
           {item.image_url ? (
             <img src={item.image_url} alt={item.title} className="w-full h-full object-contain" loading="lazy" />
           ) : (
