@@ -24,6 +24,9 @@ import {
   ResponsiveContainer, LineChart, Line, AreaChart, Area,
   PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 type RangeMode = 'day' | 'week' | 'month' | 'year';
 
@@ -119,6 +122,8 @@ export default function AnalyticsDashboardPage() {
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
   const { leads = [] } = useLeads();
+  const { isDemo, can } = useDemoMode();
+  const { vendorId: vfId, setVendorId: setVfId } = useDemoVendorFilter();
 
   const [tab, setTab] = useState('overview');
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
@@ -333,9 +338,13 @@ export default function AnalyticsDashboardPage() {
       {/* Header — mobile stacks: Title → Buttons → Filters (Tabs) */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+            Dashboard
+            <ViewOnlyPill module="reports" />
+          </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">Unified analytics and business intelligence</p>
         </div>
+        <VendorFilter value={vfId} onChange={setVfId} className="w-full lg:w-auto" />
         <Button size="sm" variant="outline" onClick={handleLoadDemo} className="w-full lg:w-auto justify-center">
           <Database className="mr-2 h-4 w-4" /> Load Demo Data
         </Button>

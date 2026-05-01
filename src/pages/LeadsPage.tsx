@@ -20,6 +20,9 @@ import {
 } from 'lucide-react';
 import { format, addDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 const statusConfig: Record<string, { color: string; bg: string; border: string }> = {
   new: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
@@ -49,6 +52,9 @@ export default function LeadsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { leads, isLoading, addLead, updateLeadStatus, deleteLead, convertToMember } = useLeads();
   const { data: plans } = usePlans();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('leads', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
 
   // Add lead dialog
   const [open, setOpen] = useState(false);
@@ -96,7 +102,7 @@ export default function LeadsPage() {
 
   // Apply filters
   const filtered = useMemo(() => {
-    let rows = [...leads];
+    let rows = vendorFilter([...leads] as any) as typeof leads;
 
     // time
     if (mode === 'month') {
@@ -147,7 +153,7 @@ export default function LeadsPage() {
       return 0;
     });
     return rows;
-  }, [leads, mode, month, year, filter, search, sortKey, sortDir]);
+  }, [leads, mode, month, year, filter, search, sortKey, sortDir, vendorFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -155,16 +161,17 @@ export default function LeadsPage() {
 
   // Stats over period (all leads in active time window, ignoring status filter)
   const periodLeads = useMemo(() => {
-    if (mode === 'all') return leads;
+    const scoped = vendorFilter(leads as any) as typeof leads;
+    if (mode === 'all') return scoped;
     if (mode === 'month') {
       const f = startOfMonth(new Date(year, month, 1));
       const t = endOfMonth(f);
-      return leads.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
+      return scoped.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
     }
     const f = startOfYear(new Date(year, 0, 1));
     const t = endOfYear(f);
-    return leads.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
-  }, [leads, mode, month, year]);
+    return scoped.filter(l => { const d = new Date(l.created_at); return d >= f && d <= t; });
+  }, [leads, mode, month, year, vendorFilter]);
 
   const totalLeads = periodLeads.length;
   const convertedLeads = periodLeads.filter(l => l.status === 'joined').length;
@@ -177,6 +184,7 @@ export default function LeadsPage() {
   }, {} as Record<string, number>);
 
   const handleAdd = () => {
+    if (!canEdit) return;
     if (!name.trim() || !phone.trim()) return;
     addLead.mutate(
       { name: name.trim(), phone: phone.trim(), fitness_goal: goal || undefined },
@@ -204,16 +212,22 @@ export default function LeadsPage() {
     <div className="space-y-6 max-w-full">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Lead Pipeline</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Lead Pipeline
+            <ViewOnlyPill module="leads" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">Track and convert potential members</p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:gap-2 gap-2">
+          <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/leads/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" />Leads Dashboard
           </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(o) => { if (o && !canEdit) return; setOpen(o); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Lead</Button>
+              <Button className="w-full sm:w-auto" disabled={!canEdit} title={!canEdit ? 'You do not have permission' : undefined}>
+                <Plus className="h-4 w-4 mr-2" />Add Lead
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Lead</DialogTitle></DialogHeader>
@@ -417,7 +431,7 @@ export default function LeadsPage() {
                       <td data-label="Phone" className="p-3 text-muted-foreground">{lead.phone}</td>
                       <td data-label="Goal" className="p-3 text-muted-foreground">{lead.fitness_goal ?? '—'}</td>
                       <td data-label="Status" className="p-3">
-                        {isActive ? (
+                        {isActive && canEdit ? (
                           <Select
                             value={lead.status}
                             onValueChange={(v) => updateLeadStatus.mutate({ id: lead.id, status: v as LeadStatus })}
@@ -449,6 +463,7 @@ export default function LeadsPage() {
                               variant="outline"
                               size="sm"
                               className="text-xs h-7"
+                              disabled={!canEdit}
                               onClick={() => updateLeadStatus.mutate({ id: lead.id, status: nextAction.next })}
                             >
                               <nextAction.icon className="h-3 w-3 mr-1" />
@@ -461,6 +476,7 @@ export default function LeadsPage() {
                               variant="default"
                               size="sm"
                               className="text-xs h-7"
+                              disabled={!canEdit}
                               onClick={() => setConvertLead(lead)}
                             >
                               <UserCheck className="h-3 w-3 mr-1" />
@@ -473,6 +489,7 @@ export default function LeadsPage() {
                               variant="ghost"
                               size="sm"
                               className="text-xs h-7 text-muted-foreground"
+                              disabled={!canEdit}
                               onClick={() => updateLeadStatus.mutate({ id: lead.id, status: 'lost' })}
                             >
                               <X className="h-3 w-3 mr-1" />
@@ -480,7 +497,7 @@ export default function LeadsPage() {
                             </Button>
                           )}
 
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteLead.mutate(lead.id)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!canEdit} onClick={() => deleteLead.mutate(lead.id)}>
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </Button>
                         </div>

@@ -35,6 +35,9 @@ import { Plus, Trash2, CheckCircle, CreditCard, BarChart3 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 const PAGE_SIZE = 15;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -59,6 +62,9 @@ export default function PaymentsPage() {
   const deletePayment = useDeletePayment();
   const updateStatus = useUpdatePaymentStatus();
   const { toast } = useToast();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('payments', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [memberId, setMemberId] = useState('');
   const [amount, setAmount] = useState('');
@@ -76,6 +82,7 @@ export default function PaymentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to record payments.', variant: 'destructive' }); return; }
     try {
       await createPayment.mutateAsync({
         member_id: memberId,
@@ -101,22 +108,23 @@ export default function PaymentsPage() {
 
   const filteredPayments = useMemo(() => {
     if (!payments) return [];
-    if (timeMode === 'all') return payments;
+    const scoped = vendorFilter(payments as any) as typeof payments;
+    if (timeMode === 'all') return scoped;
     if (timeMode === 'month') {
       const f = startOfMonth(new Date(filterYear, filterMonth, 1));
       const t = endOfMonth(f);
-      return payments.filter(p => {
+      return scoped.filter(p => {
         const d = new Date(p.payment_date);
         return d >= f && d <= t;
       });
     }
     const f = startOfYear(new Date(filterYear, 0, 1));
     const t = endOfYear(f);
-    return payments.filter(p => {
+    return scoped.filter(p => {
       const d = new Date(p.payment_date);
       return d >= f && d <= t;
     });
-  }, [payments, timeMode, filterMonth, filterYear]);
+  }, [payments, timeMode, filterMonth, filterYear, vendorFilter]);
 
   const paidPayments = filteredPayments.filter(p => p.status === 'paid');
   const pendingPayments = filteredPayments.filter(p => p.status === 'pending');
@@ -131,6 +139,7 @@ export default function PaymentsPage() {
 
   const handleConfirm = async () => {
     if (!confirmAction) return;
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to modify payments.', variant: 'destructive' }); setConfirmAction(null); return; }
     try {
       if (confirmAction.type === 'mark-paid') {
         await updateStatus.mutateAsync({ id: confirmAction.payment.id, status: 'paid' });
@@ -219,7 +228,8 @@ export default function PaymentsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      title="Mark as Paid"
+                      disabled={!canEdit}
+                      title={!canEdit ? 'View only' : 'Mark as Paid'}
                       onClick={() => setConfirmAction({ type: 'mark-paid', payment: p })}
                     >
                       <CheckCircle className="h-4 w-4 text-primary" />
@@ -228,7 +238,8 @@ export default function PaymentsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    title="Delete Payment"
+                    disabled={!canEdit}
+                    title={!canEdit ? 'View only' : 'Delete Payment'}
                     onClick={() => setConfirmAction({ type: 'delete', payment: p })}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -298,18 +309,22 @@ export default function PaymentsPage() {
     <div className="space-y-6 max-w-full">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold font-display">Payments</h1>
+            <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+              Payments
+              <ViewOnlyPill module="payments" />
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">Track all payment transactions</p>
           </div>
           <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
+            <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
             <Link to="/app/payments/dashboard" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full sm:w-auto">
                 <BarChart3 className="h-4 w-4 mr-2" />Payments Dashboard
               </Button>
             </Link>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { if (o && !canEdit) return; setDialogOpen(o); }}>
               <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto" disabled={!members || members.length === 0}>
+                <Button className="w-full sm:w-auto" disabled={!canEdit || !members || members.length === 0} title={!canEdit ? 'You do not have permission' : undefined}>
                   <Plus className="h-4 w-4 mr-2" />Add Payment
                 </Button>
               </DialogTrigger>

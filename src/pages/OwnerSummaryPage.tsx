@@ -15,6 +15,9 @@ import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type RangeKey = 'today' | 'week' | 'month' | 'year';
 
@@ -100,6 +103,7 @@ function KpiCard({
 
 export default function OwnerSummaryPage() {
   const navigate = useNavigate();
+  const demo = useDemoMode();
   const [rangeKey, setRangeKey] = useState<RangeKey>('month');
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
@@ -117,6 +121,23 @@ export default function OwnerSummaryPage() {
   const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: ds.getMembers });
   const { data: payments = [] } = useQuery({ queryKey: ['payments'], queryFn: ds.getPayments });
   const { data: leads = [] } = useQuery({ queryKey: ['leads'], queryFn: ds.getLeads });
+
+  // Super-admin: per-vendor overview (demo mode only).
+  const isSuperAdmin = demo.isDemo && demo.currentUser?.role === 'super_admin';
+  const vendorRows = useMemo(() => {
+    if (!isSuperAdmin) return [];
+    return demo.vendors.map(v => {
+      const vMembers = (members as any[]).filter(m => m.vendor_id === v.id);
+      const vPayments = (payments as any[]).filter(p => p.vendor_id === v.id);
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const active = vMembers.filter(m => m.expiry_date >= todayStr).length;
+      const revenue = vPayments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+      const overdue = vPayments.filter(p => p.status === 'overdue').length;
+      const total = vPayments.length || 1;
+      const overduePct = Math.round((overdue / total) * 100);
+      return { vendor: v, active, revenue, overduePct };
+    });
+  }, [isSuperAdmin, demo.vendors, members, payments]);
 
   const today = new Date().toISOString().slice(0, 10);
   const sevenDays = new Date(); sevenDays.setDate(sevenDays.getDate() + 7);
@@ -193,6 +214,53 @@ export default function OwnerSummaryPage() {
           )}
         </div>
       </div>
+
+      {isSuperAdmin && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Vendors Overview</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <div className="responsive-card-table"><Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Active Members</TableHead>
+                  <TableHead>Overdue %</TableHead>
+                  <TableHead className="text-right">Lock</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vendorRows.map(({ vendor, active, revenue, overduePct }) => {
+                  const locks = (() => { try { return JSON.parse(localStorage.getItem('gymos_vendor_locks') || '{}'); } catch { return {}; } })();
+                  void demo.changeTick; // re-evaluate when vendor lock state changes
+                  const isLocked = !!locks[vendor.id];
+                  return (
+                    <TableRow key={vendor.id}>
+                      <TableCell data-label="Vendor" className="font-medium">
+                        {vendor.name} <span className="text-muted-foreground text-xs">· {vendor.city}</span>
+                      </TableCell>
+                      <TableCell data-label="Revenue">₹{revenue.toLocaleString()}</TableCell>
+                      <TableCell data-label="Active Members">{active}</TableCell>
+                      <TableCell data-label="Overdue %">
+                        <Badge variant={overduePct > 20 ? 'destructive' : 'secondary'}>{overduePct}%</Badge>
+                      </TableCell>
+                      <TableCell data-label="Lock" className="text-right">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span className="text-xs text-muted-foreground">{isLocked ? 'Locked' : 'Unlocked'}</span>
+                          <Switch
+                            checked={isLocked}
+                            onCheckedChange={(v) => demo.setVendorLocked(vendor.id, v)}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table></div>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading || !k ? (
         <div className="text-muted-foreground">Loading…</div>

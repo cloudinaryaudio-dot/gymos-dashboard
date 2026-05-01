@@ -13,6 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Receipt, Search, ArrowUpDown, BarChart3, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 const DEFAULT_CATEGORIES = ['Rent', 'Salaries', 'Equipment', 'Utilities', 'Maintenance', 'Marketing', 'Other'];
 const PAGE_SIZE = 15;
@@ -39,6 +42,9 @@ export default function ExpensesPage() {
   const createExpense = useCreateExpense();
   const deleteExpense = useDeleteExpense();
   const { toast } = useToast();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('expenses', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
 
   // dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -96,6 +102,7 @@ export default function ExpensesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to add expenses.', variant: 'destructive' }); return; }
     try {
       await createExpense.mutateAsync({
         title, amount: parseFloat(amount), expense_date: date,
@@ -112,7 +119,8 @@ export default function ExpensesPage() {
   // filter by period + search + category
   const filtered = useMemo(() => {
     if (!expenses) return [];
-    return expenses.filter(e => {
+    const scoped = vendorFilter(expenses as any) as typeof expenses;
+    return scoped.filter(e => {
       const d = new Date(e.expense_date);
       if (mode === 'month') {
         if (d.getMonth() + 1 !== selMonth || d.getFullYear() !== selYear) return false;
@@ -126,7 +134,7 @@ export default function ExpensesPage() {
       }
       return true;
     });
-  }, [expenses, mode, selMonth, selYear, filterCategory, search]);
+  }, [expenses, mode, selMonth, selYear, filterCategory, search, vendorFilter]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -166,20 +174,26 @@ export default function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Expenses</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Expenses
+            <ViewOnlyPill module="expenses" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {periodLabel}: <span className="text-foreground font-semibold">₹{totalForPeriod.toLocaleString()}</span>
             <span className="text-muted-foreground"> · {filtered.length} entries</span>
           </p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/expenses/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Expenses Dashboard
           </Button>
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setCatDialogOpen(true)}>Manage Categories</Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Button variant="outline" className="w-full sm:w-auto" disabled={!canEdit} onClick={() => setCatDialogOpen(true)}>Manage Categories</Button>
+          <Dialog open={dialogOpen} onOpenChange={(o) => { if (o && !canEdit) return; setDialogOpen(o); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Expense</Button>
+              <Button className="w-full sm:w-auto" disabled={!canEdit} title={!canEdit ? 'You do not have permission' : undefined}>
+                <Plus className="h-4 w-4 mr-2" />Add Expense
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Expense</DialogTitle></DialogHeader>
@@ -305,7 +319,7 @@ export default function ExpensesPage() {
                       <TableCell data-label="Date">{format(new Date(exp.expense_date), 'dd MMM yyyy')}</TableCell>
                       <TableCell data-label="Category">{exp.category ? <Badge variant="secondary">{exp.category}</Badge> : '—'}</TableCell>
                       <TableCell data-label="Actions" className="text-right actions-cell">
-                        <Button variant="ghost" size="icon" onClick={() => deleteExpense.mutateAsync(exp.id)}>
+                        <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => deleteExpense.mutateAsync(exp.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>

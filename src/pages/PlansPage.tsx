@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Package, Crown, X, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 
 const CATEGORIES = ['general', 'Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'Male', 'Female', 'Couple'];
 
@@ -121,10 +123,13 @@ export default function PlansPage() {
   const deletePlan = useDeletePlan();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('settings', 'edit');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>();
 
   const handleSubmit = async (data: { name: string; price: number; duration_days: number; category: string; benefits: string[]; is_highlighted: boolean; show_on_homepage: boolean }) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to modify plans.', variant: 'destructive' }); return; }
     try {
       if (editingPlan) {
         await updatePlan.mutateAsync({ id: editingPlan.id, ...data });
@@ -141,6 +146,7 @@ export default function PlansPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to delete plans.', variant: 'destructive' }); return; }
     try {
       await deletePlan.mutateAsync(id);
       toast({ title: 'Plan deleted!' });
@@ -153,16 +159,19 @@ export default function PlansPage() {
     <div className="space-y-6 max-w-full">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Plans</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Plans
+            <ViewOnlyPill module="settings" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">Manage your membership plans</p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:items-center gap-2">
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/plans/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Plans Dashboard
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { if (open && !canEdit) return; setDialogOpen(open); if (!open) setEditingPlan(undefined); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
+              <Button className="w-full sm:w-auto" disabled={!canEdit} title={!canEdit ? 'You do not have permission' : undefined}><Plus className="h-4 w-4 mr-2" />Add Plan</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
@@ -210,10 +219,10 @@ export default function PlansPage() {
                     </TableCell>
                     <TableCell data-label="Actions" className="text-right actions-cell">
                       <div className="inline-flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingPlan(plan); setDialogOpen(true); }}>
+                       <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => { setEditingPlan(plan); setDialogOpen(true); }}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(plan.id)}>
+                        <Button variant="ghost" size="icon" disabled={!canEdit} onClick={() => handleDelete(plan.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

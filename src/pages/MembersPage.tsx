@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils';
 import { RenewDialog } from '@/components/RenewDialog';
 import { AddPaymentDialog } from '@/components/AddPaymentDialog';
 import { ReminderDialog, whatsappDirect } from '@/components/ReminderDialog';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
+import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
 type SortKey = 'name' | 'start_date' | 'expiry_date' | 'plan' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -198,6 +201,10 @@ export default function MembersPage() {
   const [paymentMember, setPaymentMember] = useState<Member | undefined>();
   const [reminderMember, setReminderMember] = useState<Member | undefined>();
 
+  const { isDemo, can } = useDemoMode();
+  const canEdit = !isDemo || can('members', 'edit');
+  const { vendorId: vfId, setVendorId: setVfId, filter: vendorFilter } = useDemoVendorFilter();
+
   // ─── URL-driven state ───
   const statusFilter = (searchParams.get('status') ?? 'all') as 'all' | 'active' | 'expired' | 'overdue';
   const planFilter = searchParams.get('plan') ?? 'all';
@@ -233,6 +240,7 @@ export default function MembersPage() {
 
   const processed = useMemo(() => {
     if (!members) return [] as Member[];
+    const scoped = vendorFilter(members as any) as Member[];
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().slice(0, 10);
     const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
@@ -241,7 +249,7 @@ export default function MembersPage() {
     const in30Str = in30.toISOString().slice(0, 10);
     const q = debouncedSearch.trim().toLowerCase();
 
-    let list = members.filter(m => {
+    let list = scoped.filter(m => {
       if (statusFilter === 'active' && m.expiry_date < todayStr) return false;
       if (statusFilter === 'expired' && m.expiry_date >= todayStr) return false;
       if (statusFilter === 'overdue') {
@@ -279,7 +287,7 @@ export default function MembersPage() {
     });
 
     return list;
-  }, [members, payments, plans, statusFilter, planFilter, expiryFilter, sortKey, sortDir, debouncedSearch]);
+  }, [members, payments, plans, statusFilter, planFilter, expiryFilter, sortKey, sortDir, debouncedSearch, vendorFilter]);
 
   const totalPages = Math.max(1, Math.ceil(processed.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -301,6 +309,7 @@ export default function MembersPage() {
 
 
   const handleSubmit = async (data: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to modify members.', variant: 'destructive' }); return; }
     try {
       if (editingMember) {
         await updateMember.mutateAsync({ id: editingMember.id, ...data });
@@ -318,6 +327,7 @@ export default function MembersPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canEdit) { toast({ title: 'View only', description: 'You do not have permission to delete members.', variant: 'destructive' }); return; }
     try {
       await deleteMember.mutateAsync(id);
       toast({ title: 'Member deleted!' });
@@ -341,7 +351,10 @@ export default function MembersPage() {
     <div className="space-y-6 max-w-full">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold font-display">Members</h1>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            Members
+            <ViewOnlyPill module="members" />
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Manage your gym members
             {(expiringCount > 0 || expiredCount > 0) && (
@@ -361,12 +374,13 @@ export default function MembersPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+          <VendorFilter value={vfId} onChange={setVfId} className="w-full sm:w-auto" />
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/app/members/dashboard')}>
             <BarChart3 className="h-4 w-4 mr-2" /> Members Dashboard
           </Button>
-          <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+          <Dialog open={quickAddOpen} onOpenChange={(o) => { if (o && !canEdit) return; setQuickAddOpen(o); }}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
+              <Button variant="outline" className="w-full sm:w-auto" disabled={!canEdit || !plans || plans.length === 0} title={!canEdit ? 'You do not have permission' : undefined}>
                 <Zap className="h-4 w-4 mr-2" /> Quick Add
               </Button>
             </DialogTrigger>
@@ -381,9 +395,9 @@ export default function MembersPage() {
               )}
             </DialogContent>
           </Dialog>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingMember(undefined); }}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { if (open && !canEdit) return; setDialogOpen(open); if (!open) setEditingMember(undefined); }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto" disabled={!plans || plans.length === 0}>
+              <Button className="w-full sm:w-auto" disabled={!canEdit || !plans || plans.length === 0} title={!canEdit ? 'You do not have permission' : undefined}>
                 <Plus className="h-4 w-4 mr-2" /> Add Member
               </Button>
             </DialogTrigger>
