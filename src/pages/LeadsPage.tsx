@@ -102,7 +102,7 @@ export default function LeadsPage() {
 
   // Apply filters
   const filtered = useMemo(() => {
-    let rows = [...leads];
+    let rows = vendorFilter([...leads] as any) as typeof leads;
 
     // time
     if (mode === 'month') {
