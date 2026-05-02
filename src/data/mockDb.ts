@@ -100,6 +100,9 @@ function emptyDb(): MockDb {
     leads: [],
     website_content: [],
     contact_settings: [],
+    trainers: [],
+    trainer_assignments: [],
+    trainer_sessions: [],
   };
 }
 
