@@ -12,6 +12,30 @@ export interface MockDb {
   leads: LeadRow[];
   website_content: WebsiteContentRow[];
   contact_settings: ContactSettingsRow[];
+  trainers: TrainerRow[];
+  trainer_assignments: TrainerAssignmentRow[];
+  trainer_sessions: TrainerSessionRow[];
+}
+
+export interface TrainerRow {
+  id: string; user_id: string; vendor_id: string;
+  name: string; phone: string; specialization: string;
+  experience: number; is_active: boolean; created_at: string;
+}
+export interface TrainerAssignmentRow {
+  id: string; user_id: string; vendor_id: string;
+  trainer_id: string; member_id: string;
+  plan_type: 'PT' | 'regular';
+  start_date: string; end_date: string;
+  total_sessions: number; sessions_completed: number;
+  price: number; created_at: string;
+}
+export interface TrainerSessionRow {
+  id: string; user_id: string; vendor_id: string;
+  trainer_id: string; member_id: string;
+  assignment_id: string;
+  date: string; status: 'completed' | 'missed';
+  created_at: string;
 }
 
 export interface GymSettingsRow {
@@ -76,6 +100,9 @@ function emptyDb(): MockDb {
     leads: [],
     website_content: [],
     contact_settings: [],
+    trainers: [],
+    trainer_assignments: [],
+    trainer_sessions: [],
   };
 }
 
@@ -85,11 +112,16 @@ export function loadDb(): MockDb {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Backfill new collections so older saved DBs stay compatible
+      if (!parsed.trainers) parsed.trainers = [];
+      if (!parsed.trainer_assignments) parsed.trainer_assignments = [];
+      if (!parsed.trainer_sessions) parsed.trainer_sessions = [];
       console.log('[mockDb] Loaded from localStorage:', {
         plans: parsed.plans?.length ?? 0,
         members: parsed.members?.length ?? 0,
         payments: parsed.payments?.length ?? 0,
         website_content: parsed.website_content?.length ?? 0,
+        trainers: parsed.trainers?.length ?? 0,
       });
       return parsed;
     }
@@ -969,6 +1001,66 @@ export function createSeedData(): MockDb {
 
   leads.push(...prevMonthLeads, ...curMonthLeads);
 
+  // ─── Trainers (Personal Training module) ───
+  const DEMO_VENDOR = DEMO_USER_ID; // single-tenant uses user_id as vendor scope
+  const trainerSeed: Array<Pick<TrainerRow, 'name' | 'phone' | 'specialization' | 'experience' | 'is_active'>> = [
+    { name: 'Raj Bhatia',    phone: '+91 9810000001', specialization: 'Strength & Conditioning', experience: 8, is_active: true },
+    { name: 'Priya Wellness', phone: '+91 9810000002', specialization: 'Yoga & Flexibility',     experience: 6, is_active: true },
+    { name: 'Vikram Power',  phone: '+91 9810000003', specialization: 'CrossFit & HIIT',         experience: 5, is_active: true },
+    { name: 'Meera Cardio',  phone: '+91 9810000004', specialization: 'Zumba & Cardio',          experience: 4, is_active: true },
+    { name: 'Karthik Joshi', phone: '+91 9810000005', specialization: 'Functional Training',     experience: 7, is_active: false },
+  ];
+  const trainers: TrainerRow[] = trainerSeed.map(t => ({
+    id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
+    name: t.name, phone: t.phone, specialization: t.specialization,
+    experience: t.experience, is_active: t.is_active,
+    created_at: nowIso,
+  }));
+
+  // Assign first 12 members to active trainers as PT clients (round-robin)
+  const activeTrainers = trainers.filter(t => t.is_active);
+  const ptCandidates = members.slice(0, 12);
+  const trainer_assignments: TrainerAssignmentRow[] = ptCandidates.map((m, i) => {
+    const trainer = activeTrainers[i % activeTrainers.length];
+    const total = [12, 16, 20, 24][i % 4];
+    const completed = Math.min(total, Math.floor(total * (0.3 + (i % 5) * 0.15)));
+    const start = subDays(now, 30 + (i * 3));
+    const end = addDays(start, 90);
+    const price = [4999, 7999, 9999, 11999][i % 4];
+    return {
+      id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
+      trainer_id: trainer.id, member_id: m.id,
+      plan_type: 'PT', start_date: format(start, 'yyyy-MM-dd'),
+      end_date: format(end, 'yyyy-MM-dd'),
+      total_sessions: total, sessions_completed: completed,
+      price, created_at: start.toISOString(),
+    };
+  });
+
+  // Generate session logs spread across last 30 days based on completed counts
+  const trainer_sessions: TrainerSessionRow[] = [];
+  trainer_assignments.forEach((a, i) => {
+    for (let k = 0; k < a.sessions_completed; k++) {
+      const sd = subDays(now, (k * 2) + (i % 3));
+      trainer_sessions.push({
+        id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
+        trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
+        date: format(sd, 'yyyy-MM-dd'), status: 'completed',
+        created_at: sd.toISOString(),
+      });
+    }
+    // a couple of missed sessions
+    if (i % 4 === 0) {
+      const md = subDays(now, 5 + i);
+      trainer_sessions.push({
+        id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
+        trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
+        date: format(md, 'yyyy-MM-dd'), status: 'missed',
+        created_at: md.toISOString(),
+      });
+    }
+  });
+
   return {
     gym_settings,
     plans,
@@ -978,6 +1070,9 @@ export function createSeedData(): MockDb {
     leads,
     website_content,
     contact_settings,
+    trainers,
+    trainer_assignments,
+    trainer_sessions,
   };
 }
 
