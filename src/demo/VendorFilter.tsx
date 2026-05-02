@@ -7,16 +7,32 @@
  *   <VendorFilter value={vendorId} onChange={setVendorId} />
  *   const visible = filter(rows);
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Building2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDemoMode } from './DemoModeContext';
 
 const ALL = '__all__';
+const VENDOR_SCOPE_KEY = 'demo_vendor_scope';
 
 export function useDemoVendorFilter() {
   const { isDemo, currentUser, vendors } = useDemoMode();
-  const [vendorId, setVendorId] = useState<string>(ALL);
+  // Persist super_admin's vendor selection across reloads.
+  const [vendorId, setVendorIdState] = useState<string>(() => {
+    if (typeof window === 'undefined') return ALL;
+    try { return window.localStorage.getItem(VENDOR_SCOPE_KEY) || ALL; } catch { return ALL; }
+  });
+  const setVendorId = useCallback((next: string) => {
+    setVendorIdState(next);
+    try { window.localStorage.setItem(VENDOR_SCOPE_KEY, next); } catch {}
+  }, []);
+  // Reset when leaving demo mode so a real-auth session never inherits a stale scope.
+  useEffect(() => {
+    if (!isDemo) {
+      setVendorIdState(ALL);
+      try { window.localStorage.removeItem(VENDOR_SCOPE_KEY); } catch {}
+    }
+  }, [isDemo]);
 
   const isSuperAdmin = isDemo && currentUser?.role === 'super_admin';
 

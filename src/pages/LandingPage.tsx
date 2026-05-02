@@ -27,6 +27,7 @@ import { AchievementsSection } from '@/components/landing/AchievementsSection';
 import { ServicesSection } from '@/components/landing/ServicesSection';
 import { FooterSocial } from '@/components/landing/FooterSocial';
 import { ProductsBanner } from '@/components/landing/ProductsBanner';
+import { YouTubeShortsSection } from '@/components/landing/YouTubeShortsSection';
 import * as ds from '@/services/dataService';
 
 function getYouTubeId(url: string): string | null {
@@ -624,6 +625,9 @@ export default function LandingPage() {
           />
         );
       })()}
+
+      {/* ─── YOUTUBE SHORTS (bg secondary) ─── */}
+      <YouTubeShortsSection bg="secondary" />
 
       {/* ─── GALLERY (bg secondary) ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (() => {

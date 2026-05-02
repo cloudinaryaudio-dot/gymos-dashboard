@@ -38,6 +38,7 @@ import { Link } from 'react-router-dom';
 import { useDemoMode } from '@/demo/DemoModeContext';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 const PAGE_SIZE = 15;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -304,6 +305,8 @@ export default function PaymentsPage() {
   };
 
 
+
+  if (isDemo && !can('payments', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-6 max-w-full">

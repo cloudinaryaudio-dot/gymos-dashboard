@@ -100,11 +100,15 @@ export interface Expense {
 }
 
 export type Permission =
+  | 'dashboard:view' | 'dashboard:edit'
   | 'members:view' | 'members:edit'
   | 'payments:view' | 'payments:edit'
   | 'leads:view' | 'leads:edit'
   | 'expenses:view' | 'expenses:edit'
-  | 'reports:view' | 'settings:edit';
+  | 'plans:view' | 'plans:edit'
+  | 'website:view' | 'website:edit'
+  | 'recycle:view' | 'recycle:edit'
+  | 'reports:view' | 'settings:view' | 'settings:edit';
 
 export interface PermissionGrant {
   user_id: string;
@@ -186,10 +190,10 @@ const ADHOC_EXPENSES: Array<Omit<Expense, 'id' | 'vendor_id' | 'date'>> = [
 ];
 
 const PERMISSION_PRESETS: Record<string, Permission[]> = {
-  manager:    ['members:view','members:edit','payments:view','payments:edit','leads:view','leads:edit','expenses:view','reports:view'],
-  trainer:    ['members:view','members:edit','leads:view','leads:edit'],
-  reception:  ['members:view','payments:view','leads:view','leads:edit'],
-  viewer:     ['members:view','payments:view','reports:view'],
+  manager:    ['dashboard:view','members:view','members:edit','payments:view','payments:edit','leads:view','leads:edit','expenses:view','plans:view','reports:view'],
+  trainer:    ['dashboard:view','members:view','members:edit','leads:view','leads:edit'],
+  reception:  ['dashboard:view','members:view','payments:view','leads:view','leads:edit'],
+  viewer:     ['dashboard:view','members:view','payments:view','reports:view'],
 };
 
 // ─── Builder ───────────────────────────────────────────────────

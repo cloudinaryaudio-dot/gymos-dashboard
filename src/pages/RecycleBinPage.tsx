@@ -11,6 +11,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 const TYPE_META: Record<RecycleEntityType, { label: string; icon: typeof Users; color: string }> = {
   member: { label: 'Members', icon: Users, color: 'text-blue-500' },
@@ -42,6 +44,7 @@ function formatTimeRemaining(expiresIso: string) {
 export default function RecycleBinPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { isDemo, can } = useDemoMode();
   const [confirmDelete, setConfirmDelete] = useState<DeletedItem | null>(null);
 
   // Run cleanup on mount
@@ -97,6 +100,8 @@ export default function RecycleBinPage() {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     }
   };
+
+  if (isDemo && !can('recycle', 'view')) return <NoAccessCard />;
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">

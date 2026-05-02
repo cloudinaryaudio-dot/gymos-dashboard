@@ -25,6 +25,7 @@ import {
   PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts';
 import { useDemoMode } from '@/demo/DemoModeContext';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
 
@@ -332,6 +333,8 @@ export default function AnalyticsDashboardPage() {
   };
 
   const ChartFallback = () => <Skeleton className="h-full w-full rounded-lg" />;
+
+  if (isDemo && !can('dashboard', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-4 md:space-y-6 pb-8 px-1 sm:px-0">

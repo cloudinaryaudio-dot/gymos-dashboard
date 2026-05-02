@@ -22,6 +22,7 @@ import { ReminderDialog, whatsappDirect } from '@/components/ReminderDialog';
 import { useDemoMode } from '@/demo/DemoModeContext';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 type SortKey = 'name' | 'start_date' | 'expiry_date' | 'plan' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -346,6 +347,8 @@ export default function MembersPage() {
     const info = getExpiryInfo(m.expiry_date);
     return info.variant === 'expired';
   }).length ?? 0;
+
+  if (isDemo && !can('members', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-6 max-w-full">

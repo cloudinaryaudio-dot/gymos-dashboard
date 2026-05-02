@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Save, Eye, Palette, Check, RefreshCw } from 'lucide-react';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 
 
@@ -145,6 +147,7 @@ const PRESETS: ThemePreset[] = [
 
 export default function BrandingSettingsPage() {
   const { resolved, isLoading, upsertSettings } = useGymSettings();
+  const { isDemo, can } = useDemoMode();
 
   const [gymName, setGymName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
@@ -228,6 +231,8 @@ if (!resolved.button_color) {
   if (isLoading) {
     return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
   }
+
+  if (isDemo && !can('settings', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-6">

@@ -89,6 +89,18 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
     };
   }, [refresh]);
 
+  // One-shot restore log on initial mount when demo state was rehydrated from localStorage.
+  useEffect(() => {
+    if (isDemo && currentUser) {
+      const scope = (() => {
+        try { return window.localStorage.getItem('demo_vendor_scope') || null; } catch { return null; }
+      })();
+      // eslint-disable-next-line no-console
+      console.log('Demo restored:', currentUser, scope);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const setCurrentUser = useCallback((userId: string) => {
     demoStore.setCurrentUserId(userId);
     emitDemoChange();

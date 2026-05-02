@@ -16,8 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save, ExternalLink, Plus, Trash2, Film, Image, Dumbbell, Sparkles, Star, MapPin, Phone, Navigation, Loader2, BarChart3 } from 'lucide-react';
+import { useDemoMode } from '@/demo/DemoModeContext';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 export default function WebsiteBuilderPage() {
+  const { isDemo, can } = useDemoMode();
   const { sections, isLoading, getSectionContent, isSectionEnabled, upsertSection } = useWebsiteContent();
 
   const [drafts, setDrafts] = useState<Record<string, any>>({});
@@ -63,6 +66,8 @@ export default function WebsiteBuilderPage() {
   };
 
   const publicUrl = `${window.location.origin}/`;
+
+  if (isDemo && !can('website', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-6">

@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useDemoMode } from '@/demo/DemoModeContext';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 const statusConfig: Record<string, { color: string; bg: string; border: string }> = {
   new: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
@@ -207,6 +208,8 @@ export default function LeadsPage() {
   };
 
   const yearOptions = Array.from({ length: 6 }, (_, i) => today.getFullYear() - i);
+
+  if (isDemo && !can('leads', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-6 max-w-full">

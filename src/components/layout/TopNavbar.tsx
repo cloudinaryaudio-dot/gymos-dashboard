@@ -41,9 +41,14 @@ export function TopNavbar() {
   const [confirmExit, setConfirmExit] = useState(false);
 
   const handleLoadDemo = () => {
+    const wasActive = isDemo;
     const res = loadDemoDataset();
     const { vendors, members } = res.summary;
-    toast.success(`Demo data loaded — ${vendors} vendors, ${members} members`);
+    if (wasActive) {
+      toast.success('Demo data refreshed');
+    } else {
+      toast.success(`Demo data loaded — ${vendors} vendors, ${members} members`);
+    }
   };
 
   const handleExitDemo = () => {
@@ -81,6 +86,16 @@ export function TopNavbar() {
         {isDemo ? (
           <>
             <RoleSwitcher />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLoadDemo}
+              className="h-9 gap-1.5"
+              title="Reset demo data to a clean state"
+            >
+              <Database className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs">Reload</span>
+            </Button>
             <Button
               variant="outline"
               size="sm"

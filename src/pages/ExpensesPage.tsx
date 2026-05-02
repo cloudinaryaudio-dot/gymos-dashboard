@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { useDemoMode } from '@/demo/DemoModeContext';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
+import { NoAccessCard } from '@/demo/NoAccessCard';
 
 const DEFAULT_CATEGORIES = ['Rent', 'Salaries', 'Equipment', 'Utilities', 'Maintenance', 'Marketing', 'Other'];
 const PAGE_SIZE = 15;
@@ -169,6 +170,8 @@ export default function ExpensesPage() {
   const months = Array.from({ length: 12 }, (_, i) => ({ v: i + 1, label: format(new Date(2000, i, 1), 'MMMM') }));
 
   const hasActiveFilters = filterCategory !== 'all' || !!search;
+
+  if (isDemo && !can('expenses', 'view')) return <NoAccessCard />;
 
   return (
     <div className="space-y-6">
