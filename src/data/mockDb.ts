@@ -112,11 +112,16 @@ export function loadDb(): MockDb {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Backfill new collections so older saved DBs stay compatible
+      if (!parsed.trainers) parsed.trainers = [];
+      if (!parsed.trainer_assignments) parsed.trainer_assignments = [];
+      if (!parsed.trainer_sessions) parsed.trainer_sessions = [];
       console.log('[mockDb] Loaded from localStorage:', {
         plans: parsed.plans?.length ?? 0,
         members: parsed.members?.length ?? 0,
         payments: parsed.payments?.length ?? 0,
         website_content: parsed.website_content?.length ?? 0,
+        trainers: parsed.trainers?.length ?? 0,
       });
       return parsed;
     }
