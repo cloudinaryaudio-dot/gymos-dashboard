@@ -16,7 +16,6 @@ import type {
   PermissionGrant,
   VendorLockState,
 } from './types';
-import type { Trainer, TrainerAssignment, TrainerSession } from '@/data/seedDemoData';
 
 export const DEMO_KEYS = {
   users:        'gymos_users',
@@ -30,9 +29,6 @@ export const DEMO_KEYS = {
   vendorLocks:  'gymos_vendor_locks',
   currentUser:  'gymos_current_user_id',
   isDemoLoaded: 'gymos_is_demo_loaded',
-  trainers:           'gymos_trainers',
-  trainerAssignments: 'gymos_trainer_assignments',
-  trainerSessions:    'gymos_trainer_sessions',
 } as const;
 
 const isBrowser = typeof window !== 'undefined';
