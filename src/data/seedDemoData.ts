@@ -116,6 +116,42 @@ export interface PermissionGrant {
   permissions: Permission[];
 }
 
+export interface Trainer {
+  id: string;
+  vendor_id: string;
+  name: string;
+  phone: string;
+  specialization: string;
+  experience: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface TrainerAssignment {
+  id: string;
+  vendor_id: string;
+  trainer_id: string;
+  member_id: string;
+  plan_type: 'PT' | 'regular';
+  start_date: string;
+  end_date: string;
+  total_sessions: number;
+  sessions_completed: number;
+  price: number;
+  created_at: string;
+}
+
+export interface TrainerSession {
+  id: string;
+  vendor_id: string;
+  trainer_id: string;
+  member_id: string;
+  assignment_id: string;
+  date: string;
+  status: 'completed' | 'missed';
+  created_at: string;
+}
+
 export interface SeedDataset {
   users: User[];
   vendors: Vendor[];
@@ -125,6 +161,9 @@ export interface SeedDataset {
   leads: Lead[];
   expenses: Expense[];
   permissions: PermissionGrant[];
+  trainers: Trainer[];
+  trainer_assignments: TrainerAssignment[];
+  trainer_sessions: TrainerSession[];
 }
 
 // ─── Deterministic helpers ─────────────────────────────────────
