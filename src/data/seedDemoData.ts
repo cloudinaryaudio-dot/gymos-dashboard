@@ -445,7 +445,98 @@ export function seedDemoData(): SeedDataset {
     }
   });
 
-  return { users, vendors, plans, members, payments, leads, expenses, permissions };
+  // ─── Trainers (Personal Training) per vendor ───
+  const TRAINER_TEMPLATES = [
+    { name: 'Raj Bhatia',     specialization: 'Strength & Conditioning', experience: 8 },
+    { name: 'Priya Kumar',    specialization: 'Yoga & Flexibility',      experience: 6 },
+    { name: 'Vikram Power',   specialization: 'CrossFit & HIIT',         experience: 5 },
+    { name: 'Meera Sharma',   specialization: 'Zumba & Cardio',          experience: 4 },
+    { name: 'Karthik Joshi',  specialization: 'Functional Training',     experience: 7 },
+  ];
+  const PT_PRICES = [4999, 7999, 9999, 11999];
+  const PT_TOTALS = [12, 16, 20, 24];
+
+  vendors.forEach((vendor, vi) => {
+    // 3-5 trainers per vendor
+    const tCount = 3 + (vi % 3);
+    const vendorTrainers: Trainer[] = [];
+    for (let t = 0; t < tCount; t++) {
+      const tpl = TRAINER_TEMPLATES[(vi + t) % TRAINER_TEMPLATES.length];
+      const tr: Trainer = {
+        id: id('trainer'),
+        vendor_id: vendor.id,
+        name: tpl.name,
+        phone: phone(vi * 1000 + t * 7),
+        specialization: tpl.specialization,
+        experience: tpl.experience,
+        is_active: t < tCount - 1, // last one inactive for variety
+        created_at: fmtIso(subMonths(now, 6 + (vi % 4))),
+      };
+      trainers.push(tr);
+      vendorTrainers.push(tr);
+    }
+
+    // Assign 30-50% of vendor's members as PT clients
+    const vendorMembers = members.filter(m => m.vendor_id === vendor.id);
+    const ptCount = Math.max(3, Math.floor(vendorMembers.length * 0.35));
+    const activeTrainers = vendorTrainers.filter(t => t.is_active);
+    if (activeTrainers.length === 0) return;
+
+    for (let i = 0; i < ptCount; i++) {
+      const m = vendorMembers[i];
+      if (!m) break;
+      const trainer = activeTrainers[i % activeTrainers.length];
+      const total = PT_TOTALS[i % PT_TOTALS.length];
+      const completed = Math.min(total, Math.floor(total * (0.25 + ((vi + i) % 5) * 0.15)));
+      const start = subDays(now, 30 + (i * 3));
+      const end = addDays(start, 90);
+      const price = PT_PRICES[i % PT_PRICES.length];
+      const a: TrainerAssignment = {
+        id: id('assign'),
+        vendor_id: vendor.id,
+        trainer_id: trainer.id,
+        member_id: m.id,
+        plan_type: 'PT',
+        start_date: fmtDate(start),
+        end_date: fmtDate(end),
+        total_sessions: total,
+        sessions_completed: completed,
+        price,
+        created_at: fmtIso(start),
+      };
+      trainer_assignments.push(a);
+
+      // Sessions log: completed ones spread back, plus occasional missed
+      for (let k = 0; k < completed; k++) {
+        const sd = subDays(now, (k * 2) + (i % 3));
+        trainer_sessions.push({
+          id: id('session'),
+          vendor_id: vendor.id,
+          trainer_id: trainer.id,
+          member_id: m.id,
+          assignment_id: a.id,
+          date: fmtDate(sd),
+          status: 'completed',
+          created_at: fmtIso(sd),
+        });
+      }
+      if (i % 4 === 0) {
+        const md = subDays(now, 6 + i);
+        trainer_sessions.push({
+          id: id('session'),
+          vendor_id: vendor.id,
+          trainer_id: trainer.id,
+          member_id: m.id,
+          assignment_id: a.id,
+          date: fmtDate(md),
+          status: 'missed',
+          created_at: fmtIso(md),
+        });
+      }
+    }
+  });
+
+  return { users, vendors, plans, members, payments, leads, expenses, permissions, trainers, trainer_assignments, trainer_sessions };
 }
 
 // ─── Convenience selectors (multi-tenant filtering) ─────────────
