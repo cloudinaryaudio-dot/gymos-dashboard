@@ -248,6 +248,9 @@ export function seedDemoData(): SeedDataset {
   const leads: Lead[] = [];
   const expenses: Expense[] = [];
   const permissions: PermissionGrant[] = [];
+  const trainers: Trainer[] = [];
+  const trainer_assignments: TrainerAssignment[] = [];
+  const trainer_sessions: TrainerSession[] = [];
 
   // 1. Super Admin
   users.push({
