@@ -12,6 +12,30 @@ export interface MockDb {
   leads: LeadRow[];
   website_content: WebsiteContentRow[];
   contact_settings: ContactSettingsRow[];
+  trainers: TrainerRow[];
+  trainer_assignments: TrainerAssignmentRow[];
+  trainer_sessions: TrainerSessionRow[];
+}
+
+export interface TrainerRow {
+  id: string; user_id: string; vendor_id: string;
+  name: string; phone: string; specialization: string;
+  experience: number; is_active: boolean; created_at: string;
+}
+export interface TrainerAssignmentRow {
+  id: string; user_id: string; vendor_id: string;
+  trainer_id: string; member_id: string;
+  plan_type: 'PT' | 'regular';
+  start_date: string; end_date: string;
+  total_sessions: number; sessions_completed: number;
+  price: number; created_at: string;
+}
+export interface TrainerSessionRow {
+  id: string; user_id: string; vendor_id: string;
+  trainer_id: string; member_id: string;
+  assignment_id: string;
+  date: string; status: 'completed' | 'missed';
+  created_at: string;
 }
 
 export interface GymSettingsRow {
