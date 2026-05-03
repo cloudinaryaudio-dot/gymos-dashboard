@@ -17,7 +17,7 @@ import { NoAccessCard } from '@/demo/NoAccessCard';
 import {
   useTrainers, useCreateTrainer, useUpdateTrainer, useDeleteTrainer,
   useTrainerAssignments, useTrainerSessions,
-  type Trainer,
+  type Trainer, type TrainerAssignment, type TrainerSession,
 } from '@/hooks/useTrainers';
 import { AssignPTDialog } from '@/components/AssignPTDialog';
 
@@ -71,8 +71,8 @@ export default function TrainersPage() {
   const [assignOpen, setAssignOpen] = useState(false);
 
   const visibleTrainers = useMemo(() => vendorFilter(trainers as any) as Trainer[], [trainers, vendorFilter]);
-  const visibleAssignments = useMemo(() => vendorFilter(assignments as any), [assignments, vendorFilter]);
-  const visibleSessions = useMemo(() => vendorFilter(sessions as any), [sessions, vendorFilter]);
+  const visibleAssignments = useMemo(() => vendorFilter(assignments as any) as TrainerAssignment[], [assignments, vendorFilter]);
+  const visibleSessions = useMemo(() => vendorFilter(sessions as any) as TrainerSession[], [sessions, vendorFilter]);
 
   // Stats
   const activeTrainers = visibleTrainers.filter(t => t.is_active).length;
