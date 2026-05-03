@@ -16,6 +16,7 @@ import type {
   PermissionGrant,
   VendorLockState,
 } from './types';
+import type { Trainer, TrainerAssignment, TrainerSession } from '@/data/seedDemoData';
 
 export const DEMO_KEYS = {
   users:        'gymos_users',
@@ -25,6 +26,9 @@ export const DEMO_KEYS = {
   leads:        'gymos_leads',
   expenses:     'gymos_expenses',
   plans:        'gymos_plans',
+  trainers:     'gymos_trainers',
+  trainerAssignments: 'gymos_trainer_assignments',
+  trainerSessions:    'gymos_trainer_sessions',
   permissions:  'gymos_permissions',
   vendorLocks:  'gymos_vendor_locks',
   currentUser:  'gymos_current_user_id',
@@ -68,6 +72,9 @@ export const demoStore = {
   getLeads:       (): DemoLead[]         => read(DEMO_KEYS.leads, []),
   getExpenses:    (): DemoExpense[]      => read(DEMO_KEYS.expenses, []),
   getPlans:       (): DemoPlan[]         => read(DEMO_KEYS.plans, []),
+  getTrainers:    (): Trainer[]                  => read(DEMO_KEYS.trainers, []),
+  getTrainerAssignments: (): TrainerAssignment[] => read(DEMO_KEYS.trainerAssignments, []),
+  getTrainerSessions:    (): TrainerSession[]    => read(DEMO_KEYS.trainerSessions, []),
   getPermissions: (): PermissionGrant[]  => read(DEMO_KEYS.permissions, []),
   getVendorLocks: (): VendorLockState    => read(DEMO_KEYS.vendorLocks, {}),
   getCurrentUserId: (): string | null    => read<string | null>(DEMO_KEYS.currentUser, null),
@@ -81,6 +88,9 @@ export const demoStore = {
   setLeads:        (v: DemoLead[])        => write(DEMO_KEYS.leads, v),
   setExpenses:     (v: DemoExpense[])     => write(DEMO_KEYS.expenses, v),
   setPlans:        (v: DemoPlan[])        => write(DEMO_KEYS.plans, v),
+  setTrainers:            (v: Trainer[])           => write(DEMO_KEYS.trainers, v),
+  setTrainerAssignments:  (v: TrainerAssignment[]) => write(DEMO_KEYS.trainerAssignments, v),
+  setTrainerSessions:     (v: TrainerSession[])    => write(DEMO_KEYS.trainerSessions, v),
   setPermissions:  (v: PermissionGrant[]) => write(DEMO_KEYS.permissions, v),
   setVendorLocks:  (v: VendorLockState)   => write(DEMO_KEYS.vendorLocks, v),
   setCurrentUserId:(id: string | null)    => write(DEMO_KEYS.currentUser, id),
@@ -95,6 +105,9 @@ export const demoStore = {
     write(DEMO_KEYS.payments,    d.payments);
     write(DEMO_KEYS.leads,       d.leads);
     write(DEMO_KEYS.expenses,    d.expenses);
+    write(DEMO_KEYS.trainers,            d.trainers ?? []);
+    write(DEMO_KEYS.trainerAssignments,  d.trainer_assignments ?? []);
+    write(DEMO_KEYS.trainerSessions,     d.trainer_sessions ?? []);
     write(DEMO_KEYS.permissions, d.permissions);
     write(DEMO_KEYS.vendorLocks, {} as VendorLockState);
     write(DEMO_KEYS.isDemoLoaded, true);
