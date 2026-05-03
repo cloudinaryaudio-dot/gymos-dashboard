@@ -6,7 +6,7 @@
  * delegates to `src/demo/demoDataService.ts`, which reads from the
  * multi-vendor seedDemoData fixture in localStorage and enforces RBAC.
  */
-import { getDb, setDb, genId, type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow, type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow } from '@/data/mockDb';
+import { getDb, setDb, genId, type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow, type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow, type TrainerRow, type TrainerAssignmentRow, type TrainerSessionRow } from '@/data/mockDb';
 import * as demo from '@/demo/demoDataService';
 
 const useDemo = () => demo.shouldUseDemo();
