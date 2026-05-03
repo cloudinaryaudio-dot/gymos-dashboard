@@ -106,6 +106,7 @@ export type Permission =
   | 'leads:view' | 'leads:edit'
   | 'expenses:view' | 'expenses:edit'
   | 'plans:view' | 'plans:edit'
+  | 'trainers:view' | 'trainers:edit'
   | 'website:view' | 'website:edit'
   | 'recycle:view' | 'recycle:edit'
   | 'reports:view' | 'settings:view' | 'settings:edit';
