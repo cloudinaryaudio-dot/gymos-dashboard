@@ -6,7 +6,7 @@
  * delegates to `src/demo/demoDataService.ts`, which reads from the
  * multi-vendor seedDemoData fixture in localStorage and enforces RBAC.
  */
-import { getDb, setDb, genId, type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow, type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow } from '@/data/mockDb';
+import { getDb, setDb, genId, type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow, type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow, type TrainerRow, type TrainerAssignmentRow, type TrainerSessionRow } from '@/data/mockDb';
 import * as demo from '@/demo/demoDataService';
 
 const useDemo = () => demo.shouldUseDemo();
@@ -684,4 +684,113 @@ export async function getAnalytics(range: AnalyticsRange, granularity: 'day' | '
     leads: leadsTable,
     topDay: topDay ? { label: topDay.label, revenue: topDay.revenue } : undefined,
   };
+}
+
+// ─── Trainers / Personal Training ───
+export type Trainer = TrainerRow;
+export type TrainerAssignment = TrainerAssignmentRow;
+export type TrainerSession = TrainerSessionRow;
+
+const DEMO_VENDOR_FALLBACK = 'demo-user';
+
+export async function getTrainers(): Promise<TrainerRow[]> {
+  if (useDemo()) return demo.getTrainers() as any;
+  await delay();
+  return [...db().trainers].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function createTrainer(t: { name: string; phone: string; specialization: string; experience: number; is_active?: boolean }): Promise<TrainerRow> {
+  if (useDemo()) return demo.createTrainer(t) as any;
+  await delay();
+  const row: TrainerRow = {
+    id: genId(), user_id: DEMO_VENDOR_FALLBACK, vendor_id: DEMO_VENDOR_FALLBACK,
+    name: t.name, phone: t.phone, specialization: t.specialization,
+    experience: t.experience, is_active: t.is_active ?? true,
+    created_at: new Date().toISOString(),
+  };
+  const d = db(); d.trainers.push(row); save(d); return row;
+}
+
+export async function updateTrainer(id: string, patch: Partial<Pick<TrainerRow, 'name' | 'phone' | 'specialization' | 'experience' | 'is_active'>>): Promise<TrainerRow> {
+  if (useDemo()) return demo.updateTrainer(id, patch) as any;
+  await delay();
+  const d = db();
+  const idx = d.trainers.findIndex(x => x.id === id);
+  if (idx === -1) throw new Error('Trainer not found');
+  d.trainers[idx] = { ...d.trainers[idx], ...patch };
+  save(d); return d.trainers[idx];
+}
+
+export async function deleteTrainer(id: string): Promise<void> {
+  if (useDemo()) return demo.deleteTrainer(id) as any;
+  await delay();
+  const d = db();
+  // Block delete if active assignments exist
+  const hasActive = d.trainer_assignments.some(a => a.trainer_id === id && a.sessions_completed < a.total_sessions);
+  if (hasActive) throw new Error('Cannot delete trainer with active assignments');
+  d.trainers = d.trainers.filter(x => x.id !== id);
+  save(d);
+}
+
+export async function getTrainerAssignments(): Promise<TrainerAssignmentRow[]> {
+  if (useDemo()) return demo.getTrainerAssignments() as any;
+  await delay();
+  return [...db().trainer_assignments].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function createTrainerAssignment(a: { trainer_id: string; member_id: string; total_sessions: number; price: number; start_date: string; end_date: string }): Promise<TrainerAssignmentRow> {
+  if (useDemo()) return demo.createTrainerAssignment(a) as any;
+  await delay();
+  const d = db();
+  // Prevent duplicate active assignment for same member+trainer
+  const existing = d.trainer_assignments.find(x => x.trainer_id === a.trainer_id && x.member_id === a.member_id && x.sessions_completed < x.total_sessions);
+  if (existing) throw new Error('This member already has an active assignment with this trainer');
+  if (a.total_sessions <= 0) throw new Error('Total sessions must be > 0');
+  if (a.price < 0) throw new Error('Price must be ≥ 0');
+  const row: TrainerAssignmentRow = {
+    id: genId(), user_id: DEMO_VENDOR_FALLBACK, vendor_id: DEMO_VENDOR_FALLBACK,
+    trainer_id: a.trainer_id, member_id: a.member_id,
+    plan_type: 'PT', start_date: a.start_date, end_date: a.end_date,
+    total_sessions: a.total_sessions, sessions_completed: 0,
+    price: a.price, created_at: new Date().toISOString(),
+  };
+  d.trainer_assignments.push(row); save(d); return row;
+}
+
+export async function deleteTrainerAssignment(id: string): Promise<void> {
+  if (useDemo()) return demo.deleteTrainerAssignment(id) as any;
+  await delay();
+  const d = db();
+  d.trainer_assignments = d.trainer_assignments.filter(x => x.id !== id);
+  d.trainer_sessions = d.trainer_sessions.filter(x => x.assignment_id !== id);
+  save(d);
+}
+
+export async function getTrainerSessions(): Promise<TrainerSessionRow[]> {
+  if (useDemo()) return demo.getTrainerSessions() as any;
+  await delay();
+  return [...db().trainer_sessions].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function markTrainerSession(params: { assignment_id: string; status: 'completed' | 'missed'; date?: string }): Promise<TrainerSessionRow> {
+  if (useDemo()) return demo.markTrainerSession(params) as any;
+  await delay();
+  const d = db();
+  const aIdx = d.trainer_assignments.findIndex(x => x.id === params.assignment_id);
+  if (aIdx === -1) throw new Error('Assignment not found');
+  const a = d.trainer_assignments[aIdx];
+  if (params.status === 'completed' && a.sessions_completed >= a.total_sessions) {
+    throw new Error('Session limit reached for this assignment');
+  }
+  const today = (params.date ?? new Date().toISOString().slice(0, 10));
+  const row: TrainerSessionRow = {
+    id: genId(), user_id: a.user_id, vendor_id: a.vendor_id,
+    trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
+    date: today, status: params.status, created_at: new Date().toISOString(),
+  };
+  d.trainer_sessions.push(row);
+  if (params.status === 'completed') {
+    d.trainer_assignments[aIdx] = { ...a, sessions_completed: a.sessions_completed + 1 };
+  }
+  save(d); return row;
 }

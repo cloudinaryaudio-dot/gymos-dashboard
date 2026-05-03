@@ -633,3 +633,118 @@ export async function getAnalytics(range: { from: string; to: string }, granular
     topDay: topDay ? { label: topDay.label, revenue: topDay.revenue } : undefined,
   };
 }
+
+// ───────── Trainers / Personal Training ─────────
+import type { Trainer, TrainerAssignment, TrainerSession } from '@/data/seedDemoData';
+
+export async function getTrainers() {
+  await delay();
+  require('trainers' as any, 'view');
+  return scope(demoStore.getTrainers()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function createTrainer(t: { name: string; phone: string; specialization: string; experience: number; is_active?: boolean }) {
+  await delay();
+  require('trainers' as any, 'edit');
+  const row: Trainer = {
+    id: genId('trainer'),
+    vendor_id: activeVendorId(),
+    name: t.name, phone: t.phone, specialization: t.specialization,
+    experience: t.experience, is_active: t.is_active ?? true,
+    created_at: nowIso(),
+  };
+  demoStore.setTrainers([...demoStore.getTrainers(), row]);
+  emitDemoChange();
+  return row;
+}
+
+export async function updateTrainer(id: string, patch: Partial<Pick<Trainer, 'name' | 'phone' | 'specialization' | 'experience' | 'is_active'>>) {
+  await delay();
+  require('trainers' as any, 'edit');
+  const all = demoStore.getTrainers();
+  const idx = all.findIndex(x => x.id === id);
+  if (idx === -1) throw new Error('Trainer not found');
+  all[idx] = { ...all[idx], ...patch };
+  demoStore.setTrainers(all);
+  emitDemoChange();
+  return all[idx];
+}
+
+export async function deleteTrainer(id: string) {
+  await delay();
+  require('trainers' as any, 'edit');
+  const assigns = demoStore.getTrainerAssignments();
+  if (assigns.some(a => a.trainer_id === id && a.sessions_completed < a.total_sessions)) {
+    throw new Error('Cannot delete trainer with active assignments');
+  }
+  demoStore.setTrainers(demoStore.getTrainers().filter(x => x.id !== id));
+  emitDemoChange();
+}
+
+export async function getTrainerAssignments() {
+  await delay();
+  require('trainers' as any, 'view');
+  return scope(demoStore.getTrainerAssignments()).sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function createTrainerAssignment(a: { trainer_id: string; member_id: string; total_sessions: number; price: number; start_date: string; end_date: string }) {
+  await delay();
+  require('trainers' as any, 'edit');
+  if (a.total_sessions <= 0) throw new Error('Total sessions must be > 0');
+  if (a.price < 0) throw new Error('Price must be ≥ 0');
+  const all = demoStore.getTrainerAssignments();
+  if (all.some(x => x.trainer_id === a.trainer_id && x.member_id === a.member_id && x.sessions_completed < x.total_sessions)) {
+    throw new Error('This member already has an active assignment with this trainer');
+  }
+  const row: TrainerAssignment = {
+    id: genId('assign'),
+    vendor_id: activeVendorId(),
+    trainer_id: a.trainer_id, member_id: a.member_id,
+    plan_type: 'PT', start_date: a.start_date, end_date: a.end_date,
+    total_sessions: a.total_sessions, sessions_completed: 0,
+    price: a.price, created_at: nowIso(),
+  };
+  demoStore.setTrainerAssignments([...all, row]);
+  emitDemoChange();
+  return row;
+}
+
+export async function deleteTrainerAssignment(id: string) {
+  await delay();
+  require('trainers' as any, 'edit');
+  demoStore.setTrainerAssignments(demoStore.getTrainerAssignments().filter(x => x.id !== id));
+  demoStore.setTrainerSessions(demoStore.getTrainerSessions().filter(x => x.assignment_id !== id));
+  emitDemoChange();
+}
+
+export async function getTrainerSessions() {
+  await delay();
+  require('trainers' as any, 'view');
+  return scope(demoStore.getTrainerSessions()).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function markTrainerSession(params: { assignment_id: string; status: 'completed' | 'missed'; date?: string }) {
+  await delay();
+  require('trainers' as any, 'edit');
+  const all = demoStore.getTrainerAssignments();
+  const idx = all.findIndex(x => x.id === params.assignment_id);
+  if (idx === -1) throw new Error('Assignment not found');
+  const a = all[idx];
+  if (params.status === 'completed' && a.sessions_completed >= a.total_sessions) {
+    throw new Error('Session limit reached for this assignment');
+  }
+  const today = params.date ?? todayStr();
+  const session: TrainerSession = {
+    id: genId('session'),
+    vendor_id: a.vendor_id,
+    trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
+    date: today, status: params.status, created_at: nowIso(),
+  };
+  demoStore.setTrainerSessions([...demoStore.getTrainerSessions(), session]);
+  if (params.status === 'completed') {
+    all[idx] = { ...a, sessions_completed: a.sessions_completed + 1 };
+    demoStore.setTrainerAssignments(all);
+  }
+  emitDemoChange();
+  return session;
+}

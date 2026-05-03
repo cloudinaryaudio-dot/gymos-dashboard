@@ -32,6 +32,7 @@ const MODULE_LABELS: Record<Module, string> = {
   leads: 'Leads',
   expenses: 'Expenses',
   plans: 'Plans',
+  trainers: 'Trainers',
   website: 'Website',
   settings: 'Settings',
   recycle: 'Recycle Bin',
@@ -39,7 +40,7 @@ const MODULE_LABELS: Record<Module, string> = {
 };
 
 const VISIBLE_MODULES: Module[] = [
-  'dashboard', 'members', 'payments', 'leads', 'expenses', 'plans', 'website', 'settings', 'recycle',
+  'dashboard', 'members', 'payments', 'leads', 'expenses', 'plans', 'trainers', 'website', 'settings', 'recycle',
 ];
 
 export default function EmployeeAccessPage() {

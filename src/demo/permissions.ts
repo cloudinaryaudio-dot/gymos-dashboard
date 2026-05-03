@@ -8,11 +8,11 @@
 import { demoStore, emitDemoChange } from './storage';
 import type { DemoUser, Permission, PermissionGrant } from './types';
 
-export type Module = 'dashboard' | 'members' | 'payments' | 'leads' | 'expenses' | 'plans' | 'website' | 'recycle' | 'reports' | 'settings';
+export type Module = 'dashboard' | 'members' | 'payments' | 'leads' | 'expenses' | 'plans' | 'website' | 'recycle' | 'reports' | 'settings' | 'trainers';
 export type Action = 'view' | 'edit';
 
 export const ALL_MODULES: Module[] = [
-  'dashboard', 'members', 'payments', 'leads', 'expenses', 'plans', 'website', 'recycle', 'reports', 'settings',
+  'dashboard', 'members', 'payments', 'leads', 'expenses', 'plans', 'trainers', 'website', 'recycle', 'reports', 'settings',
 ];
 
 const OWNER_FULL: Permission[] = [
@@ -22,6 +22,7 @@ const OWNER_FULL: Permission[] = [
   'leads:view', 'leads:edit',
   'expenses:view', 'expenses:edit',
   'plans:view', 'plans:edit',
+  'trainers:view' as Permission, 'trainers:edit' as Permission,
   'website:view', 'website:edit',
   'recycle:view', 'recycle:edit',
   'reports:view', 'settings:view', 'settings:edit',
