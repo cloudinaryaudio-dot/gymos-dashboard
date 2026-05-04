@@ -43,11 +43,13 @@ export function TopNavbar() {
   const handleLoadDemo = () => {
     const wasActive = isDemo;
     const res = loadDemoDataset();
-    const { vendors, members } = res.summary;
+    const { vendors, members, trainers, pt_assignments } = res.summary;
     if (wasActive) {
-      toast.success('Demo data refreshed');
+      toast.success(`Demo refreshed — Trainers: ${trainers}, PT Members: ${pt_assignments}`);
     } else {
-      toast.success(`Demo data loaded — ${vendors} vendors, ${members} members`);
+      toast.success(
+        `Demo loaded — ${vendors} vendors, ${members} members, ${trainers} trainers, ${pt_assignments} PT clients`,
+      );
     }
   };
 
