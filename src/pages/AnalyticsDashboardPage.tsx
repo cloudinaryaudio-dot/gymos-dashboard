@@ -28,6 +28,8 @@ import { useDemoMode } from '@/demo/DemoModeContext';
 import { NoAccessCard } from '@/demo/NoAccessCard';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
+import { useTrainers, useTrainerAssignments, useTrainerSessions } from '@/hooks/useTrainers';
+import { BarChart, Bar } from 'recharts';
 
 type RangeMode = 'day' | 'week' | 'month' | 'year';
 
@@ -123,6 +125,9 @@ export default function AnalyticsDashboardPage() {
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
   const { leads = [] } = useLeads();
+  const { data: trainers = [] } = useTrainers();
+  const { data: ptAssignments = [] } = useTrainerAssignments();
+  const { data: ptSessions = [] } = useTrainerSessions();
   const { isDemo, can } = useDemoMode();
   const { vendorId: vfId, setVendorId: setVfId } = useDemoVendorFilter();
 
@@ -460,7 +465,55 @@ export default function AnalyticsDashboardPage() {
               gradient="bg-gradient-to-br from-slate-600 to-slate-800" />
           </div>
 
-          {/* ROW 1: revenue trend + payment donut */}
+          {/* PT MODULE SUMMARY */}
+          {(() => {
+            const activeTrainers = trainers.filter(t => t.is_active).length;
+            const todayKey = new Date().toISOString().slice(0, 10);
+            const activePtClients = ptAssignments.filter(a => a.end_date >= todayKey && a.sessions_completed < a.total_sessions).length;
+            const ptRevenue = ptAssignments.reduce((s, a) => s + Number(a.price || 0), 0);
+            const sessionsByDay = (() => {
+              const days = 14;
+              const out: { day: string; sessions: number }[] = [];
+              for (let i = days - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().slice(0, 10);
+                const count = ptSessions.filter(s => s.status === 'completed' && s.date.slice(0, 10) === key).length;
+                out.push({ day: d.toLocaleDateString('en', { day: '2-digit', month: 'short' }), sessions: count });
+              }
+              return out;
+            })();
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 lg:col-span-1">
+                  <KpiCard label="Active Trainers" value={String(activeTrainers)} icon={Users} gradient="bg-gradient-to-br from-indigo-500 to-blue-600" onClick={() => navigate('/app/trainers')} />
+                  <KpiCard label="PT Clients" value={String(activePtClients)} icon={UserCheck} gradient="bg-gradient-to-br from-emerald-500 to-teal-600" onClick={() => navigate('/app/trainers')} />
+                  <KpiCard label="PT Revenue" value={inr(ptRevenue)} icon={DollarSign} gradient="bg-gradient-to-br from-fuchsia-500 to-pink-600" onClick={() => navigate('/app/trainers')} />
+                </div>
+                <Card className="lg:col-span-2 rounded-2xl">
+                  <CardHeader className="pb-2 sm:pb-4">
+                    <CardTitle className="text-base">PT Sessions (last 14 days)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[260px] sm:h-[280px] min-h-[250px] px-2 sm:px-6">
+                    {sessionsByDay.every(d => d.sessions === 0) ? (
+                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No sessions logged yet</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={sessionsByDay} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                          <XAxis dataKey="day" fontSize={11} />
+                          <YAxis fontSize={11} allowDecimals={false} />
+                          <Tooltip />
+                          <Bar dataKey="sessions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <Card className="lg:col-span-2 rounded-2xl">
               <CardHeader className="pb-2 sm:pb-4">
