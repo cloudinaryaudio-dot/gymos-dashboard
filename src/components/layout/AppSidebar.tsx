@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, CreditCard, UserPlus, Receipt, Globe, Settings, Dumbbell, Package, MessageCircle, Sparkles, BarChart3, FileText, Trash2, RefreshCw, ShieldCheck,
+  LayoutDashboard, Users, CreditCard, UserPlus, Receipt, Globe, Settings, Dumbbell, Package, MessageCircle, Sparkles, BarChart3, FileText, Trash2, RefreshCw, ShieldCheck, UserCog,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { NavLink } from '@/components/NavLink';
@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { title: 'Members', url: '/app/members', icon: Users, module: 'members' },
   { title: 'Plans', url: '/app/plans', icon: Package, module: 'plans' },
   { title: 'Payments', url: '/app/payments', icon: CreditCard, module: 'payments' },
+  { title: 'Trainers', url: '/app/trainers', icon: UserCog, module: 'trainers' },
   { title: 'Leads', url: '/app/leads', icon: UserPlus, module: 'leads' },
   { title: 'Expenses', url: '/app/expenses', icon: Receipt, module: 'expenses' },
   { title: 'Website', url: '/app/website', icon: Globe, module: 'website' },
