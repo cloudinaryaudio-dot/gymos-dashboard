@@ -24,6 +24,7 @@
  */
 
 import { addDays, subDays, subMonths, format } from 'date-fns';
+import { buildTrainerSeed } from './seedTrainerData';
 
 // ─── Types ─────────────────────────────────────────────────────
 export type Role = 'super_admin' | 'owner' | 'employee';
