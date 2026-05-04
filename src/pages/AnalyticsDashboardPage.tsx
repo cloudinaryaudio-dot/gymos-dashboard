@@ -28,6 +28,8 @@ import { useDemoMode } from '@/demo/DemoModeContext';
 import { NoAccessCard } from '@/demo/NoAccessCard';
 import { ViewOnlyPill } from '@/demo/ViewOnlyPill';
 import { VendorFilter, useDemoVendorFilter } from '@/demo/VendorFilter';
+import { useTrainers, useTrainerAssignments, useTrainerSessions } from '@/hooks/useTrainers';
+import { BarChart, Bar } from 'recharts';
 
 type RangeMode = 'day' | 'week' | 'month' | 'year';
 
@@ -123,6 +125,9 @@ export default function AnalyticsDashboardPage() {
   const { data: payments = [] } = usePayments();
   const { data: expenses = [] } = useExpenses();
   const { leads = [] } = useLeads();
+  const { data: trainers = [] } = useTrainers();
+  const { data: ptAssignments = [] } = useTrainerAssignments();
+  const { data: ptSessions = [] } = useTrainerSessions();
   const { isDemo, can } = useDemoMode();
   const { vendorId: vfId, setVendorId: setVfId } = useDemoVendorFilter();
 
