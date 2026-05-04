@@ -468,7 +468,8 @@ export default function AnalyticsDashboardPage() {
           {/* PT MODULE SUMMARY */}
           {(() => {
             const activeTrainers = trainers.filter(t => t.is_active).length;
-            const activePtClients = ptAssignments.filter(a => a.status === 'active').length;
+            const todayKey = new Date().toISOString().slice(0, 10);
+            const activePtClients = ptAssignments.filter(a => a.end_date >= todayKey && a.sessions_completed < a.total_sessions).length;
             const ptRevenue = ptAssignments.reduce((s, a) => s + Number(a.price || 0), 0);
             const sessionsByDay = (() => {
               const days = 14;
@@ -477,7 +478,7 @@ export default function AnalyticsDashboardPage() {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const key = d.toISOString().slice(0, 10);
-                const count = ptSessions.filter(s => s.status === 'completed' && s.session_date.slice(0, 10) === key).length;
+                const count = ptSessions.filter(s => s.status === 'completed' && s.date.slice(0, 10) === key).length;
                 out.push({ day: d.toLocaleDateString('en', { day: '2-digit', month: 'short' }), sessions: count });
               }
               return out;
