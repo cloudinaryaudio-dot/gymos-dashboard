@@ -475,6 +475,7 @@ export function summarizeDataset(d: SeedDataset) {
     permissions: d.permissions.length,
     trainers: d.trainers.length,
     pt_assignments: d.trainer_assignments.length,
+    pt_sessions: d.trainer_sessions.length,
     pt_revenue: d.trainer_assignments.reduce((s, a) => s + a.price, 0),
     revenue_paid: d.payments.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0),
     revenue_overdue: d.payments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0),
