@@ -450,8 +450,6 @@ export function seedDemoData(): SeedDataset {
   // ─── Trainers (Personal Training) per vendor ───
   // Delegated to seedTrainerData.ts so the trainer module can be
   // maintained independently while sharing the same id namespace.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { buildTrainerSeed } = require('./seedTrainerData') as typeof import('./seedTrainerData');
   const trainerSeed = buildTrainerSeed(vendors, members, { now, idFactory: id });
   trainers.push(...trainerSeed.trainers);
   trainer_assignments.push(...trainerSeed.trainer_assignments);
