@@ -631,9 +631,17 @@ export default function LandingPage() {
       {(() => {
         const videoUrls = (testimonialsContent.items || [])
           .map(t => t.video_url)
-          .filter((u): u is string => !!u && /(?:youtu\.be\/|youtube\.com\/)/.test(u));
+          .filter((u): u is string => !!u && /(?:youtu\.be\/|youtube\.com\/)/.test(u) && !/\/shorts\//.test(u));
         if (videoUrls.length === 0) return null;
         return <YouTubeShortsSection videos={videoUrls} bg="secondary" />;
+      })()}
+
+      {/* ─── YOUTUBE SHORTS (vertical carousel) — dashboard-driven ─── */}
+      {(() => {
+        const shortsLinks = (testimonialsContent.youtube_shorts_links || [])
+          .filter((u): u is string => !!u && /\/shorts\//.test(u));
+        if (shortsLinks.length === 0) return null;
+        return <YouTubeShortsCarousel links={shortsLinks} bg="primary" />;
       })()}
 
       {/* ─── GALLERY (bg secondary) ─── */}
