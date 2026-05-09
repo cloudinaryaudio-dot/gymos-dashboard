@@ -19,7 +19,7 @@ export interface PricingContent { title?: string; subtitle?: string; cta_note?: 
 export interface TrainerItem { name: string; specialization?: string; image_url?: string; show_on_homepage?: boolean; }
 export interface TrainersContent { title?: string; subtitle?: string; items: TrainerItem[]; }
 export interface TestimonialItem { name: string; content?: string; video_url?: string; show_on_homepage?: boolean; }
-export interface TestimonialsContent { title?: string; subtitle?: string; items: TestimonialItem[]; }
+export interface TestimonialsContent { title?: string; subtitle?: string; items: TestimonialItem[]; youtube_shorts_links?: string[]; }
 export interface GalleryMediaItem { url: string; type: 'image' | 'video'; caption?: string; show_on_homepage?: boolean; }
 export interface GalleryContent { title?: string; items: GalleryMediaItem[]; }
 export interface GalleryImageItem { image_url: string; caption?: string; }

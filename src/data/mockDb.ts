@@ -422,6 +422,13 @@ export function createSeedData(): MockDb {
           { name: 'Karan Singh', content: 'Great transformation journey!', video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
           { name: 'Pooja Fitness', content: 'My 6-month transformation story', video_url: 'https://www.youtube.com/watch?v=ScMzIvxBSi4' },
         ],
+        youtube_shorts_links: [
+          'https://www.youtube.com/shorts/HtYJccshFgg',
+          'https://www.youtube.com/shorts/HtYJccsh3gg',
+          'https://www.youtube.com/shorts/HtYJccshFdsg',
+          'https://www.youtube.com/shorts/HtYJccshFgj',
+          'https://www.youtube.com/shorts/HtYJccshFgf',
+        ],
       },
       created_at: nowIso, updated_at: nowIso,
     },
