@@ -260,6 +260,28 @@ export default function WebsiteBuilderPage() {
                 }}
               />
               <AddTestimonialForm onAdd={item => addItem('testimonials', item)} />
+
+              <div className="space-y-2 pt-4 border-t">
+                <Label>YouTube Shorts URLs</Label>
+                <p className="text-xs text-muted-foreground">
+                  One Shorts URL per line. Only valid <code>/shorts/</code> links are rendered.
+                </p>
+                <Textarea
+                  rows={5}
+                  placeholder={'https://www.youtube.com/shorts/abc123\nhttps://www.youtube.com/shorts/xyz789'}
+                  value={(drafts.testimonials?.youtube_shorts_links ?? []).join('\n')}
+                  onChange={e => {
+                    const lines = e.target.value
+                      .split('\n')
+                      .map(s => s.trim())
+                      .filter(Boolean);
+                    updateDraft('testimonials', 'youtube_shorts_links', lines);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {(drafts.testimonials?.youtube_shorts_links ?? []).filter((u: string) => /\/shorts\//.test(u)).length} valid Shorts link(s)
+                </p>
+              </div>
             </SectionCard>
           </TabsContent>
 
