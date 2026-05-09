@@ -28,6 +28,7 @@ import { ServicesSection } from '@/components/landing/ServicesSection';
 import { FooterSocial } from '@/components/landing/FooterSocial';
 import { ProductsBanner } from '@/components/landing/ProductsBanner';
 import { YouTubeShortsSection } from '@/components/landing/YouTubeShortsSection';
+import { YouTubeShortsCarousel } from '@/components/landing/YouTubeShortsCarousel';
 import * as ds from '@/services/dataService';
 
 function getYouTubeId(url: string): string | null {
