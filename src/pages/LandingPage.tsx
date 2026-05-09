@@ -626,8 +626,14 @@ export default function LandingPage() {
         );
       })()}
 
-      {/* ─── YOUTUBE SHORTS (bg secondary) ─── */}
-      <YouTubeShortsSection bg="secondary" />
+      {/* ─── YOUTUBE VIDEOS (bg secondary) — sourced from dashboard testimonials ─── */}
+      {(() => {
+        const videoUrls = (testimonialsContent.items || [])
+          .map(t => t.video_url)
+          .filter((u): u is string => !!u && /(?:youtu\.be\/|youtube\.com\/)/.test(u));
+        if (videoUrls.length === 0) return null;
+        return <YouTubeShortsSection videos={videoUrls} bg="secondary" />;
+      })()}
 
       {/* ─── GALLERY (bg secondary) ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (() => {
