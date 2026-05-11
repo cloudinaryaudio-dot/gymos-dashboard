@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Building2, Plus, Trash2, Users, IndianRupee, ShieldCheck } from 'lucide-react';
+import { Building2, Plus, Trash2, Users, IndianRupee, ShieldCheck, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useDemoMode } from '@/demo/DemoModeContext';
@@ -17,6 +18,11 @@ import {
   assignGymToSuperOwner,
   removeGymFromSuperOwner,
 } from '@/demo/superOwnerService';
+import {
+  SO_MODULES, type SuperOwnerModule,
+  getSuperOwnerPermission, setSuperOwnerModule, setSuperOwnerFullView,
+  setSuperOwnerPermissionPreset, FULL_MODULES, ANALYTICS_ONLY, MEMBERS_AND_PAYMENTS, LIMITED,
+} from '@/demo/superOwnerPermissions';
 
 const fmtINR = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
