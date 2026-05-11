@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionHeader } from '@/components/PremiumCard';
 
+const YT_PLAY_EVENT = 'gymos:yt-video-play';
+
 /** Extract YouTube ID strictly from /shorts/ URLs */
 function getShortsId(url: string): string | null {
   if (!url) return null;
@@ -34,6 +36,7 @@ export function YouTubeShortsCarousel({
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
+  const instanceId = useRef(`yt-shorts-${Math.random().toString(36).slice(2)}`).current;
 
   const goTo = useCallback(
     (next: number) => {
@@ -44,6 +47,22 @@ export function YouTubeShortsCarousel({
     },
     [ids.length]
   );
+
+  const handlePlay = useCallback(() => {
+    setPlaying(true);
+    window.dispatchEvent(new CustomEvent(YT_PLAY_EVENT, { detail: instanceId }));
+  }, [instanceId]);
+
+  // Stop when another carousel starts a video
+  useEffect(() => {
+    const onOtherPlay = (e: Event) => {
+      const id = (e as CustomEvent).detail;
+      if (id !== instanceId) setPlaying(false);
+    };
+    window.addEventListener(YT_PLAY_EVENT, onOtherPlay);
+    return () => window.removeEventListener(YT_PLAY_EVENT, onOtherPlay);
+  }, [instanceId]);
+
 
   // Auto carousel — pause when video is playing or user interacting
   useEffect(() => {
@@ -109,7 +128,7 @@ export function YouTubeShortsCarousel({
                 {!playing ? (
                   <button
                     type="button"
-                    onClick={() => setPlaying(true)}
+                    onClick={handlePlay}
                     className="group absolute inset-0 w-full h-full cursor-pointer"
                     aria-label="Play short"
                   >
@@ -132,7 +151,7 @@ export function YouTubeShortsCarousel({
                   </button>
                 ) : (
                   <iframe
-                    src={`https://www.youtube.com/embed/${currentId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${currentId}`}
+                    src={`https://www.youtube.com/embed/${currentId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${currentId}`}
                     className="absolute inset-0 w-full h-full"
                     style={{ border: 'none' }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionHeader } from '@/components/PremiumCard';
+
+const YT_PLAY_EVENT = 'gymos:yt-video-play';
 
 // Accept any YouTube URL form (watch, youtu.be, shorts, embed)
 function getYouTubeId(url: string): string | null {
@@ -16,12 +18,16 @@ interface Props {
   bg?: 'primary' | 'secondary';
   title?: string;
   subtitle?: string;
+  /** Auto-advance interval (ms). 0 disables. */
+  interval?: number;
 }
 
-export function YouTubeShortsSection({ videos = [], bg = 'primary', title, subtitle }: Props) {
+export function YouTubeShortsSection({ videos = [], bg = 'primary', title, subtitle, interval = 4000 }: Props) {
   const ids = Array.from(new Set(videos.map(getYouTubeId).filter(Boolean) as string[]));
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const instanceId = useRef(`yt-std-${Math.random().toString(36).slice(2)}`).current;
 
   const goTo = useCallback((next: number) => {
     if (ids.length === 0) return;
@@ -29,6 +35,43 @@ export function YouTubeShortsSection({ videos = [], bg = 'primary', title, subti
     setIndex(n);
     setPlaying(false); // stop previous video
   }, [ids.length]);
+
+  const handlePlay = useCallback(() => {
+    setPlaying(true);
+    window.dispatchEvent(new CustomEvent(YT_PLAY_EVENT, { detail: instanceId }));
+  }, [instanceId]);
+
+  // Stop when another carousel starts a video
+  useEffect(() => {
+    const onOtherPlay = (e: Event) => {
+      const id = (e as CustomEvent).detail;
+      if (id !== instanceId) setPlaying(false);
+    };
+    window.addEventListener(YT_PLAY_EVENT, onOtherPlay);
+    return () => window.removeEventListener(YT_PLAY_EVENT, onOtherPlay);
+  }, [instanceId]);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (!interval || ids.length < 2 || playing || paused) return;
+    const t = setInterval(() => setIndex(i => (i + 1) % ids.length), interval);
+    return () => clearInterval(t);
+  }, [interval, ids.length, playing, paused]);
+
+  // Touch swipe
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    setPaused(true);
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) goTo(index + (dx < 0 ? 1 : -1));
+    touchStartX.current = null;
+    setTimeout(() => setPaused(false), 1500);
+  };
+
 
   if (ids.length === 0) return null;
 
@@ -46,7 +89,13 @@ export function YouTubeShortsSection({ videos = [], bg = 'primary', title, subti
           subtitle={subtitle || 'Real stories, real transformations.'}
         />
 
-        <div className="relative mt-8">
+        <div
+          className="relative mt-8"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Card */}
           <div
             className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/30 bg-black"
@@ -64,7 +113,7 @@ export function YouTubeShortsSection({ videos = [], bg = 'primary', title, subti
                 {!playing ? (
                   <button
                     type="button"
-                    onClick={() => setPlaying(true)}
+                    onClick={handlePlay}
                     className="group absolute inset-0 w-full h-full cursor-pointer"
                     aria-label="Play video"
                   >
@@ -87,7 +136,7 @@ export function YouTubeShortsSection({ videos = [], bg = 'primary', title, subti
                   </button>
                 ) : (
                   <iframe
-                    src={`https://www.youtube.com/embed/${currentId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`}
+                    src={`https://www.youtube.com/embed/${currentId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`}
                     className="absolute inset-0 w-full h-full"
                     style={{ border: 'none' }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

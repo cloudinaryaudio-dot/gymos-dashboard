@@ -6,6 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { useSession } from '@/contexts/SessionContext';
+import * as ds from '@/services/dataService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +30,13 @@ import { useDemoModeOptional } from '@/demo/DemoModeContext';
 import { loadDemoDataset } from '@/demo/seedAdapter';
 import { RoleSwitcher } from '@/demo/RoleSwitcher';
 
+const ROLE_LABEL: Record<string, string> = {
+  super_admin: 'Super Admin',
+  super_owner: 'Super Owner',
+  owner: 'Owner',
+  employee: 'Employee',
+};
+
 function initialsOf(name?: string | null): string {
   if (!name) return 'RS';
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -40,15 +51,33 @@ export function TopNavbar() {
   const vendor = demo?.vendor ?? null;
   const [confirmExit, setConfirmExit] = useState(false);
 
+  const session = (() => {
+    try { return useSession(); } catch { return null; }
+  })();
+  const sessionUser = session?.user ?? null;
+  const sessionRole = session?.role ?? null;
+  const sessionVendorId = session?.vendorId ?? null;
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['app-users'],
+    queryFn: ds.getAppUsers,
+    enabled: !isDemo && !!session,
+  });
+  const { data: vendors = [] } = useQuery({
+    queryKey: ['vendors'],
+    queryFn: ds.getVendors,
+    enabled: !isDemo && !!session,
+  });
+
   const handleLoadDemo = () => {
     const wasActive = isDemo;
     const res = loadDemoDataset();
-    const { vendors, members, trainers, pt_assignments } = res.summary;
+    const { vendors: vCount, members, trainers, pt_assignments } = res.summary;
     if (wasActive) {
       toast.success(`Demo refreshed — Trainers: ${trainers}, PT Members: ${pt_assignments}`);
     } else {
       toast.success(
-        `Demo loaded — ${vendors} vendors, ${members} members, ${trainers} trainers, ${pt_assignments} PT clients`,
+        `Demo loaded — ${vCount} vendors, ${members} members, ${trainers} trainers, ${pt_assignments} PT clients`,
       );
     }
   };
@@ -59,7 +88,9 @@ export function TopNavbar() {
     toast.success('Exited demo mode');
   };
 
-  const initials = isDemo ? initialsOf(currentUser?.name) : 'RS';
+  const initials = isDemo
+    ? initialsOf(currentUser?.name)
+    : initialsOf(sessionUser?.name) || 'RS';
 
   return (
     <header className="h-14 border-b border-border flex items-center justify-between px-3 sm:px-4 bg-card gap-2">
@@ -82,9 +113,43 @@ export function TopNavbar() {
             Demo
           </Badge>
         )}
+        {!isDemo && sessionRole && (
+          <Badge variant="secondary" className="hidden md:inline-flex ml-1">
+            {ROLE_LABEL[sessionRole] ?? sessionRole}
+          </Badge>
+        )}
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
+        {!isDemo && session && users.length > 0 && (
+          <Select
+            value={sessionUser?.id ?? ''}
+            onValueChange={(id) => session.switchUser(users.find(u => u.id === id) ?? null)}
+          >
+            <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="Switch user" /></SelectTrigger>
+            <SelectContent>
+              {users.map(u => (
+                <SelectItem key={u.id} value={u.id}>
+                  <span className="font-medium">{u.name}</span>
+                  <span className="text-muted-foreground ml-2 text-xs">({ROLE_LABEL[u.role]})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {!isDemo && session && sessionRole === 'super_admin' && vendors.length > 0 && (
+          <Select
+            value={sessionVendorId ?? 'all'}
+            onValueChange={(v) => session.switchVendor(v === 'all' ? null : v)}
+          >
+            <SelectTrigger className="w-[170px] h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Gyms</SelectItem>
+              {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+
         {isDemo ? (
           <>
             <RoleSwitcher />

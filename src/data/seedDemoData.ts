@@ -79,6 +79,12 @@ export interface Payment {
   status: PaymentStatus;
   date: string;
   method: 'cash' | 'upi' | 'card' | 'bank_transfer';
+  /** Distinguishes membership renewals from PT package payments. */
+  payment_type?: 'membership' | 'pt';
+  /** Set when payment_type === 'pt' — links to the trainer assignment. */
+  assignment_id?: string;
+  trainer_id?: string;
+  note?: string | null;
 }
 
 export interface Lead {

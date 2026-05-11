@@ -12,30 +12,6 @@ export interface MockDb {
   leads: LeadRow[];
   website_content: WebsiteContentRow[];
   contact_settings: ContactSettingsRow[];
-  trainers: TrainerRow[];
-  trainer_assignments: TrainerAssignmentRow[];
-  trainer_sessions: TrainerSessionRow[];
-}
-
-export interface TrainerRow {
-  id: string; user_id: string; vendor_id: string;
-  name: string; phone: string; specialization: string;
-  experience: number; is_active: boolean; created_at: string;
-}
-export interface TrainerAssignmentRow {
-  id: string; user_id: string; vendor_id: string;
-  trainer_id: string; member_id: string;
-  plan_type: 'PT' | 'regular';
-  start_date: string; end_date: string;
-  total_sessions: number; sessions_completed: number;
-  price: number; created_at: string;
-}
-export interface TrainerSessionRow {
-  id: string; user_id: string; vendor_id: string;
-  trainer_id: string; member_id: string;
-  assignment_id: string;
-  date: string; status: 'completed' | 'missed';
-  created_at: string;
 }
 
 export interface GymSettingsRow {
@@ -46,39 +22,70 @@ export interface GymSettingsRow {
   description_color?: string | null;
   button_color?: string | null;
   created_at: string; updated_at: string;
+  vendor_id?: string;
 }
 export interface PlanRow {
   id: string; user_id: string; name: string; price: number; duration_days: number;
   category?: string; benefits?: string[]; is_highlighted?: boolean; show_on_homepage?: boolean; created_at: string;
+  vendor_id?: string;
 }
 export interface MemberRow {
   id: string; user_id: string; name: string; phone: string; plan_id: string | null;
   start_date: string; expiry_date: string; status: string; created_at: string;
+  vendor_id?: string;
   is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface PaymentRow {
   id: string; user_id: string; member_id: string; amount: number; payment_date: string;
   method: string; status: string; note: string | null; created_at: string;
+  vendor_id?: string;
   is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface ExpenseRow {
   id: string; user_id: string; title: string; amount: number; expense_date: string;
   category: string | null; created_at: string;
-  is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface LeadRow {
   id: string; user_id: string; name: string; phone: string; fitness_goal: string | null;
   status: string; created_at: string; updated_at: string;
-  is_deleted?: boolean; deleted_at?: string | null;
 }
 export interface WebsiteContentRow {
   id: string; user_id: string; section_key: string; is_enabled: boolean;
   content: any; created_at: string; updated_at: string;
+  vendor_id?: string;
 }
 export interface ContactSettingsRow {
   id: string; user_id: string; gym_id: string | null;
   whatsapp_number: string | null; whatsapp_message: string | null; instagram_url: string | null;
   created_at: string; updated_at: string;
+  vendor_id?: string;
+}
+
+// ─── Multi-tenant (Vendors / Roles) ───
+export type AppRole = 'super_admin' | 'super_owner' | 'owner' | 'employee';
+
+export interface VendorRow {
+  id: string;
+  name: string;
+  location: string;
+  logo_url?: string | null;
+  created_at: string;
+}
+export interface AppUserRow {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: AppRole;
+  /** for owner/employee: their gym */
+  vendor_id?: string | null;
+  created_at: string;
+}
+export interface SuperOwnerGymAccessRow {
+  id: string;
+  super_owner_id: string;
+  vendor_id: string;
+  assigned_at: string;
 }
 
 // ─── Helpers ───
@@ -100,9 +107,6 @@ function emptyDb(): MockDb {
     leads: [],
     website_content: [],
     contact_settings: [],
-    trainers: [],
-    trainer_assignments: [],
-    trainer_sessions: [],
   };
 }
 
@@ -693,381 +697,6 @@ export function createSeedData(): MockDb {
     created_at: nowIso, updated_at: nowIso,
   }];
 
-  // ─────────────────────────────────────────────────────────────
-  // RICH CURRENT-MONTH + PREVIOUS-MONTH DATASET
-  // Hand-tuned data (NOT randomized) for reliable monthly comparison.
-  // ─────────────────────────────────────────────────────────────
-  const todayDay = now.getDate();
-  const curYear = now.getFullYear();
-  const curMonth = now.getMonth(); // 0-indexed
-  const prevMonthDate = new Date(curYear, curMonth - 1, 1);
-  const prevYear = prevMonthDate.getFullYear();
-  const prevMonth = prevMonthDate.getMonth();
-  const daysInPrevMonth = new Date(curYear, curMonth, 0).getDate();
-
-  const ymd = (y: number, m: number, d: number) => format(new Date(y, m, d), 'yyyy-MM-dd');
-  const iso = (y: number, m: number, d: number, h = 10) => new Date(y, m, d, h, 0, 0).toISOString();
-  const clampCurDay = (d: number) => Math.min(Math.max(1, d), todayDay);
-
-  // Pick plan ids by category for realistic linkage
-  const planByName = (n: string) => plans.find(p => p.name === n) ?? plans[0];
-  const pBasicM = planByName('Basic Monthly');
-  const pStdM = planByName('Standard Monthly');
-  const pPremM = planByName('Premium Monthly');
-  const pQtrStd = planByName('Quarterly Standard');
-  const pQtrPrem = planByName('Quarterly Premium');
-  const pHalfPrem = planByName('Half-Year Premium');
-  const pYearSaver = planByName('Yearly Saver');
-  const pWomen = planByName('Women Special Plan');
-  const pStudent = planByName('Student Plan');
-  const pCouple = planByName('Couple Plan Monthly');
-
-  // ─── Previous-month members (joined last month) ───
-  const prevMonthMembersSeed: Array<{ name: string; phone: string; plan: PlanRow; day: number }> = [
-    { name: 'Aakash Bhardwaj',   phone: '+91 9810000101', plan: pBasicM,   day: 2 },
-    { name: 'Sanya Khurana',     phone: '+91 9810000102', plan: pStdM,     day: 4 },
-    { name: 'Devansh Bose',      phone: '+91 9810000103', plan: pPremM,    day: 6 },
-    { name: 'Mitali Kapoor',     phone: '+91 9810000104', plan: pQtrStd,   day: 8 },
-    { name: 'Yuvraj Salunkhe',   phone: '+91 9810000105', plan: pBasicM,   day: 10 },
-    { name: 'Trisha Menon',      phone: '+91 9810000106', plan: pWomen,    day: 12 },
-    { name: 'Parth Goyal',       phone: '+91 9810000107', plan: pStdM,     day: 14 },
-    { name: 'Ira Chatterjee',    phone: '+91 9810000108', plan: pPremM,    day: 16 },
-    { name: 'Hemant Solanki',    phone: '+91 9810000109', plan: pQtrPrem,  day: 18 },
-    { name: 'Ridhima Sethi',     phone: '+91 9810000110', plan: pBasicM,   day: 20 },
-    { name: 'Vivaan Trivedi',    phone: '+91 9810000111', plan: pStudent,  day: 22 },
-    { name: 'Nandini Pillai',    phone: '+91 9810000112', plan: pStdM,     day: 24 },
-    { name: 'Omkar Bhandari',    phone: '+91 9810000113', plan: pHalfPrem, day: 26 },
-    { name: 'Saanvi Aggarwal',   phone: '+91 9810000114', plan: pCouple,   day: 28 },
-  ];
-
-  const prevMonthMembers: MemberRow[] = prevMonthMembersSeed.map(s => {
-    const day = Math.min(s.day, daysInPrevMonth);
-    const startDate = new Date(prevYear, prevMonth, day);
-    const expiry = addDays(startDate, s.plan.duration_days);
-    return {
-      id: genId(),
-      user_id: DEMO_USER_ID,
-      name: s.name,
-      phone: s.phone,
-      plan_id: s.plan.id,
-      start_date: format(startDate, 'yyyy-MM-dd'),
-      expiry_date: format(expiry, 'yyyy-MM-dd'),
-      status: expiry < now ? 'expired' : 'active',
-      created_at: startDate.toISOString(),
-    };
-  });
-
-  // ─── Current-month members (joined this month, up to today) ───
-  const curMonthMembersSeed: Array<{ name: string; phone: string; plan: PlanRow; day: number }> = [
-    { name: 'Atharv Bansal',     phone: '+91 9820000201', plan: pBasicM,   day: 1 },
-    { name: 'Avni Lakhani',      phone: '+91 9820000202', plan: pStdM,     day: 2 },
-    { name: 'Krish Madan',       phone: '+91 9820000203', plan: pPremM,    day: 3 },
-    { name: 'Zara Sheikh',       phone: '+91 9820000204', plan: pWomen,    day: 4 },
-    { name: 'Rudra Ahuja',       phone: '+91 9820000205', plan: pQtrStd,   day: 5 },
-    { name: 'Mahira Sood',       phone: '+91 9820000206', plan: pStdM,     day: 6 },
-    { name: 'Veer Chhabra',      phone: '+91 9820000207', plan: pPremM,    day: 7 },
-    { name: 'Anvi Talwar',       phone: '+91 9820000208', plan: pBasicM,   day: 8 },
-    { name: 'Reyansh Kohli',     phone: '+91 9820000209', plan: pYearSaver,day: 10 },
-    { name: 'Myra Hegde',        phone: '+91 9820000210', plan: pStdM,     day: 12 },
-    { name: 'Aryan Lamba',       phone: '+91 9820000211', plan: pStudent,  day: 14 },
-    { name: 'Saisha Borkar',     phone: '+91 9820000212', plan: pPremM,    day: 16 },
-    { name: 'Ishaan Patil',      phone: '+91 9820000213', plan: pCouple,   day: 18 },
-    { name: 'Aadhya Kashyap',    phone: '+91 9820000214', plan: pStdM,     day: 20 },
-    { name: 'Kabir Rastogi',     phone: '+91 9820000215', plan: pQtrPrem,  day: 22 },
-    { name: 'Pari Walia',        phone: '+91 9820000216', plan: pBasicM,   day: 24 },
-  ];
-
-  const curMonthMembers: MemberRow[] = curMonthMembersSeed
-    .filter(s => s.day <= todayDay)
-    .map(s => {
-      const day = clampCurDay(s.day);
-      const startDate = new Date(curYear, curMonth, day);
-      const expiry = addDays(startDate, s.plan.duration_days);
-      return {
-        id: genId(),
-        user_id: DEMO_USER_ID,
-        name: s.name,
-        phone: s.phone,
-        plan_id: s.plan.id,
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        expiry_date: format(expiry, 'yyyy-MM-dd'),
-        status: expiry < now ? 'expired' : 'active',
-        created_at: startDate.toISOString(),
-      };
-    });
-
-  // Append to main members
-  members.push(...prevMonthMembers, ...curMonthMembers);
-
-  // ─── Previous-month payments ───
-  // Most paid, a few overdue (kept unpaid into current month)
-  const prevPaymentMethods = ['cash', 'upi', 'card', 'bank_transfer'];
-  const prevMonthPayments: PaymentRow[] = prevMonthMembers.map((m, i) => {
-    const plan = plans.find(p => p.id === m.plan_id)!;
-    const day = Math.min(parseInt(m.start_date.slice(8, 10), 10), daysInPrevMonth);
-    // Mark last 3 prev-month members as overdue (unpaid carry-over)
-    const isOverdue = i >= prevMonthMembers.length - 3;
-    return {
-      id: genId(),
-      user_id: DEMO_USER_ID,
-      member_id: m.id,
-      amount: plan.price,
-      payment_date: ymd(prevYear, prevMonth, day),
-      method: prevPaymentMethods[i % prevPaymentMethods.length],
-      status: isOverdue ? 'overdue' : 'paid',
-      note: isOverdue ? 'Unpaid from last month' : 'Joining payment',
-      created_at: iso(prevYear, prevMonth, day, 11),
-    };
-  });
-
-  // A few extra prev-month one-off paid renewals to boost revenue
-  const prevExtraRenewals = [
-    { plan: pStdM,    day: 5 },
-    { plan: pPremM,   day: 9 },
-    { plan: pQtrStd,  day: 13 },
-    { plan: pBasicM,  day: 17 },
-    { plan: pStdM,    day: 21 },
-    { plan: pPremM,   day: 25 },
-    { plan: pHalfPrem,day: 27 },
-  ];
-  prevExtraRenewals.forEach((e, idx) => {
-    const target = members[(idx * 5) % Math.max(members.length, 1)];
-    if (!target) return;
-    const day = Math.min(e.day, daysInPrevMonth);
-    prevMonthPayments.push({
-      id: genId(), user_id: DEMO_USER_ID, member_id: target.id, amount: e.plan.price,
-      payment_date: ymd(prevYear, prevMonth, day),
-      method: prevPaymentMethods[idx % prevPaymentMethods.length],
-      status: 'paid', note: 'Renewal',
-      created_at: iso(prevYear, prevMonth, day, 12),
-    });
-  });
-
-  // ─── Current-month payments ───
-  // Mix paid + pending for new joiners, plus 2-3 walk-in renewals
-  const curMonthPayments: PaymentRow[] = curMonthMembers.map((m, i) => {
-    const plan = plans.find(p => p.id === m.plan_id)!;
-    const day = clampCurDay(parseInt(m.start_date.slice(8, 10), 10));
-    // Make every 5th payment "pending"
-    const isPending = i % 5 === 4;
-    return {
-      id: genId(),
-      user_id: DEMO_USER_ID,
-      member_id: m.id,
-      amount: plan.price,
-      payment_date: ymd(curYear, curMonth, day),
-      method: prevPaymentMethods[i % prevPaymentMethods.length],
-      status: isPending ? 'pending' : 'paid',
-      note: isPending ? 'Awaiting confirmation' : 'Joining payment',
-      created_at: iso(curYear, curMonth, day, 11),
-    };
-  });
-
-  // Current-month walk-in renewals from existing members
-  const curRenewalDays = [clampCurDay(2), clampCurDay(7), clampCurDay(13), clampCurDay(19)];
-  curRenewalDays.forEach((day, idx) => {
-    const target = members[(idx * 7) % Math.max(members.length, 1)];
-    if (!target) return;
-    const plan = plans.find(p => p.id === target.plan_id) ?? pStdM;
-    curMonthPayments.push({
-      id: genId(), user_id: DEMO_USER_ID, member_id: target.id, amount: plan.price,
-      payment_date: ymd(curYear, curMonth, day),
-      method: prevPaymentMethods[idx % prevPaymentMethods.length],
-      status: 'paid', note: 'Renewal',
-      created_at: iso(curYear, curMonth, day, 13),
-    });
-  });
-
-  payments.push(...prevMonthPayments, ...curMonthPayments);
-
-  // ─── Previous-month expenses (full month) ───
-  const prevMonthExpensesSeed = [
-    { title: 'Monthly Rent',               amount: 45000, category: 'Rent',        day: 1 },
-    { title: 'Electricity Bill',           amount: 13500, category: 'Utilities',   day: 5 },
-    { title: 'Water Supply',               amount: 3200,  category: 'Utilities',   day: 5 },
-    { title: 'Internet & Wifi',            amount: 2200,  category: 'Utilities',   day: 6 },
-    { title: 'Staff Salary - Trainer 1',   amount: 25000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Trainer 2',   amount: 22000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Trainer 3',   amount: 20000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Reception',   amount: 15000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Housekeeping',amount: 9000,  category: 'Salary',      day: 7 },
-    { title: 'Treadmill Belt Replacement', amount: 6500,  category: 'Maintenance', day: 9 },
-    { title: 'AC Servicing',               amount: 4200,  category: 'Maintenance', day: 11 },
-    { title: 'Cleaning Supplies',          amount: 2800,  category: 'Maintenance', day: 12 },
-    { title: 'New Barbell Plates Set',     amount: 14500, category: 'Equipment',   day: 14 },
-    { title: 'Resistance Bands Bulk',      amount: 4800,  category: 'Equipment',   day: 16 },
-    { title: 'Instagram Ads',              amount: 6000,  category: 'Marketing',   day: 18 },
-    { title: 'Google Ads',                 amount: 5500,  category: 'Marketing',   day: 19 },
-    { title: 'Flyer Printing',             amount: 1800,  category: 'Marketing',   day: 20 },
-    { title: 'Whey Protein Stock',         amount: 18000, category: 'Inventory',   day: 22 },
-    { title: 'Pre-Workout Stock',          amount: 9500,  category: 'Inventory',   day: 23 },
-    { title: 'Office Stationery',          amount: 1500,  category: 'Other',       day: 25 },
-    { title: 'Trainer Certification Fees', amount: 8000,  category: 'Other',       day: 27 },
-  ];
-  const prevMonthExpenses: ExpenseRow[] = prevMonthExpensesSeed.map(e => {
-    const day = Math.min(e.day, daysInPrevMonth);
-    return {
-      id: genId(), user_id: DEMO_USER_ID,
-      title: e.title, amount: e.amount, category: e.category,
-      expense_date: ymd(prevYear, prevMonth, day),
-      created_at: iso(prevYear, prevMonth, day, 9),
-    };
-  });
-
-  // ─── Current-month expenses (1st → today) ───
-  const curMonthExpensesSeed = [
-    { title: 'Monthly Rent',               amount: 45000, category: 'Rent',        day: 1 },
-    { title: 'Electricity Bill',           amount: 14200, category: 'Utilities',   day: 5 },
-    { title: 'Water Supply',               amount: 3000,  category: 'Utilities',   day: 5 },
-    { title: 'Internet & Wifi',            amount: 2200,  category: 'Utilities',   day: 6 },
-    { title: 'Staff Salary - Trainer 1',   amount: 26000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Trainer 2',   amount: 23000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Trainer 3',   amount: 21000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Reception',   amount: 16000, category: 'Salary',      day: 7 },
-    { title: 'Staff Salary - Housekeeping',amount: 9500,  category: 'Salary',      day: 7 },
-    { title: 'Equipment Maintenance',      amount: 7800,  category: 'Maintenance', day: 9 },
-    { title: 'Mirror Repair',              amount: 3200,  category: 'Maintenance', day: 11 },
-    { title: 'Cleaning Supplies',          amount: 3000,  category: 'Maintenance', day: 12 },
-    { title: 'New Dumbbells Set',          amount: 22000, category: 'Equipment',   day: 13 },
-    { title: 'Yoga Mats (20 pcs)',         amount: 6500,  category: 'Equipment',   day: 15 },
-    { title: 'Instagram Ads',              amount: 7500,  category: 'Marketing',   day: 16 },
-    { title: 'Influencer Collab',          amount: 12000, category: 'Marketing',   day: 18 },
-    { title: 'Whey Protein Stock',         amount: 19500, category: 'Inventory',   day: 20 },
-    { title: 'BCAA Stock',                 amount: 7500,  category: 'Inventory',   day: 22 },
-  ];
-  const curMonthExpenses: ExpenseRow[] = curMonthExpensesSeed
-    .filter(e => e.day <= todayDay)
-    .map(e => ({
-      id: genId(), user_id: DEMO_USER_ID,
-      title: e.title, amount: e.amount, category: e.category,
-      expense_date: ymd(curYear, curMonth, clampCurDay(e.day)),
-      created_at: iso(curYear, curMonth, clampCurDay(e.day), 9),
-    }));
-
-  expenses.push(...prevMonthExpenses, ...curMonthExpenses);
-
-  // ─── Previous-month leads (lower conversion ~25%) ───
-  const prevLeadsSeed: Array<{ name: string; phone: string; goal: string; status: string; day: number }> = [
-    { name: 'Lakshay Wadhwa',   phone: '+91 9700000301', goal: 'Weight Loss',       status: 'lost',            day: 2 },
-    { name: 'Bhumi Sahni',      phone: '+91 9700000302', goal: 'Yoga',              status: 'joined',          day: 3 },
-    { name: 'Rohan Khatri',     phone: '+91 9700000303', goal: 'Muscle Gain',       status: 'contacted',       day: 4 },
-    { name: 'Tanisha Kohli',    phone: '+91 9700000304', goal: 'General Fitness',   status: 'lost',            day: 5 },
-    { name: 'Aniket Phadke',    phone: '+91 9700000305', goal: 'Strength Training', status: 'joined',          day: 7 },
-    { name: 'Sara Bhatia',      phone: '+91 9700000306', goal: 'Weight Loss',       status: 'visit_scheduled', day: 8 },
-    { name: 'Dhruv Bajwa',      phone: '+91 9700000307', goal: 'Muscle Gain',       status: 'lost',            day: 10 },
-    { name: 'Vanya Roy',        phone: '+91 9700000308', goal: 'Yoga',              status: 'contacted',       day: 11 },
-    { name: 'Mihir Shroff',     phone: '+91 9700000309', goal: 'Cardio',            status: 'joined',          day: 13 },
-    { name: 'Tara Iyengar',     phone: '+91 9700000310', goal: 'Weight Loss',       status: 'lost',            day: 15 },
-    { name: 'Pranay Wagh',      phone: '+91 9700000311', goal: 'Muscle Gain',       status: 'contacted',       day: 17 },
-    { name: 'Diya Sengupta',    phone: '+91 9700000312', goal: 'General Fitness',   status: 'lost',            day: 19 },
-    { name: 'Aryaman Khanna',   phone: '+91 9700000313', goal: 'Strength Training', status: 'visit_scheduled', day: 21 },
-    { name: 'Inaya Marwah',     phone: '+91 9700000314', goal: 'Weight Loss',       status: 'lost',            day: 23 },
-    { name: 'Kavin Subramanian',phone: '+91 9700000315', goal: 'Cardio',            status: 'contacted',       day: 25 },
-    { name: 'Naina Bedi',       phone: '+91 9700000316', goal: 'Yoga',              status: 'lost',            day: 27 },
-  ];
-  const prevMonthLeads: LeadRow[] = prevLeadsSeed.map(s => {
-    const day = Math.min(s.day, daysInPrevMonth);
-    const created = iso(prevYear, prevMonth, day, 14);
-    return {
-      id: genId(), user_id: DEMO_USER_ID,
-      name: s.name, phone: s.phone, fitness_goal: s.goal, status: s.status,
-      created_at: created, updated_at: created,
-    };
-  });
-
-  // ─── Current-month leads (higher conversion ~45%) ───
-  const curLeadsSeed: Array<{ name: string; phone: string; goal: string; status: string; day: number }> = [
-    { name: 'Aarush Mathur',    phone: '+91 9710000401', goal: 'Weight Loss',       status: 'joined',          day: 1 },
-    { name: 'Kiara Bhalla',     phone: '+91 9710000402', goal: 'Muscle Gain',       status: 'joined',          day: 2 },
-    { name: 'Shaurya Vohra',    phone: '+91 9710000403', goal: 'Strength Training', status: 'contacted',       day: 3 },
-    { name: 'Anaya Bakshi',     phone: '+91 9710000404', goal: 'Yoga',              status: 'joined',          day: 4 },
-    { name: 'Yash Vengsarkar',  phone: '+91 9710000405', goal: 'Weight Loss',       status: 'visit_scheduled', day: 5 },
-    { name: 'Riya Mahajan',     phone: '+91 9710000406', goal: 'Cardio',            status: 'joined',          day: 6 },
-    { name: 'Ayaan Bhasin',     phone: '+91 9710000407', goal: 'Muscle Gain',       status: 'new',             day: 7 },
-    { name: 'Misha Sandhu',     phone: '+91 9710000408', goal: 'General Fitness',   status: 'contacted',       day: 8 },
-    { name: 'Veer Mathew',      phone: '+91 9710000409', goal: 'Strength Training', status: 'joined',          day: 10 },
-    { name: 'Tanya Sehgal',     phone: '+91 9710000410', goal: 'Weight Loss',       status: 'lost',            day: 12 },
-    { name: 'Arnav Bose',       phone: '+91 9710000411', goal: 'Cardio',            status: 'joined',          day: 14 },
-    { name: 'Ahaana Mirchandani',phone:'+91 9710000412', goal: 'Yoga',              status: 'visit_scheduled', day: 16 },
-    { name: 'Kian Bhardwaj',    phone: '+91 9710000413', goal: 'Muscle Gain',       status: 'new',             day: 18 },
-    { name: 'Jiya Khurana',     phone: '+91 9710000414', goal: 'Weight Loss',       status: 'contacted',       day: 20 },
-    { name: 'Vihaan Kotak',     phone: '+91 9710000415', goal: 'General Fitness',   status: 'joined',          day: 22 },
-    { name: 'Suhana Verma',     phone: '+91 9710000416', goal: 'Strength Training', status: 'new',             day: 24 },
-  ];
-  const curMonthLeads: LeadRow[] = curLeadsSeed
-    .filter(s => s.day <= todayDay)
-    .map(s => {
-      const day = clampCurDay(s.day);
-      const created = iso(curYear, curMonth, day, 14);
-      return {
-        id: genId(), user_id: DEMO_USER_ID,
-        name: s.name, phone: s.phone, fitness_goal: s.goal, status: s.status,
-        created_at: created, updated_at: created,
-      };
-    });
-
-  leads.push(...prevMonthLeads, ...curMonthLeads);
-
-  // ─── Trainers (Personal Training module) ───
-  const DEMO_VENDOR = DEMO_USER_ID; // single-tenant uses user_id as vendor scope
-  const trainerSeed: Array<Pick<TrainerRow, 'name' | 'phone' | 'specialization' | 'experience' | 'is_active'>> = [
-    { name: 'Raj Bhatia',    phone: '+91 9810000001', specialization: 'Strength & Conditioning', experience: 8, is_active: true },
-    { name: 'Priya Wellness', phone: '+91 9810000002', specialization: 'Yoga & Flexibility',     experience: 6, is_active: true },
-    { name: 'Vikram Power',  phone: '+91 9810000003', specialization: 'CrossFit & HIIT',         experience: 5, is_active: true },
-    { name: 'Meera Cardio',  phone: '+91 9810000004', specialization: 'Zumba & Cardio',          experience: 4, is_active: true },
-    { name: 'Karthik Joshi', phone: '+91 9810000005', specialization: 'Functional Training',     experience: 7, is_active: false },
-  ];
-  const trainers: TrainerRow[] = trainerSeed.map(t => ({
-    id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
-    name: t.name, phone: t.phone, specialization: t.specialization,
-    experience: t.experience, is_active: t.is_active,
-    created_at: nowIso,
-  }));
-
-  // Assign first 12 members to active trainers as PT clients (round-robin)
-  const activeTrainers = trainers.filter(t => t.is_active);
-  const ptCandidates = members.slice(0, 12);
-  const trainer_assignments: TrainerAssignmentRow[] = ptCandidates.map((m, i) => {
-    const trainer = activeTrainers[i % activeTrainers.length];
-    const total = [12, 16, 20, 24][i % 4];
-    const completed = Math.min(total, Math.floor(total * (0.3 + (i % 5) * 0.15)));
-    const start = subDays(now, 30 + (i * 3));
-    const end = addDays(start, 90);
-    const price = [4999, 7999, 9999, 11999][i % 4];
-    return {
-      id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
-      trainer_id: trainer.id, member_id: m.id,
-      plan_type: 'PT', start_date: format(start, 'yyyy-MM-dd'),
-      end_date: format(end, 'yyyy-MM-dd'),
-      total_sessions: total, sessions_completed: completed,
-      price, created_at: start.toISOString(),
-    };
-  });
-
-  // Generate session logs spread across last 30 days based on completed counts
-  const trainer_sessions: TrainerSessionRow[] = [];
-  trainer_assignments.forEach((a, i) => {
-    for (let k = 0; k < a.sessions_completed; k++) {
-      const sd = subDays(now, (k * 2) + (i % 3));
-      trainer_sessions.push({
-        id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
-        trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
-        date: format(sd, 'yyyy-MM-dd'), status: 'completed',
-        created_at: sd.toISOString(),
-      });
-    }
-    // a couple of missed sessions
-    if (i % 4 === 0) {
-      const md = subDays(now, 5 + i);
-      trainer_sessions.push({
-        id: genId(), user_id: DEMO_USER_ID, vendor_id: DEMO_VENDOR,
-        trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
-        date: format(md, 'yyyy-MM-dd'), status: 'missed',
-        created_at: md.toISOString(),
-      });
-    }
-  });
-
   return {
     gym_settings,
     plans,
@@ -1077,9 +706,6 @@ export function createSeedData(): MockDb {
     leads,
     website_content,
     contact_settings,
-    trainers,
-    trainer_assignments,
-    trainer_sessions,
   };
 }
 
@@ -1154,6 +780,41 @@ export function resetDemoData(): MockDb {
 
 export function clearLocalData() {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(VENDOR_KEY);
   _db = emptyDb();
   window.location.reload();
+}
+
+// ─── Session (current user + active vendor) ───
+const SESSION_KEY = 'gymos_current_user';
+const VENDOR_KEY = 'gymos_current_vendor_id';
+
+export function getCurrentUser(): AppUserRow | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  // Default: super_admin in demo mode (so existing flows keep working)
+  const users = ((_db as any).app_users ?? []) as AppUserRow[];
+  return users.find(u => u.role === 'super_admin') ?? null;
+}
+
+export function setCurrentUser(user: AppUserRow | null) {
+  if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  else localStorage.removeItem(SESSION_KEY);
+}
+
+export function getCurrentVendorId(): string | null {
+  const v = localStorage.getItem(VENDOR_KEY);
+  if (v) return v === 'all' ? null : v;
+  // Default for owners: their vendor; for others: null = all
+  const u = getCurrentUser();
+  if (u?.role === 'owner' && u.vendor_id) return u.vendor_id;
+  return null;
+}
+
+export function setCurrentVendorId(vendorId: string | null) {
+  if (vendorId) localStorage.setItem(VENDOR_KEY, vendorId);
+  else localStorage.setItem(VENDOR_KEY, 'all');
 }

@@ -90,7 +90,10 @@ function adaptPayment(p: DemoPayment, members: DemoMember[]) {
     payment_date: p.date,
     method: p.method,
     status: p.status,
-    note: null,
+    note: p.note ?? null,
+    payment_type: p.payment_type ?? 'membership',
+    assignment_id: p.assignment_id ?? null,
+    trainer_id: p.trainer_id ?? null,
     created_at: new Date(p.date).toISOString(),
     is_deleted: false,
     deleted_at: null,
@@ -616,10 +619,19 @@ export async function getAnalytics(range: { from: string; to: string }, granular
     .map(p => ({
       id: p.id, member_name: memberMap.get(p.member_id) ?? 'Unknown',
       amount: p.amount, payment_date: p.date, method: p.method, status: p.status,
+      payment_type: p.payment_type ?? 'membership',
     }));
   const leadRows = leadsInRange
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .map(l => ({ id: l.id, name: l.name, phone: l.phone, goal: l.goal, status: l.status === 'converted' ? 'joined' : l.status, created_at: l.created_at }));
+
+  // PT analytics
+  const ptRevenue = paid.filter(p => p.payment_type === 'pt').reduce((s, p) => s + p.amount, 0);
+  const membershipRevenue = totalRevenue - ptRevenue;
+  const assignments = scope(demoStore.getTrainerAssignments());
+  const trainerSessions = scope(demoStore.getTrainerSessions());
+  const activePtMembers = new Set(assignments.filter(a => a.sessions_completed < a.total_sessions).map(a => a.member_id)).size;
+  const ptSessionsCompleted = trainerSessions.filter(s => s.status === 'completed' && inRange(s.date)).length;
 
   return {
     kpis: {
@@ -627,6 +639,7 @@ export async function getAnalytics(range: { from: string; to: string }, granular
       newMembers, membersLeft, activeMembers,
       pendingPayments, pendingAmount,
       newLeads, convertedLeads,
+      ptRevenue, membershipRevenue, activePtMembers, ptSessionsCompleted,
     },
     series, planDistribution, expenseBreakdown,
     members: memberRows, payments: paymentRows, leads: leadRows,
@@ -696,15 +709,33 @@ export async function createTrainerAssignment(a: { trainer_id: string; member_id
   if (all.some(x => x.trainer_id === a.trainer_id && x.member_id === a.member_id && x.sessions_completed < x.total_sessions)) {
     throw new Error('This member already has an active assignment with this trainer');
   }
+  const vendorId = activeVendorId();
   const row: TrainerAssignment = {
     id: genId('assign'),
-    vendor_id: activeVendorId(),
+    vendor_id: vendorId,
     trainer_id: a.trainer_id, member_id: a.member_id,
     plan_type: 'PT', start_date: a.start_date, end_date: a.end_date,
     total_sessions: a.total_sessions, sessions_completed: 0,
     price: a.price, created_at: nowIso(),
   };
   demoStore.setTrainerAssignments([...all, row]);
+  // Auto-create PT payment so revenue is captured in main payment system + analytics
+  if (a.price > 0) {
+    const ptPay: DemoPayment = {
+      id: genId('pay'),
+      vendor_id: vendorId,
+      member_id: a.member_id,
+      amount: a.price,
+      status: 'paid',
+      date: a.start_date,
+      method: 'cash',
+      payment_type: 'pt',
+      assignment_id: row.id,
+      trainer_id: a.trainer_id,
+      note: 'PT package',
+    };
+    demoStore.setPayments([...demoStore.getPayments(), ptPay]);
+  }
   emitDemoChange();
   return row;
 }

@@ -44,6 +44,9 @@ export function useCreateAssignment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['trainer_assignments'] });
       qc.invalidateQueries({ queryKey: ['trainers'] });
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 }
@@ -54,6 +57,9 @@ export function useDeleteAssignment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['trainer_assignments'] });
       qc.invalidateQueries({ queryKey: ['trainer_sessions'] });
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 }
@@ -64,6 +70,8 @@ export function useMarkSession() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['trainer_sessions'] });
       qc.invalidateQueries({ queryKey: ['trainer_assignments'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 }

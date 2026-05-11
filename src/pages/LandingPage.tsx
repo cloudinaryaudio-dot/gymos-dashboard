@@ -22,7 +22,6 @@ import { PremiumCard, SectionHeader } from '@/components/PremiumCard';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { ReviewsCarousel } from '@/components/landing/ReviewsCarousel';
 import { BranchesCarousel } from '@/components/landing/BranchesCarousel';
-import { VideoTestimonialsSection } from '@/components/landing/VideoTestimonialsSection';
 import { AchievementsSection } from '@/components/landing/AchievementsSection';
 import { ServicesSection } from '@/components/landing/ServicesSection';
 import { FooterSocial } from '@/components/landing/FooterSocial';
@@ -606,26 +605,6 @@ export default function LandingPage() {
         );
       })()}
 
-      {/* ─── VIDEO TESTIMONIALS (bg primary) — only 3 video shorts on landing ─── */}
-      {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (() => {
-        const allItems = testimonialsContent.items;
-        const videoItems = allItems.filter(t => !!t.video_url);
-        const marked = videoItems.filter(i => (i as any).show_on_homepage);
-        const rest = videoItems.filter(i => !marked.includes(i));
-        const homepageVideos = [...marked, ...rest].slice(0, 3);
-        // Show "View All" if there's any extra content (more videos OR text reviews exist)
-        const showViewAll = videoItems.length > 3 || allItems.some(t => !t.video_url);
-        if (homepageVideos.length === 0) return null;
-        return (
-          <VideoTestimonialsSection
-            items={homepageVideos}
-            title={testimonialsContent.title || 'What Our Members Say'}
-            subtitle={testimonialsContent.subtitle}
-            showViewAll={showViewAll}
-            bg="primary"
-          />
-        );
-      })()}
 
       {/* ─── YOUTUBE VIDEOS (bg secondary) — sourced from dashboard testimonials ─── */}
       {(() => {
@@ -643,6 +622,21 @@ export default function LandingPage() {
         if (shortsLinks.length === 0) return null;
         return <YouTubeShortsCarousel links={shortsLinks} bg="primary" />;
       })()}
+
+      {/* ─── VIEW ALL TESTIMONIALS ─── */}
+      {data?.testimonials && (testimonialsContent.items?.length ?? 0) > 0 && (
+        <section className="py-16 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg-primary)' }}>
+          <div className="max-w-7xl mx-auto text-center">
+            <Link to="/testimonials">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+                <Button size="lg" className="rounded-xl h-12 px-8 font-semibold shadow-lg shadow-primary/20" style={{ background: 'var(--button-bg)', color: 'var(--button-text)' }}>
+                  View All Testimonials <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </motion.div>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ─── GALLERY (bg secondary) ─── */}
       {data?.gallery && (galleryContent.items?.length ?? 0) > 0 && (() => {
