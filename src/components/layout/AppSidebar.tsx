@@ -67,7 +67,6 @@ export function AppSidebar() {
       if (isSuperOwner) {
         // In owner-view (gym selected) show modules permitted for that gym.
         if (!activeVendor) return Boolean(item.superOwnerOnly);
-        if (item.ownerOnly) return false;
         const m = soModuleFor(item);
         if (!m) return false;
         return canSuperOwnerAccess(soUser?.id, activeVendor, m);
