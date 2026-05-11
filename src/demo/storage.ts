@@ -37,6 +37,7 @@ export const DEMO_KEYS = {
   superOwners:  'gymos_super_owners',
   superOwnerAccess: 'gymos_super_owner_access',
   superOwnerActiveVendor: 'gymos_super_owner_active_vendor',
+  superOwnerPermissions: 'gymos_super_owner_permissions',
 } as const;
 
 const isBrowser = typeof window !== 'undefined';
