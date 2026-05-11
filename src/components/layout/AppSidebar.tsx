@@ -49,20 +49,37 @@ export function AppSidebar() {
   const isSuperOwner = role === 'super_owner';
   const ownerLike = !isDemo || isOwnerLike(demo?.currentUser ?? null) || isSuperOwner;
 
+  const activeVendor = isSuperOwner ? getActiveSuperOwnerVendor() : null;
+  const soUser = isSuperOwner ? demo?.currentUser ?? null : null;
+
+  // Map sidebar items to the super-owner module namespace (analytics is its own).
+  const soModuleFor = (item: NavItem): SuperOwnerModule | null => {
+    if (item.url === '/app/analytics' || item.url === '/app/owner-summary') return 'analytics';
+    if (!item.module) return null;
+    return (item.module as string) as SuperOwnerModule;
+  };
+
   // Filter sidebar items by role + RBAC.
   const visibleItems = useMemo(() => {
     return navItems.filter(item => {
       if (item.superAdminOnly) return isDemo && isSuperAdmin;
       if (item.superOwnerOnly) return isDemo && isSuperOwner;
-      if (isSuperOwner && item.hideForSuperOwner) return false;
-      if (item.ownerOnly) return ownerLike && !isSuperOwner;
+      if (isSuperOwner) {
+        // In owner-view (gym selected) show modules permitted for that gym.
+        if (!activeVendor) return Boolean(item.superOwnerOnly);
+        if (item.ownerOnly) return false;
+        const m = soModuleFor(item);
+        if (!m) return false;
+        return canSuperOwnerAccess(soUser?.id, activeVendor, m);
+      }
+      if (item.ownerOnly) return ownerLike;
       if (!isDemo) return true;
       if (isOwnerLike(demo?.currentUser ?? null)) return true;
       if (!item.module) return true;
       return demo?.can(item.module, 'view') ?? false;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDemo, ownerLike, isSuperAdmin, isSuperOwner, demo?.changeTick, demo?.currentUser?.id]);
+  }, [isDemo, ownerLike, isSuperAdmin, isSuperOwner, activeVendor, demo?.changeTick, demo?.currentUser?.id]);
 
   // Auto-close mobile sidebar on route change
   useEffect(() => {
