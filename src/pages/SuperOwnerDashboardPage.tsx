@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Building2, Users, IndianRupee, AlertCircle, TrendingUp, UserPlus, Receipt, Activity } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Building2, Users, IndianRupee, AlertCircle, TrendingUp, UserPlus, Receipt, Activity, ArrowRight, BarChart3, CreditCard, ShieldCheck } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { useDemoMode } from '@/demo/DemoModeContext';
 import {
@@ -15,6 +16,7 @@ import {
   setActiveSuperOwnerVendor,
   getActiveSuperOwnerVendor,
 } from '@/demo/superOwnerService';
+import { getSuperOwnerPermission, summarizeAccess, type AccessLevel } from '@/demo/superOwnerPermissions';
 
 const fmtINR = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
