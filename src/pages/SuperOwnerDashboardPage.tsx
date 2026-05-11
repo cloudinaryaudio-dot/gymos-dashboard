@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Building2, Users, IndianRupee, AlertCircle, TrendingUp, UserPlus, Receipt, Activity } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Building2, Users, IndianRupee, AlertCircle, TrendingUp, UserPlus, Receipt, Activity, ArrowRight, BarChart3, CreditCard, ShieldCheck } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, LineChart, Line, Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { useDemoMode } from '@/demo/DemoModeContext';
 import {
@@ -15,11 +16,20 @@ import {
   setActiveSuperOwnerVendor,
   getActiveSuperOwnerVendor,
 } from '@/demo/superOwnerService';
+import { getSuperOwnerPermission, summarizeAccess, type AccessLevel } from '@/demo/superOwnerPermissions';
 
 const fmtINR = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
+const ACCESS_BADGE: Record<AccessLevel, { label: string; className: string }> = {
+  full:      { label: 'Full Access',     className: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' },
+  limited:   { label: 'Limited Access',  className: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+  analytics: { label: 'Analytics Only',  className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30' },
+  none:      { label: 'No Access',       className: 'bg-destructive/15 text-destructive border-destructive/30' },
+};
+
 export default function SuperOwnerDashboardPage() {
   const { isDemo, currentUser, changeTick } = useDemoMode();
+  const navigate = useNavigate();
   const [active, setActive] = useState<string>(() => getActiveSuperOwnerVendor() ?? 'all');
 
   // Reset active filter when switching users
@@ -127,6 +137,88 @@ export default function SuperOwnerDashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Quick-access gym cards */}
+          {currentUser && (
+            <div>
+              <h2 className="text-lg font-semibold font-display mb-3">Your Gyms</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {perGym.map(g => {
+                  const perm = getSuperOwnerPermission(currentUser.id, g.vendor_id);
+                  const level = summarizeAccess(perm);
+                  const badge = ACCESS_BADGE[level];
+                  const open = (path: string, module?: string) => {
+                    if (module && !(perm.modules as Record<string, boolean>)[module]) return;
+                    setActiveSuperOwnerVendor(g.vendor_id);
+                    navigate(path);
+                  };
+                  return (
+                    <Card key={g.vendor_id} className="overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <CardTitle className="text-base truncate">{g.vendor_name}</CardTitle>
+                            <p className="text-xs text-muted-foreground">{g.city}</p>
+                          </div>
+                          <Badge variant="outline" className={`shrink-0 text-[10px] ${badge.className}`}>{badge.label}</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Revenue</div>
+                            <div className="font-semibold">{fmtINR(g.revenue)}</div>
+                          </div>
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Active</div>
+                            <div className="font-semibold">{g.active_members}/{g.members}</div>
+                          </div>
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Pending</div>
+                            <div className="font-semibold">{g.pending}</div>
+                          </div>
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Leads</div>
+                            <div className="font-semibold">{g.leads}</div>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full gap-1.5"
+                          disabled={level === 'none' || !perm.modules.dashboard}
+                          onClick={() => open('/app/dashboard', 'dashboard')}
+                        >
+                          Open Gym Dashboard <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1"
+                            disabled={!perm.modules.members}
+                            onClick={() => open('/app/members', 'members')}>
+                            <Users className="h-3 w-3" /> Members
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1"
+                            disabled={!perm.modules.payments}
+                            onClick={() => open('/app/payments', 'payments')}>
+                            <CreditCard className="h-3 w-3" /> Pay
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1"
+                            disabled={!perm.modules.analytics}
+                            onClick={() => open('/app/analytics', 'analytics')}>
+                            <BarChart3 className="h-3 w-3" /> Stats
+                          </Button>
+                        </div>
+                        {!perm.allow_full_owner_view && level !== 'none' && (
+                          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <ShieldCheck className="h-3 w-3" /> Read-only access
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Per-gym comparison table */}
           <Card>

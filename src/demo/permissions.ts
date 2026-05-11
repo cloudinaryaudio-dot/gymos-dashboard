@@ -57,8 +57,23 @@ export function checkPermission(user: DemoUser | null, module: Module, action: A
   // super_admin always has access (lock does not affect platform admin).
   if (user.role === 'super_admin') return true;
 
-  // super_owner is read-only across assigned gyms — block all edits.
-  if (user.role === 'super_owner' && action === 'edit') return false;
+  // super_owner — check fine-grained per-gym permissions when a gym is active.
+  if (user.role === 'super_owner') {
+    const activeVendor = demoStore.getSuperOwnerActiveVendor();
+    if (activeVendor) {
+      // Lazy import to avoid circular deps.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getSuperOwnerPermission } = require('./superOwnerPermissions') as
+        typeof import('./superOwnerPermissions');
+      const perm = getSuperOwnerPermission(user.id, activeVendor);
+      const moduleEnabled = (perm.modules as Record<string, boolean>)[module] ?? false;
+      if (!moduleEnabled) return false;
+      if (action === 'edit') return perm.allow_full_owner_view === true;
+      return true;
+    }
+    // No active vendor — only the super-owner dashboard is meaningful; block edits.
+    if (action === 'edit') return false;
+  }
 
   // Vendor lock — block ALL edit/create/delete actions, allow view only.
   if (action === 'edit' && user.vendor_id && isVendorLocked(user.vendor_id)) {
