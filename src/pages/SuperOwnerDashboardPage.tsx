@@ -138,6 +138,88 @@ export default function SuperOwnerDashboardPage() {
             </Card>
           </div>
 
+          {/* Quick-access gym cards */}
+          {currentUser && (
+            <div>
+              <h2 className="text-lg font-semibold font-display mb-3">Your Gyms</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {perGym.map(g => {
+                  const perm = getSuperOwnerPermission(currentUser.id, g.vendor_id);
+                  const level = summarizeAccess(perm);
+                  const badge = ACCESS_BADGE[level];
+                  const open = (path: string, module?: string) => {
+                    if (module && !(perm.modules as Record<string, boolean>)[module]) return;
+                    setActiveSuperOwnerVendor(g.vendor_id);
+                    navigate(path);
+                  };
+                  return (
+                    <Card key={g.vendor_id} className="overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <CardTitle className="text-base truncate">{g.vendor_name}</CardTitle>
+                            <p className="text-xs text-muted-foreground">{g.city}</p>
+                          </div>
+                          <Badge variant="outline" className={`shrink-0 text-[10px] ${badge.className}`}>{badge.label}</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Revenue</div>
+                            <div className="font-semibold">{fmtINR(g.revenue)}</div>
+                          </div>
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Active</div>
+                            <div className="font-semibold">{g.active_members}/{g.members}</div>
+                          </div>
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Pending</div>
+                            <div className="font-semibold">{g.pending}</div>
+                          </div>
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <div className="text-muted-foreground">Leads</div>
+                            <div className="font-semibold">{g.leads}</div>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full gap-1.5"
+                          disabled={level === 'none' || !perm.modules.dashboard}
+                          onClick={() => open('/app/dashboard', 'dashboard')}
+                        >
+                          Open Gym Dashboard <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1"
+                            disabled={!perm.modules.members}
+                            onClick={() => open('/app/members', 'members')}>
+                            <Users className="h-3 w-3" /> Members
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1"
+                            disabled={!perm.modules.payments}
+                            onClick={() => open('/app/payments', 'payments')}>
+                            <CreditCard className="h-3 w-3" /> Pay
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1"
+                            disabled={!perm.modules.analytics}
+                            onClick={() => open('/app/analytics', 'analytics')}>
+                            <BarChart3 className="h-3 w-3" /> Stats
+                          </Button>
+                        </div>
+                        {!perm.allow_full_owner_view && level !== 'none' && (
+                          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <ShieldCheck className="h-3 w-3" /> Read-only access
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Per-gym comparison table */}
           <Card>
             <CardHeader><CardTitle className="text-base">Gym Comparison</CardTitle></CardHeader>
