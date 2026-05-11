@@ -13,6 +13,8 @@ import { useGymSettings } from '@/hooks/useGymSettings';
 import { useDemoModeOptional } from '@/demo/DemoModeContext';
 import { loadDemoDataset } from '@/demo/seedAdapter';
 import { isOwnerLike, type Module } from '@/demo/permissions';
+import { getActiveSuperOwnerVendor } from '@/demo/superOwnerService';
+import { canSuperOwnerAccess, type SuperOwnerModule } from '@/demo/superOwnerPermissions';
 
 type NavItem = { title: string; url: string; icon: any; module?: Module; ownerOnly?: boolean; superAdminOnly?: boolean; superOwnerOnly?: boolean; hideForSuperOwner?: boolean };
 
