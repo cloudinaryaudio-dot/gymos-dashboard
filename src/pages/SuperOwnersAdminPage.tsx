@@ -144,3 +144,99 @@ export default function SuperOwnersAdminPage() {
     </div>
   );
 }
+
+const MODULE_LABELS: Record<SuperOwnerModule, string> = {
+  dashboard: 'Dashboard',
+  analytics: 'Analytics',
+  members: 'Members',
+  payments: 'Payments',
+  leads: 'Leads',
+  expenses: 'Expenses',
+  trainers: 'Trainers',
+  plans: 'Plans',
+  website: 'Website',
+  settings: 'Settings',
+};
+
+function ManageAccessButton({
+  superOwnerId, vendorId, vendorName, changeTick,
+}: { superOwnerId: string; vendorId: string; vendorName: string; changeTick: number }) {
+  const [open, setOpen] = useState(false);
+  const perm = useMemo(
+    () => getSuperOwnerPermission(superOwnerId, vendorId),
+    [superOwnerId, vendorId, changeTick, open],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" className="h-7 w-7" title="Manage access">
+          <Settings2 className="h-3.5 w-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" /> {vendorName}
+          </DialogTitle>
+          <DialogDescription>
+            Configure which modules this super owner can access in this gym.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="rounded-md border border-border/60 p-3 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium">Allow full owner view</div>
+                <div className="text-xs text-muted-foreground">Grant edit/create/delete (otherwise read-only).</div>
+              </div>
+              <Switch
+                checked={perm.allow_full_owner_view}
+                onCheckedChange={(v) => {
+                  setSuperOwnerFullView(superOwnerId, vendorId, Boolean(v));
+                  toast.success(v ? 'Full owner view enabled' : 'Switched to read-only');
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            <Button size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => { setSuperOwnerPermissionPreset(superOwnerId, vendorId, FULL_MODULES, true); toast.success('Preset: Full access'); }}>
+              Full
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => { setSuperOwnerPermissionPreset(superOwnerId, vendorId, LIMITED, false); toast.success('Preset: Limited'); }}>
+              Limited
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => { setSuperOwnerPermissionPreset(superOwnerId, vendorId, MEMBERS_AND_PAYMENTS, false); toast.success('Preset: Members + Payments'); }}>
+              Members+Pay
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => { setSuperOwnerPermissionPreset(superOwnerId, vendorId, ANALYTICS_ONLY, false); toast.success('Preset: Analytics only'); }}>
+              Analytics
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-1.5">
+            {SO_MODULES.map(m => (
+              <label key={m} className="flex items-center justify-between gap-3 rounded-md border border-border/60 px-3 py-2 cursor-pointer hover:bg-muted/40">
+                <span className="text-sm">{MODULE_LABELS[m]}</span>
+                <Switch
+                  checked={Boolean(perm.modules[m])}
+                  onCheckedChange={(v) => setSuperOwnerModule(superOwnerId, vendorId, m, Boolean(v))}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={() => setOpen(false)}>Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
