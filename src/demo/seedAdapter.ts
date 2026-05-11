@@ -32,27 +32,25 @@ export function loadDemoDataset(): LoadResult {
 
   // Seed default super-owner permission presets so demo showcases the
   // gym-level visibility controls.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const sop = require('./superOwnerPermissions') as typeof import('./superOwnerPermissions');
   const presets: Array<{
     so: string; vendor: string;
-    modules: Record<sop.SuperOwnerModule, boolean>;
+    modules: Record<SuperOwnerModule, boolean>;
     full: boolean;
   }> = [
-    { so: 'super_owner_1', vendor: 'vendor_1', modules: sop.FULL_MODULES,         full: true  },
-    { so: 'super_owner_1', vendor: 'vendor_2', modules: sop.ANALYTICS_ONLY,        full: false },
-    { so: 'super_owner_1', vendor: 'vendor_3', modules: sop.MEMBERS_AND_PAYMENTS,  full: false },
-    { so: 'super_owner_2', vendor: 'vendor_4', modules: sop.FULL_MODULES,         full: true  },
-    { so: 'super_owner_2', vendor: 'vendor_5', modules: sop.LIMITED,              full: false },
+    { so: 'super_owner_1', vendor: 'vendor_1', modules: FULL_MODULES,         full: true  },
+    { so: 'super_owner_1', vendor: 'vendor_2', modules: ANALYTICS_ONLY,       full: false },
+    { so: 'super_owner_1', vendor: 'vendor_3', modules: MEMBERS_AND_PAYMENTS, full: false },
+    { so: 'super_owner_2', vendor: 'vendor_4', modules: FULL_MODULES,         full: true  },
+    { so: 'super_owner_2', vendor: 'vendor_5', modules: LIMITED,              full: false },
   ];
-  const rows = presets.map((p, i) => ({
+  const rows: SuperOwnerPermission[] = presets.map((p, i) => ({
     id: `soperm_seed_${i + 1}`,
     super_owner_id: p.so,
     vendor_id: p.vendor,
     modules: { ...p.modules },
     allow_full_owner_view: p.full,
   }));
-  sop.hydrateSuperOwnerPermissions(rows);
+  hydrateSuperOwnerPermissions(rows);
 
   emitDemoChange();
 
