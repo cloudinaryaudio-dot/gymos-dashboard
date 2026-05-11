@@ -11,6 +11,12 @@
 import { seedDemoData, summarizeDataset } from '@/data/seedDemoData';
 import { demoStore, emitDemoChange } from './storage';
 
+import {
+  hydrateSuperOwnerPermissions,
+  FULL_MODULES, ANALYTICS_ONLY, MEMBERS_AND_PAYMENTS, LIMITED,
+  type SuperOwnerModule, type SuperOwnerPermission,
+} from './superOwnerPermissions';
+
 export interface LoadResult {
   ok: true;
   defaultUserId: string;
