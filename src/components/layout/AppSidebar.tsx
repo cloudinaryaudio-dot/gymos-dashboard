@@ -129,6 +129,23 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {isSuperOwner && activeVendor && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      // exit owner-view back to super-owner dashboard
+                      // eslint-disable-next-line @typescript-eslint/no-var-requires
+                      const { setActiveSuperOwnerVendor } = require('@/demo/superOwnerService');
+                      setActiveSuperOwnerVendor(null);
+                      window.location.href = '/app/super-owner-dashboard';
+                    }}
+                    className="hover:bg-sidebar-accent/50 text-primary"
+                  >
+                    <Network className="mr-2 h-4 w-4" />
+                    {!collapsed && <span>Exit Gym View</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {isDemo && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
