@@ -16,10 +16,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDemoMode } from './DemoModeContext';
+import { demoStore } from './storage';
 import type { DemoUser, Vendor } from './types';
 
 export function RoleSwitcher() {
-  const { isDemo, currentUser, users, vendors, setCurrentUser } = useDemoMode();
+  const { isDemo, currentUser, users, vendors, setCurrentUser, changeTick } = useDemoMode();
+  const superOwners = useMemo(() => demoStore.getSuperOwners(), [changeTick]);
 
   const grouped = useMemo(() => {
     const superAdmins = users.filter(u => u.role === 'super_admin');
@@ -42,7 +44,7 @@ export function RoleSwitcher() {
   const vendorById = new Map<string, Vendor>(vendors.map(v => [v.id, v]));
 
   const label = currentUser
-    ? `${currentUser.name.split(' ')[0]} · ${currentUser.role}`
+    ? `${currentUser.name.split(' ')[0]} · ${currentUser.role.replace('_', ' ')}`
     : 'Switch user';
 
   return (
@@ -59,6 +61,21 @@ export function RoleSwitcher() {
           <>
             <DropdownMenuLabel>Super Admin</DropdownMenuLabel>
             {grouped.superAdmins.map(u => (
+              <UserRow
+                key={u.id}
+                user={u}
+                vendor={null}
+                active={currentUser?.id === u.id}
+                onSelect={() => setCurrentUser(u.id)}
+              />
+            ))}
+          </>
+        )}
+        {superOwners.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Super Owners</DropdownMenuLabel>
+            {superOwners.map(u => (
               <UserRow
                 key={u.id}
                 user={u}

@@ -14,39 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      branches: {
-        Row: {
-          contact: string | null
-          created_at: string | null
-          id: string
-          image_url: string | null
-          location: string | null
-          name: string
-          sort_order: number | null
-          user_id: string
-        }
-        Insert: {
-          contact?: string | null
-          created_at?: string | null
-          id?: string
-          image_url?: string | null
-          location?: string | null
-          name: string
-          sort_order?: number | null
-          user_id: string
-        }
-        Update: {
-          contact?: string | null
-          created_at?: string | null
-          id?: string
-          image_url?: string | null
-          location?: string | null
-          name?: string
-          sort_order?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       contact_settings: {
         Row: {
           created_at: string | null
@@ -311,34 +278,25 @@ export type Database = {
       }
       plans: {
         Row: {
-          benefits: string[] | null
-          category: string | null
           created_at: string | null
           duration_days: number
           id: string
-          is_highlighted: boolean | null
           name: string
           price: number
           user_id: string
         }
         Insert: {
-          benefits?: string[] | null
-          category?: string | null
           created_at?: string | null
           duration_days?: number
           id?: string
-          is_highlighted?: boolean | null
           name: string
           price?: number
           user_id: string
         }
         Update: {
-          benefits?: string[] | null
-          category?: string | null
           created_at?: string | null
           duration_days?: number
           id?: string
-          is_highlighted?: boolean | null
           name?: string
           price?: number
           user_id?: string
@@ -371,39 +329,6 @@ export type Database = {
           id?: string
           role?: string | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      reviews: {
-        Row: {
-          created_at: string | null
-          id: string
-          image_url: string | null
-          name: string
-          rating: number
-          sort_order: number | null
-          text: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          rating?: number
-          sort_order?: number | null
-          text?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          rating?: number
-          sort_order?: number | null
-          text?: string | null
           user_id?: string
         }
         Relationships: []
@@ -467,36 +392,6 @@ export type Database = {
           name?: string
           sort_order?: number | null
           specialization?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      website_content: {
-        Row: {
-          content: Json
-          created_at: string
-          id: string
-          is_enabled: boolean
-          section_key: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          content?: Json
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          section_key: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          content?: Json
-          created_at?: string
-          id?: string
-          is_enabled?: boolean
-          section_key?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: []

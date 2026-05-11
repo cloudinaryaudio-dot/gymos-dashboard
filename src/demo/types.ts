@@ -18,6 +18,7 @@ export type {
   Permission,
   PermissionGrant,
   SeedDataset,
+  SuperOwnerAccess,
 } from '@/data/seedDemoData';
 
 export interface VendorLockState {

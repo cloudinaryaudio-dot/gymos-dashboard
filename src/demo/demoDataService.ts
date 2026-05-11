@@ -13,7 +13,7 @@
  */
 import { demoStore, emitDemoChange } from './storage';
 import { isDemoActive } from './seedAdapter';
-import { checkPermission, getCurrentUser, getVendorScope } from './permissions';
+import { checkPermission, getCurrentUser, getVendorScope, getAllowedVendorIds } from './permissions';
 import type {
   DemoMember, DemoPayment, DemoLead, DemoExpense, DemoPlan,
 } from './types';
@@ -29,12 +29,14 @@ function genId(prefix: string) {
 function nowIso() { return new Date().toISOString(); }
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 
-/** Return rows scoped to the current user's vendor; super_admin gets everything. */
+/** Return rows scoped to current user's vendor(s). super_admin = all; super_owner = assigned ∩ active. */
 function scope<T extends { vendor_id: string }>(rows: T[]): T[] {
   const user = getCurrentUser();
+  const allowed = getAllowedVendorIds(user);
+  let scoped = allowed === null ? rows : rows.filter(r => allowed.includes(r.vendor_id));
   const vendorId = getVendorScope(user);
-  if (!vendorId) return rows; // super_admin
-  return rows.filter(r => r.vendor_id === vendorId);
+  if (vendorId) scoped = scoped.filter(r => r.vendor_id === vendorId);
+  return scoped;
 }
 
 function activeVendorId(): string {

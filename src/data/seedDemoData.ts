@@ -27,7 +27,14 @@ import { addDays, subDays, subMonths, format } from 'date-fns';
 import { buildTrainerSeed } from './seedTrainerData';
 
 // ─── Types ─────────────────────────────────────────────────────
-export type Role = 'super_admin' | 'owner' | 'employee';
+export type Role = 'super_admin' | 'super_owner' | 'owner' | 'employee';
+
+export interface SuperOwnerAccess {
+  id: string;
+  super_owner_id: string;
+  vendor_id: string;
+  assigned_at: string;
+}
 export type MemberStatus = 'active' | 'expired' | 'new';
 export type PaymentStatus = 'paid' | 'pending' | 'overdue';
 export type LeadStatus = 'new' | 'contacted' | 'converted';
@@ -172,6 +179,8 @@ export interface SeedDataset {
   trainers: Trainer[];
   trainer_assignments: TrainerAssignment[];
   trainer_sessions: TrainerSession[];
+  super_owners: User[];
+  super_owner_access: SuperOwnerAccess[];
 }
 
 // ─── Deterministic helpers ─────────────────────────────────────
@@ -461,7 +470,31 @@ export function seedDemoData(): SeedDataset {
   trainer_assignments.push(...trainerSeed.trainer_assignments);
   trainer_sessions.push(...trainerSeed.trainer_sessions);
 
-  return { users, vendors, plans, members, payments, leads, expenses, permissions, trainers, trainer_assignments, trainer_sessions };
+  // ─── Super Owners (multi-gym managers) ───
+  const SUPER_OWNER_DEFS = [
+    { id: 'super_owner_1', name: 'Rahul Fitness Group',  email: 'rahul@fitnessgroup.in',  vendors: ['vendor_1','vendor_2','vendor_3'] },
+    { id: 'super_owner_2', name: 'Apex Wellness Holdings', email: 'ops@apexwellness.in',   vendors: ['vendor_3','vendor_4','vendor_5'] },
+    { id: 'super_owner_3', name: 'Singh Sports Ventures', email: 'singh@sportsvc.in',     vendors: ['vendor_1','vendor_4'] },
+    { id: 'super_owner_4', name: 'Mehta Health Network',  email: 'mehta@healthnet.in',    vendors: ['vendor_2','vendor_5'] },
+    { id: 'super_owner_5', name: 'PowerPro Federation',   email: 'admin@powerpro.in',     vendors: ['vendor_1','vendor_5'] },
+  ];
+  const super_owners: User[] = SUPER_OWNER_DEFS.map((s, i) => ({
+    id: s.id, role: 'super_owner' as Role, vendor_id: null,
+    name: s.name, email: s.email, phone: phone(900 + i * 17),
+  }));
+  const super_owner_access: SuperOwnerAccess[] = [];
+  SUPER_OWNER_DEFS.forEach((s, i) => {
+    s.vendors.forEach((vid, j) => {
+      super_owner_access.push({
+        id: `soacc_${i + 1}_${j + 1}`,
+        super_owner_id: s.id,
+        vendor_id: vid,
+        assigned_at: fmtIso(subDays(now, 30 + i * 5 + j)),
+      });
+    });
+  });
+
+  return { users, vendors, plans, members, payments, leads, expenses, permissions, trainers, trainer_assignments, trainer_sessions, super_owners, super_owner_access };
 }
 
 // ─── Convenience selectors (multi-tenant filtering) ─────────────

@@ -106,7 +106,7 @@ export function PricingSection({ plans, content, onCtaClick, showViewAll }: Pric
   const highlightedPlan = plans.find(p => p.is_highlighted);
 
   return (
-    <section id="pricing" className="py-28 px-4 sm:px-6 lg:px-8 relative">
+    <section id="pricing" className="py-8 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[150px]" />
       </div>

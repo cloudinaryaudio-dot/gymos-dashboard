@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -34,30 +33,51 @@ import PublicEquipmentPage from "./pages/PublicEquipmentPage";
 import PublicTestimonialsPage from "./pages/PublicTestimonialsPage";
 import PublicProductsPage from "./pages/PublicProductsPage";
 import PublicProductDetailPage from "./pages/PublicProductDetailPage";
-import Dashboard from "./pages/Dashboard";
+import OwnerSummaryPage from "./pages/OwnerSummaryPage";
+import InvoiceSettingsPage from "./pages/InvoiceSettingsPage";
+import RecycleBinPage from "./pages/RecycleBinPage";
+import EmployeeAccessPage from "./pages/EmployeeAccessPage";
+import TrainersPage from "./pages/TrainersPage";
+import TrainerDetailPage from "./pages/TrainerDetailPage";
+import SuperOwnerDashboardPage from "./pages/SuperOwnerDashboardPage";
+import SuperOwnersAdminPage from "./pages/SuperOwnersAdminPage";
+import { useEffect } from "react";
 import { runRecycleCleanup } from "./services/dataService";
 
 const queryClient = new QueryClient();
 
 function AppLayout() {
   return (
-    <BrandingProvider>
-      <DashboardLayout>
-        <Routes>
-          <Route index element={<PlaceholderPage />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="members" element={<MembersPage />} />
-          <Route path="members/:memberId" element={<MemberProfilePage />} />
-          <Route path="plans" element={<PlansPage />} />
-          <Route path="payments" element={<PaymentsPage />} />
-          <Route path="leads" element={<LeadsPage />} />
-          <Route path="expenses" element={<ExpensesPage />} />
-          <Route path="website" element={<WebsiteBuilderPage />} />
-          <Route path="contact" element={<ContactSettingsPage />} />
-          <Route path="settings" element={<BrandingSettingsPage />} />
-        </Routes>
-      </DashboardLayout>
-    </BrandingProvider>
+    <DashboardLayout>
+      <Routes>
+        <Route index element={<PlaceholderPage />} />
+        <Route path="dashboard" element={<AnalyticsDashboardPage />} />
+        <Route path="owner-summary" element={<OwnerSummaryPage />} />
+        <Route path="analytics" element={<AnalyticsDashboardPage />} />
+        <Route path="members" element={<MembersPage />} />
+        <Route path="members/dashboard" element={<MembersDashboardPage />} />
+        <Route path="members/:memberId" element={<MemberProfilePage />} />
+        <Route path="plans" element={<PlansPage />} />
+        <Route path="plans/dashboard" element={<PlansDashboardPage />} />
+        <Route path="payments" element={<PaymentsPage />} />
+        <Route path="payments/dashboard" element={<PaymentsDashboardPage />} />
+        <Route path="leads" element={<LeadsPage />} />
+        <Route path="leads/dashboard" element={<LeadsDashboardPage />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses/dashboard" element={<ExpensesDashboardPage />} />
+        <Route path="website" element={<WebsiteBuilderPage />} />
+        <Route path="contact" element={<ContactSettingsPage />} />
+        <Route path="settings" element={<BrandingSettingsPage />} />
+        <Route path="settings/invoice" element={<InvoiceSettingsPage />} />
+        <Route path="trainers" element={<TrainersPage />} />
+        <Route path="trainers/:trainerId" element={<TrainerDetailPage />} />
+        <Route path="recycle" element={<RecycleBinPage />} />
+        <Route path="employee-access" element={<EmployeeAccessPage />} />
+        <Route path="permissions" element={<EmployeeAccessPage />} />
+        <Route path="super-owner-dashboard" element={<SuperOwnerDashboardPage />} />
+        <Route path="super-owners" element={<SuperOwnersAdminPage />} />
+      </Routes>
+    </DashboardLayout>
   );
 }
 

@@ -15,6 +15,7 @@ import type {
   DemoExpense,
   PermissionGrant,
   VendorLockState,
+  SuperOwnerAccess,
 } from './types';
 import type { Trainer, TrainerAssignment, TrainerSession } from '@/data/seedDemoData';
 
@@ -33,6 +34,9 @@ export const DEMO_KEYS = {
   vendorLocks:  'gymos_vendor_locks',
   currentUser:  'gymos_current_user_id',
   isDemoLoaded: 'gymos_is_demo_loaded',
+  superOwners:  'gymos_super_owners',
+  superOwnerAccess: 'gymos_super_owner_access',
+  superOwnerActiveVendor: 'gymos_super_owner_active_vendor',
 } as const;
 
 const isBrowser = typeof window !== 'undefined';
@@ -79,6 +83,9 @@ export const demoStore = {
   getVendorLocks: (): VendorLockState    => read(DEMO_KEYS.vendorLocks, {}),
   getCurrentUserId: (): string | null    => read<string | null>(DEMO_KEYS.currentUser, null),
   isDemoLoaded:   (): boolean            => read(DEMO_KEYS.isDemoLoaded, false),
+  getSuperOwners: (): DemoUser[]                 => read(DEMO_KEYS.superOwners, []),
+  getSuperOwnerAccess: (): SuperOwnerAccess[]    => read(DEMO_KEYS.superOwnerAccess, []),
+  getSuperOwnerActiveVendor: (): string | null   => read<string | null>(DEMO_KEYS.superOwnerActiveVendor, null),
 
   // Writes
   setUsers:        (v: DemoUser[])        => write(DEMO_KEYS.users, v),
@@ -95,6 +102,9 @@ export const demoStore = {
   setVendorLocks:  (v: VendorLockState)   => write(DEMO_KEYS.vendorLocks, v),
   setCurrentUserId:(id: string | null)    => write(DEMO_KEYS.currentUser, id),
   setDemoLoaded:   (v: boolean)           => write(DEMO_KEYS.isDemoLoaded, v),
+  setSuperOwners:        (v: DemoUser[])           => write(DEMO_KEYS.superOwners, v),
+  setSuperOwnerAccess:   (v: SuperOwnerAccess[])   => write(DEMO_KEYS.superOwnerAccess, v),
+  setSuperOwnerActiveVendor: (v: string | null)    => write(DEMO_KEYS.superOwnerActiveVendor, v),
 
   /** Replace the entire dataset atomically (idempotent). */
   hydrateAll(d: SeedDataset, opts?: { defaultUserId?: string }): void {
@@ -110,6 +120,9 @@ export const demoStore = {
     write(DEMO_KEYS.trainerSessions,     d.trainer_sessions ?? []);
     write(DEMO_KEYS.permissions, d.permissions);
     write(DEMO_KEYS.vendorLocks, {} as VendorLockState);
+    write(DEMO_KEYS.superOwners,       d.super_owners ?? []);
+    write(DEMO_KEYS.superOwnerAccess,  d.super_owner_access ?? []);
+    write(DEMO_KEYS.superOwnerActiveVendor, null);
     write(DEMO_KEYS.isDemoLoaded, true);
     if (opts?.defaultUserId) write(DEMO_KEYS.currentUser, opts.defaultUserId);
   },

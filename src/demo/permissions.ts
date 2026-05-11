@@ -39,11 +39,13 @@ export const DEFAULT_EMPLOYEE_PERMS: Permission[] = [
 export function getCurrentUser(): DemoUser | null {
   const id = demoStore.getCurrentUserId();
   if (!id) return null;
-  return demoStore.getUsers().find(u => u.id === id) ?? null;
+  const all = [...demoStore.getUsers(), ...demoStore.getSuperOwners()];
+  return all.find(u => u.id === id) ?? null;
 }
 
 export function getUserPermissions(user: DemoUser): Permission[] {
   if (user.role === 'super_admin') return [...OWNER_FULL]; // full access
+  if (user.role === 'super_owner') return [...OWNER_FULL]; // read-style across assigned vendors
   if (user.role === 'owner') return [...OWNER_FULL];
   const grant: PermissionGrant | undefined = demoStore.getPermissions()
     .find(p => p.user_id === user.id);
@@ -54,6 +56,9 @@ export function checkPermission(user: DemoUser | null, module: Module, action: A
   if (!user) return false;
   // super_admin always has access (lock does not affect platform admin).
   if (user.role === 'super_admin') return true;
+
+  // super_owner is read-only across assigned gyms — block all edits.
+  if (user.role === 'super_owner' && action === 'edit') return false;
 
   // Vendor lock — block ALL edit/create/delete actions, allow view only.
   if (action === 'edit' && user.vendor_id && isVendorLocked(user.vendor_id)) {
@@ -70,11 +75,26 @@ export function checkPermission(user: DemoUser | null, module: Module, action: A
   return getUserPermissions(user).includes(key);
 }
 
-/** Vendor scope for the current user. null = super_admin (sees everything). */
+/** Vendor scope for the current user. null = sees everything (super_admin, or super_owner viewing All Gyms). */
 export function getVendorScope(user: DemoUser | null): string | null {
   if (!user) return null;
   if (user.role === 'super_admin') return null;
+  if (user.role === 'super_owner') {
+    return demoStore.getSuperOwnerActiveVendor(); // null = All Gyms (combined)
+  }
   return user.vendor_id;
+}
+
+/** Vendor IDs the user is allowed to access. null = no restriction (super_admin). */
+export function getAllowedVendorIds(user: DemoUser | null): string[] | null {
+  if (!user) return [];
+  if (user.role === 'super_admin') return null;
+  if (user.role === 'super_owner') {
+    return demoStore.getSuperOwnerAccess()
+      .filter(a => a.super_owner_id === user.id)
+      .map(a => a.vendor_id);
+  }
+  return user.vendor_id ? [user.vendor_id] : [];
 }
 
 export function isVendorLocked(vendorId: string | null): boolean {

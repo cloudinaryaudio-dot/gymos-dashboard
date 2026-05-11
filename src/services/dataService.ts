@@ -6,18 +6,10 @@
  * delegates to `src/demo/demoDataService.ts`, which reads from the
  * multi-vendor seedDemoData fixture in localStorage and enforces RBAC.
  */
-import {
-  getDb, setDb, genId, getCurrentVendorId,
-  type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow,
-  type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow,
-  type AppUserRow, type VendorRow, type SuperOwnerGymAccessRow,
-} from '@/data/mockDb';
+import { getDb, setDb, genId, type MockDb, type MemberRow, type PlanRow, type PaymentRow, type ExpenseRow, type LeadRow, type WebsiteContentRow, type GymSettingsRow, type ContactSettingsRow, type TrainerRow, type TrainerAssignmentRow, type TrainerSessionRow } from '@/data/mockDb';
+import * as demo from '@/demo/demoDataService';
 
-// Demo-mode delegation shim (no-op until demo data service is reconnected).
-const useDemo = (): boolean => false;
-const demo: Record<string, (...args: any[]) => any> = new Proxy({}, {
-  get: () => () => { throw new Error('Demo mode not available'); },
-});
+const useDemo = () => demo.shouldUseDemo();
 
 // Simulate async
 const delay = () => new Promise<void>(r => setTimeout(r, 50));
@@ -25,25 +17,15 @@ const delay = () => new Promise<void>(r => setTimeout(r, 50));
 function db(): MockDb { return getDb(); }
 function save(d: MockDb) { setDb(d); }
 
-/** Filter rows by active vendor. If no vendor active (super_admin "All"), returns all. */
-function scope<T extends { vendor_id?: string }>(rows: T[]): T[] {
-  const vid = getCurrentVendorId();
-  if (!vid) return rows;
-  return rows.filter(r => !r.vendor_id || r.vendor_id === vid);
-}
-function activeVendorId(): string | undefined {
-  return getCurrentVendorId() ?? undefined;
-}
-
 // ─── Plans ───
 export async function getPlans(): Promise<PlanRow[]> {
   if (useDemo()) return demo.getPlans() as any;
   await delay();
-  return scope([...db().plans]).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return [...db().plans].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export async function createPlan(p: { name: string; price: number; duration_days: number; category?: string; benefits?: string[]; is_highlighted?: boolean; show_on_homepage?: boolean }): Promise<PlanRow> {
-  await delay();
+  if (useDemo()) return demo.createPlan(p) as any;
   const row: PlanRow = { id: genId(), user_id: 'demo-user', ...p, created_at: new Date().toISOString() };
   const d = db();
   d.plans.push(row);
@@ -75,6 +57,7 @@ export async function getMembers(): Promise<(MemberRow & { plans?: { name: strin
   const d = db();
   const today = new Date().toISOString().split('T')[0];
   return d.members
+    .filter(m => !m.is_deleted)
     .map(m => {
       const plan = d.plans.find(p => p.id === m.plan_id);
       return {
@@ -87,8 +70,8 @@ export async function getMembers(): Promise<(MemberRow & { plans?: { name: strin
 }
 
 export async function createMember(m: { name: string; phone: string; plan_id: string; start_date: string; expiry_date: string }): Promise<MemberRow> {
-  await delay();
-  const row: MemberRow = { id: genId(), user_id: 'demo-user', ...m, status: 'active', created_at: new Date().toISOString() };
+  if (useDemo()) return demo.createMember(m) as any;
+  const row: MemberRow = { id: genId(), user_id: 'demo-user', ...m, status: 'active', created_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.members.push(row);
   save(d);
@@ -116,6 +99,7 @@ export async function getPayments(): Promise<(PaymentRow & { members?: { name: s
   if (useDemo()) return demo.getPayments() as any;
   const d = db();
   return d.payments
+    .filter(p => !p.is_deleted)
     .map(p => {
       const member = d.members.find(m => m.id === p.member_id);
       return { ...p, members: member ? { name: member.name } : null };
@@ -124,8 +108,8 @@ export async function getPayments(): Promise<(PaymentRow & { members?: { name: s
 }
 
 export async function createPayment(p: { member_id: string; amount: number; payment_date: string; method: string; status: string; note?: string }): Promise<PaymentRow> {
-  await delay();
-  const row: PaymentRow = { id: genId(), user_id: 'demo-user', ...p, note: p.note || null, created_at: new Date().toISOString() };
+  if (useDemo()) return demo.createPayment(p) as any;
+  const row: PaymentRow = { id: genId(), user_id: 'demo-user', ...p, note: p.note || null, created_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.payments.push(row);
   save(d);
@@ -152,12 +136,12 @@ export async function updatePaymentStatus(id: string, status: string): Promise<v
 export async function getExpenses(): Promise<ExpenseRow[]> {
   if (useDemo()) return demo.getExpenses() as any;
   await delay();
-  return [...db().expenses].sort((a, b) => b.expense_date.localeCompare(a.expense_date));
+  return [...db().expenses].filter(e => !e.is_deleted).sort((a, b) => b.expense_date.localeCompare(a.expense_date));
 }
 
 export async function createExpense(e: { title: string; amount: number; expense_date: string; category?: string }): Promise<ExpenseRow> {
-  await delay();
-  const row: ExpenseRow = { id: genId(), user_id: 'demo-user', ...e, category: e.category || null, created_at: new Date().toISOString() };
+  if (useDemo()) return demo.createExpense(e) as any;
+  const row: ExpenseRow = { id: genId(), user_id: 'demo-user', ...e, category: e.category || null, created_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.expenses.push(row);
   save(d);
@@ -173,12 +157,12 @@ export async function deleteExpense(id: string): Promise<void> {
 export async function getLeads(): Promise<LeadRow[]> {
   if (useDemo()) return demo.getLeads() as any;
   await delay();
-  return [...db().leads].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return [...db().leads].filter(l => !l.is_deleted).sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export async function createLead(l: { name: string; phone: string; fitness_goal?: string; status?: string }): Promise<LeadRow> {
-  await delay();
-  const row: LeadRow = { id: genId(), user_id: 'demo-user', ...l, fitness_goal: l.fitness_goal || null, status: l.status || 'new', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  if (useDemo()) return demo.createLead(l) as any;
+  const row: LeadRow = { id: genId(), user_id: 'demo-user', ...l, fitness_goal: l.fitness_goal || null, status: l.status || 'new', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), is_deleted: false, deleted_at: null };
   const d = db();
   d.leads.push(row);
   save(d);
@@ -207,7 +191,7 @@ export async function convertLeadToMember(params: { leadId: string; planId: stri
   const d = db();
   // Create member
   d.members.push({
-    id: genId(), user_id: 'demo-user', vendor_id: activeVendorId(), name: params.name, phone: params.phone,
+    id: genId(), user_id: 'demo-user', name: params.name, phone: params.phone,
     plan_id: params.planId, start_date: params.startDate, expiry_date: params.expiryDate,
     status: 'active', created_at: new Date().toISOString(),
     is_deleted: false, deleted_at: null,
@@ -350,22 +334,17 @@ export async function upsertWebsiteSection(section_key: string, is_enabled: bool
 // ─── Gym Settings ───
 export async function getGymSettings(): Promise<GymSettingsRow | null> {
   await delay();
-  const vid = getCurrentVendorId();
-  const rows = db().gym_settings;
-  if (vid) return rows.find(r => r.vendor_id === vid) ?? rows[0] ?? null;
-  return rows[0] || null;
+  return db().gym_settings[0] || null;
 }
 
 export async function upsertGymSettings(updates: Partial<Omit<GymSettingsRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<void> {
   await delay();
   const d = db();
-  const vid = getCurrentVendorId();
-  const idx = vid ? d.gym_settings.findIndex(r => r.vendor_id === vid) : (d.gym_settings.length > 0 ? 0 : -1);
-  if (idx !== -1) {
-    d.gym_settings[idx] = { ...d.gym_settings[idx], ...updates, updated_at: new Date().toISOString() };
+  if (d.gym_settings.length > 0) {
+    d.gym_settings[0] = { ...d.gym_settings[0], ...updates, updated_at: new Date().toISOString() };
   } else {
     d.gym_settings.push({
-      id: genId(), user_id: 'demo-user', vendor_id: vid ?? undefined,
+      id: genId(), user_id: 'demo-user',
       gym_name: updates.gym_name || 'GymOS',
       logo_url: updates.logo_url || null,
       primary_color: updates.primary_color || '222 47% 11%',
@@ -381,22 +360,17 @@ export async function upsertGymSettings(updates: Partial<Omit<GymSettingsRow, 'i
 // ─── Contact Settings ───
 export async function getContactSettings(): Promise<ContactSettingsRow | null> {
   await delay();
-  const vid = getCurrentVendorId();
-  const rows = db().contact_settings;
-  if (vid) return rows.find(r => r.vendor_id === vid) ?? rows[0] ?? null;
-  return rows[0] || null;
+  return db().contact_settings[0] || null;
 }
 
 export async function upsertContactSettings(updates: Partial<Pick<ContactSettingsRow, 'whatsapp_number' | 'whatsapp_message' | 'instagram_url'>>): Promise<void> {
   await delay();
   const d = db();
-  const vid = getCurrentVendorId();
-  const idx = vid ? d.contact_settings.findIndex(r => r.vendor_id === vid) : (d.contact_settings.length > 0 ? 0 : -1);
-  if (idx !== -1) {
-    d.contact_settings[idx] = { ...d.contact_settings[idx], ...updates, updated_at: new Date().toISOString() };
+  if (d.contact_settings.length > 0) {
+    d.contact_settings[0] = { ...d.contact_settings[0], ...updates, updated_at: new Date().toISOString() };
   } else {
     d.contact_settings.push({
-      id: genId(), user_id: 'demo-user', gym_id: null, vendor_id: vid ?? undefined,
+      id: genId(), user_id: 'demo-user', gym_id: null,
       whatsapp_number: updates.whatsapp_number || null,
       whatsapp_message: updates.whatsapp_message || null,
       instagram_url: updates.instagram_url || null,
@@ -418,9 +392,8 @@ export async function renewMembership(params: { memberId: string; planId: string
   const newExpiryStr = newExpiry.toISOString().split('T')[0];
 
   // Create payment
-  const member = d.members.find(m => m.id === params.memberId);
   d.payments.push({
-    id: genId(), user_id: 'demo-user', vendor_id: member?.vendor_id, member_id: params.memberId, amount: params.amount,
+    id: genId(), user_id: 'demo-user', member_id: params.memberId, amount: params.amount,
     payment_date: newStart, method: params.method || 'cash', status: 'paid',
     note: 'Membership renewal', created_at: today.toISOString(),
   });
@@ -435,8 +408,16 @@ export async function renewMembership(params: { memberId: string; planId: string
 
 // ─── Dashboard Stats ───
 export async function getDashboardStats() {
+  if (useDemo()) return demo.getDashboardStats() as any;
   await delay();
-  const d = db();
+  const raw = db();
+  const d: MockDb = {
+    ...raw,
+    members: raw.members.filter(m => !m.is_deleted),
+    payments: raw.payments.filter(p => !p.is_deleted),
+    leads: raw.leads.filter(l => !l.is_deleted),
+    expenses: raw.expenses.filter(e => !e.is_deleted),
+  };
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   const monthStart = `${today.slice(0, 7)}-01`;
@@ -501,8 +482,10 @@ export async function getDashboardStats() {
 
 // ─── Revenue Chart ───
 export async function getRevenueChart() {
+  if (useDemo()) return demo.getRevenueChart() as any;
   await delay();
-  const d = db();
+  const raw = db();
+  const d = { ...raw, payments: raw.payments.filter(p => !p.is_deleted) };
   const now = new Date();
   const months: { month: string; revenue: number }[] = [];
 
@@ -525,134 +508,322 @@ export async function hasAnyData(): Promise<boolean> {
   return db().plans.length > 0;
 }
 
-// ─── Stub exports (build-compat layer) ─────────────────────────────────────
-// These keep the codebase compiling while the multi-vendor / trainer / super-owner
-// features are being wired up. They return empty data so the UI degrades cleanly.
+// ─── Analytics (time-range based) ───
+export type AnalyticsRange = { from: string; to: string }; // YYYY-MM-DD inclusive
 
 export interface AnalyticsResult {
-  totalRevenue: number;
-  ptRevenue: number;
-  membershipRevenue: number;
-  totalExpenses: number;
-  profit: number;
-  newMembers: number;
-  activePtMembers: number;
-  ptSessionsCompleted: number;
-  series: { date: string; revenue: number; expenses: number; newMembers: number }[];
   kpis: {
     totalRevenue: number;
     totalExpenses: number;
-    profit: number;
     netProfit: number;
     newMembers: number;
-    activeMembers: number;
     membersLeft: number;
-    ptRevenue: number;
-    membershipRevenue: number;
-    activePtMembers: number;
-    ptSessionsCompleted: number;
+    activeMembers: number;
     pendingPayments: number;
     pendingAmount: number;
     newLeads: number;
     convertedLeads: number;
-    avgRevenuePerDay: number;
-    avgNewMembersPerDay: number;
-    [key: string]: any;
+    /** Revenue from PT package payments within range. */
+    ptRevenue: number;
+    /** Revenue from membership payments within range. */
+    membershipRevenue: number;
+    /** Active PT clients (assignments with sessions remaining). */
+    activePtMembers: number;
+    /** Sessions completed within range. */
+    ptSessionsCompleted: number;
   };
-  topDay: { date: string; revenue: number; label?: string } | null;
-  planDistribution: { plan: string; name?: string; count: number; value?: number }[];
-  expenseBreakdown: { category: string; name?: string; amount: number; value?: number }[];
+  series: { label: string; revenue: number; expenses: number; newMembers: number }[];
+  planDistribution: { name: string; value: number }[];
+  expenseBreakdown: { name: string; value: number }[];
+  members: { id: string; name: string; phone: string; plan: string; start_date: string; expiry_date: string; status: string }[];
+  payments: { id: string; member_name: string; amount: number; payment_date: string; method: string; status: string; payment_type?: string }[];
+  leads: { id: string; name: string; phone: string; goal: string; status: string; created_at: string }[];
+  topDay?: { label: string; revenue: number };
 }
 
-export interface Trainer {
-  id: string; user_id: string; vendor_id?: string;
-  name: string; phone?: string; specialization?: string;
-  image_url?: string | null; is_active: boolean;
-  hourly_rate?: number; bio?: string | null;
-  experience?: string | number | null;
-  created_at: string;
-}
-export interface TrainerAssignment {
-  id: string; trainer_id: string; member_id: string;
-  total_sessions: number; sessions_completed: number;
-  price: number; start_date: string; end_date: string;
-  status: 'active' | 'completed' | 'cancelled';
-  created_at: string;
-}
-export interface TrainerSession {
-  id: string; assignment_id: string; trainer_id: string; member_id: string;
-  session_date: string;
-  date?: string;
-  status: 'scheduled' | 'completed' | 'missed';
-  notes?: string | null;
-  created_at: string;
+function bucketLabelsForRange(from: Date, to: Date, granularity: 'day' | 'month') {
+  const labels: { label: string; key: string; start: Date; end: Date }[] = [];
+  if (granularity === 'day') {
+    const cur = new Date(from);
+    while (cur <= to) {
+      const start = new Date(cur);
+      const end = new Date(cur); end.setHours(23, 59, 59, 999);
+      labels.push({
+        label: start.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+        key: start.toISOString().slice(0, 10),
+        start, end,
+      });
+      cur.setDate(cur.getDate() + 1);
+    }
+  } else {
+    const cur = new Date(from.getFullYear(), from.getMonth(), 1);
+    while (cur <= to) {
+      const start = new Date(cur);
+      const end = new Date(cur.getFullYear(), cur.getMonth() + 1, 0, 23, 59, 59, 999);
+      labels.push({
+        label: start.toLocaleDateString('en-US', { month: 'short' }),
+        key: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`,
+        start, end,
+      });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+  }
+  return labels;
 }
 
-export async function getAnalytics(_range: { from: string; to: string }, _gran: 'day' | 'month' = 'day'): Promise<AnalyticsResult> {
+export async function getAnalytics(range: AnalyticsRange, granularity: 'day' | 'month' = 'day'): Promise<AnalyticsResult> {
+  if (useDemo()) return demo.getAnalytics(range, granularity) as any;
   await delay();
+  const raw = db();
+  const d: MockDb = {
+    ...raw,
+    members: raw.members.filter(m => !m.is_deleted),
+    payments: raw.payments.filter(p => !p.is_deleted),
+    leads: raw.leads.filter(l => !l.is_deleted),
+    expenses: raw.expenses.filter(e => !e.is_deleted),
+  };
+  const from = range.from;
+  const to = range.to;
+  const fromDate = new Date(`${from}T00:00:00`);
+  const toDate = new Date(`${to}T23:59:59`);
+
+  const inRange = (dateStr: string) => dateStr >= from && dateStr <= to;
+  const inRangeIso = (iso: string) => {
+    const day = iso.slice(0, 10);
+    return day >= from && day <= to;
+  };
+
+  const paid = d.payments.filter(p => p.status === 'paid' && inRange(p.payment_date));
+  const totalRevenue = paid.reduce((s, p) => s + p.amount, 0);
+
+  const exp = d.expenses.filter(e => inRange(e.expense_date));
+  const totalExpenses = exp.reduce((s, e) => s + e.amount, 0);
+
+  const newMembersList = d.members.filter(m => inRangeIso(m.created_at));
+  const newMembers = newMembersList.length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const membersLeft = d.members.filter(m => inRange(m.expiry_date) && m.expiry_date < today).length;
+  const activeMembers = d.members.filter(m => m.expiry_date >= today).length;
+
+  const pendingList = d.payments.filter(p => (p.status === 'pending' || p.status === 'overdue') && inRange(p.payment_date));
+  const pendingPayments = pendingList.length;
+  const pendingAmount = pendingList.reduce((s, p) => s + p.amount, 0);
+
+  const leadsInRange = d.leads.filter(l => inRangeIso(l.created_at));
+  const newLeads = leadsInRange.length;
+  const convertedLeads = leadsInRange.filter(l => l.status === 'joined').length;
+
+  const buckets = bucketLabelsForRange(fromDate, toDate, granularity);
+  const series = buckets.map(b => {
+    const bs = b.start.toISOString().slice(0, 10);
+    const be = b.end.toISOString().slice(0, 10);
+    const bRevenue = d.payments
+      .filter(p => p.status === 'paid' && p.payment_date >= bs && p.payment_date <= be)
+      .reduce((s, p) => s + p.amount, 0);
+    const bExpenses = d.expenses
+      .filter(e => e.expense_date >= bs && e.expense_date <= be)
+      .reduce((s, e) => s + e.amount, 0);
+    const bNew = d.members.filter(m => {
+      const day = m.created_at.slice(0, 10);
+      return day >= bs && day <= be;
+    }).length;
+    return { label: b.label, revenue: bRevenue, expenses: bExpenses, newMembers: bNew };
+  });
+
+  const topDay = series.length ? series.reduce((best, cur) => cur.revenue > best.revenue ? cur : best, series[0]) : undefined;
+
+  const planCount: Record<string, number> = {};
+  newMembersList.forEach(m => {
+    const plan = d.plans.find(p => p.id === m.plan_id);
+    const key = plan?.name ?? 'Unknown';
+    planCount[key] = (planCount[key] ?? 0) + 1;
+  });
+  const planDistribution = Object.entries(planCount).map(([name, value]) => ({ name, value }));
+
+  const catCount: Record<string, number> = {};
+  exp.forEach(e => {
+    const key = e.category ?? 'Other';
+    catCount[key] = (catCount[key] ?? 0) + e.amount;
+  });
+  const expenseBreakdown = Object.entries(catCount).map(([name, value]) => ({ name, value }));
+
+  const members = newMembersList.map(m => {
+    const plan = d.plans.find(p => p.id === m.plan_id);
+    return {
+      id: m.id, name: m.name, phone: m.phone, plan: plan?.name ?? '—',
+      start_date: m.start_date, expiry_date: m.expiry_date,
+      status: m.expiry_date < today ? 'expired' : 'active',
+    };
+  });
+
+  const paymentsTable = d.payments
+    .filter(p => inRange(p.payment_date))
+    .sort((a, b) => b.payment_date.localeCompare(a.payment_date))
+    .map(p => {
+      const member = d.members.find(m => m.id === p.member_id);
+      return {
+        id: p.id, member_name: member?.name ?? 'Unknown',
+        amount: p.amount, payment_date: p.payment_date,
+        method: p.method, status: p.status,
+        payment_type: p.payment_type ?? 'membership',
+      };
+    });
+
+  const leadsTable = leadsInRange
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map(l => ({
+      id: l.id, name: l.name, phone: l.phone,
+      goal: l.fitness_goal ?? '—', status: l.status,
+      created_at: l.created_at,
+    }));
+
+  // PT analytics
+  const ptRevenue = paid.filter(p => p.payment_type === 'pt').reduce((s, p) => s + p.amount, 0);
+  const membershipRevenue = totalRevenue - ptRevenue;
+  const activePtMembers = new Set(
+    d.trainer_assignments
+      .filter(a => a.sessions_completed < a.total_sessions)
+      .map(a => a.member_id)
+  ).size;
+  const ptSessionsCompleted = d.trainer_sessions
+    .filter(s => s.status === 'completed' && inRange(s.date))
+    .length;
+
   return {
-    totalRevenue: 0, ptRevenue: 0, membershipRevenue: 0,
-    totalExpenses: 0, profit: 0,
-    newMembers: 0, activePtMembers: 0, ptSessionsCompleted: 0,
-    series: [],
     kpis: {
-      totalRevenue: 0, totalExpenses: 0, profit: 0, netProfit: 0,
-      newMembers: 0, activeMembers: 0, membersLeft: 0,
-      ptRevenue: 0, membershipRevenue: 0,
-      activePtMembers: 0, ptSessionsCompleted: 0,
-      pendingPayments: 0, pendingAmount: 0,
-      newLeads: 0, convertedLeads: 0,
-      avgRevenuePerDay: 0, avgNewMembersPerDay: 0,
+      totalRevenue, totalExpenses, netProfit: totalRevenue - totalExpenses,
+      newMembers, membersLeft, activeMembers,
+      pendingPayments, pendingAmount,
+      newLeads, convertedLeads,
+      ptRevenue, membershipRevenue, activePtMembers, ptSessionsCompleted,
     },
-    topDay: null,
-    planDistribution: [],
-    expenseBreakdown: [],
+    series,
+    planDistribution,
+    expenseBreakdown,
+    members,
+    payments: paymentsTable,
+    leads: leadsTable,
+    topDay: topDay ? { label: topDay.label, revenue: topDay.revenue } : undefined,
   };
 }
 
-export async function getAppUsers(): Promise<AppUserRow[]> { await delay(); return []; }
-export async function getVendors(): Promise<VendorRow[]> { await delay(); return []; }
-export async function getSuperOwners(): Promise<AppUserRow[]> { await delay(); return []; }
-export async function getSuperOwnerAccess(): Promise<SuperOwnerGymAccessRow[]> { await delay(); return []; }
-export async function getSuperOwnerGyms(_superOwnerId: string): Promise<VendorRow[]> { await delay(); return []; }
-export async function getSuperOwnerAnalytics(_superOwnerId: string, _filter: string | 'all'): Promise<{
-  combined: {
-    monthlyRevenue: number; activeMembers: number; totalMembers: number;
-    pendingPayments: number; pendingAmount: number;
-    newLeads: number; convertedLeads: number; totalGyms: number;
-  };
-  revenueTrend: { month: string; revenue: number }[];
-  perVendor: { vendor: VendorRow; revenue: number; members: number; activeMembers: number; overdue: number; leads: number }[];
-}> {
-  await delay();
-  return {
-    combined: {
-      monthlyRevenue: 0, activeMembers: 0, totalMembers: 0,
-      pendingPayments: 0, pendingAmount: 0,
-      newLeads: 0, convertedLeads: 0, totalGyms: 0,
-    },
-    revenueTrend: [],
-    perVendor: [],
-  };
-}
-export async function assignGymToSuperOwner(_superOwnerId: string, _vendorId: string): Promise<void> { await delay(); }
-export async function removeGymFromSuperOwner(_superOwnerId: string, _vendorId: string): Promise<void> { await delay(); }
+// ─── Trainers / Personal Training ───
+export type Trainer = TrainerRow;
+export type TrainerAssignment = TrainerAssignmentRow;
+export type TrainerSession = TrainerSessionRow;
 
-// Trainer stubs
-export async function getTrainers(): Promise<Trainer[]> { await delay(); return []; }
-export async function getTrainerAssignments(): Promise<TrainerAssignment[]> { await delay(); return []; }
-export async function getTrainerSessions(): Promise<TrainerSession[]> { await delay(); return []; }
-export async function createTrainer(_t: Partial<Trainer>): Promise<Trainer> {
+const DEMO_VENDOR_FALLBACK = 'demo-user';
+
+export async function getTrainers(): Promise<TrainerRow[]> {
+  if (useDemo()) return demo.getTrainers() as any;
   await delay();
-  return { id: genId(), user_id: 'demo-user', name: _t.name ?? '', is_active: true, created_at: new Date().toISOString(), ..._t } as Trainer;
+  return [...db().trainers].sort((a, b) => a.name.localeCompare(b.name));
 }
-export async function updateTrainer(id: string, _patch: Partial<Trainer>): Promise<void> { await delay(); }
-export async function deleteTrainer(_id: string): Promise<void> { await delay(); }
-export async function createTrainerAssignment(_a: {
-  trainer_id: string; member_id: string; total_sessions: number;
-  price: number; start_date: string; end_date: string;
-}): Promise<void> { await delay(); }
-export async function deleteTrainerAssignment(_id: string): Promise<void> { await delay(); }
-export async function markTrainerSession(_p: {
-  assignment_id: string; status: 'completed' | 'missed';
-}): Promise<void> { await delay(); }
+
+export async function createTrainer(t: { name: string; phone: string; specialization: string; experience: number; is_active?: boolean }): Promise<TrainerRow> {
+  if (useDemo()) return demo.createTrainer(t) as any;
+  await delay();
+  const row: TrainerRow = {
+    id: genId(), user_id: DEMO_VENDOR_FALLBACK, vendor_id: DEMO_VENDOR_FALLBACK,
+    name: t.name, phone: t.phone, specialization: t.specialization,
+    experience: t.experience, is_active: t.is_active ?? true,
+    created_at: new Date().toISOString(),
+  };
+  const d = db(); d.trainers.push(row); save(d); return row;
+}
+
+export async function updateTrainer(id: string, patch: Partial<Pick<TrainerRow, 'name' | 'phone' | 'specialization' | 'experience' | 'is_active'>>): Promise<TrainerRow> {
+  if (useDemo()) return demo.updateTrainer(id, patch) as any;
+  await delay();
+  const d = db();
+  const idx = d.trainers.findIndex(x => x.id === id);
+  if (idx === -1) throw new Error('Trainer not found');
+  d.trainers[idx] = { ...d.trainers[idx], ...patch };
+  save(d); return d.trainers[idx];
+}
+
+export async function deleteTrainer(id: string): Promise<void> {
+  if (useDemo()) return demo.deleteTrainer(id) as any;
+  await delay();
+  const d = db();
+  // Block delete if active assignments exist
+  const hasActive = d.trainer_assignments.some(a => a.trainer_id === id && a.sessions_completed < a.total_sessions);
+  if (hasActive) throw new Error('Cannot delete trainer with active assignments');
+  d.trainers = d.trainers.filter(x => x.id !== id);
+  save(d);
+}
+
+export async function getTrainerAssignments(): Promise<TrainerAssignmentRow[]> {
+  if (useDemo()) return demo.getTrainerAssignments() as any;
+  await delay();
+  return [...db().trainer_assignments].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function createTrainerAssignment(a: { trainer_id: string; member_id: string; total_sessions: number; price: number; start_date: string; end_date: string }): Promise<TrainerAssignmentRow> {
+  if (useDemo()) return demo.createTrainerAssignment(a) as any;
+  await delay();
+  const d = db();
+  // Prevent duplicate active assignment for same member+trainer
+  const existing = d.trainer_assignments.find(x => x.trainer_id === a.trainer_id && x.member_id === a.member_id && x.sessions_completed < x.total_sessions);
+  if (existing) throw new Error('This member already has an active assignment with this trainer');
+  if (a.total_sessions <= 0) throw new Error('Total sessions must be > 0');
+  if (a.price < 0) throw new Error('Price must be ≥ 0');
+  const row: TrainerAssignmentRow = {
+    id: genId(), user_id: DEMO_VENDOR_FALLBACK, vendor_id: DEMO_VENDOR_FALLBACK,
+    trainer_id: a.trainer_id, member_id: a.member_id,
+    plan_type: 'PT', start_date: a.start_date, end_date: a.end_date,
+    total_sessions: a.total_sessions, sessions_completed: 0,
+    price: a.price, created_at: new Date().toISOString(),
+  };
+  d.trainer_assignments.push(row);
+  // Auto-create PT payment so revenue flows through main payment system
+  if (a.price > 0) {
+    d.payments.push({
+      id: genId(), user_id: DEMO_VENDOR_FALLBACK, member_id: a.member_id,
+      amount: a.price, payment_date: a.start_date, method: 'cash', status: 'paid',
+      note: 'PT package', payment_type: 'pt', assignment_id: row.id, trainer_id: a.trainer_id,
+      created_at: new Date().toISOString(), is_deleted: false, deleted_at: null,
+    });
+  }
+  save(d); return row;
+}
+
+export async function deleteTrainerAssignment(id: string): Promise<void> {
+  if (useDemo()) return demo.deleteTrainerAssignment(id) as any;
+  await delay();
+  const d = db();
+  d.trainer_assignments = d.trainer_assignments.filter(x => x.id !== id);
+  d.trainer_sessions = d.trainer_sessions.filter(x => x.assignment_id !== id);
+  // Keep PT payment history (revenue already realized) — only mark soft-deleted if needed.
+  save(d);
+}
+
+export async function getTrainerSessions(): Promise<TrainerSessionRow[]> {
+  if (useDemo()) return demo.getTrainerSessions() as any;
+  await delay();
+  return [...db().trainer_sessions].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function markTrainerSession(params: { assignment_id: string; status: 'completed' | 'missed'; date?: string }): Promise<TrainerSessionRow> {
+  if (useDemo()) return demo.markTrainerSession(params) as any;
+  await delay();
+  const d = db();
+  const aIdx = d.trainer_assignments.findIndex(x => x.id === params.assignment_id);
+  if (aIdx === -1) throw new Error('Assignment not found');
+  const a = d.trainer_assignments[aIdx];
+  if (params.status === 'completed' && a.sessions_completed >= a.total_sessions) {
+    throw new Error('Session limit reached for this assignment');
+  }
+  const today = (params.date ?? new Date().toISOString().slice(0, 10));
+  const row: TrainerSessionRow = {
+    id: genId(), user_id: a.user_id, vendor_id: a.vendor_id,
+    trainer_id: a.trainer_id, member_id: a.member_id, assignment_id: a.id,
+    date: today, status: params.status, created_at: new Date().toISOString(),
+  };
+  d.trainer_sessions.push(row);
+  if (params.status === 'completed') {
+    d.trainer_assignments[aIdx] = { ...a, sessions_completed: a.sessions_completed + 1 };
+  }
+  save(d); return row;
+}
