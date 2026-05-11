@@ -74,17 +74,20 @@ export default function SuperOwnersAdminPage() {
                         <div className="text-sm font-medium truncate">{g.name}</div>
                         <div className="text-[11px] text-muted-foreground">{g.city}</div>
                       </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-destructive shrink-0"
-                        onClick={() => {
-                          removeGymFromSuperOwner(o.id, g.id);
-                          toast.success(`Revoked ${g.name}`);
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <ManageAccessButton superOwnerId={o.id} vendorId={g.id} vendorName={g.name} changeTick={changeTick} />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-destructive"
+                          onClick={() => {
+                            removeGymFromSuperOwner(o.id, g.id);
+                            toast.success(`Revoked ${g.name}`);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
